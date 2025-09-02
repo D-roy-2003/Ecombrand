@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react'
+import { addToCart } from '@/lib/cart'
 
 // Mock featured products data
 const featuredProducts = [
@@ -114,7 +115,15 @@ export default function FeaturedProducts() {
                       >
                         VIEW DETAILS
                       </Link>
-                      <button className="btn-secondary">
+                      <button
+                        className="btn-secondary"
+                        onClick={() => addToCart({
+                          id: featuredProducts[currentIndex].id,
+                          name: featuredProducts[currentIndex].name,
+                          price: featuredProducts[currentIndex].price,
+                          imageUrl: featuredProducts[currentIndex].imageUrl
+                        })}
+                      >
                         <ShoppingBag className="w-5 h-5 mr-2" />
                         ADD TO CART
                       </button>

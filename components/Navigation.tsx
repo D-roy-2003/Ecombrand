@@ -19,10 +19,10 @@ export default function Navigation() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-2xl font-display font-bold text-gradient">
-              EDGY
+              ROT
             </span>
             <span className="text-xl font-display font-medium text-white">
-              FASHION
+              KIT
             </span>
           </Link>
 

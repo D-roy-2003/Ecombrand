@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ShoppingBag, Heart } from 'lucide-react'
+import { addToCart } from '@/lib/cart'
 
 interface Product {
   id: string
@@ -98,6 +99,12 @@ export default function ProductGrid({ products }: ProductGridProps) {
                   <button 
                     className="btn-primary text-sm py-2 px-4"
                     disabled={product.stock === 0}
+                    onClick={() => addToCart({
+                      id: product.id,
+                      name: product.name,
+                      price: product.price,
+                      imageUrl: product.imageUrl
+                    })}
                   >
                     <ShoppingBag className="w-4 h-4 mr-2" />
                     ADD TO CART

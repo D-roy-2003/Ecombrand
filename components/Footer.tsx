@@ -20,10 +20,10 @@ export default function Footer() {
             >
               <div className="mb-6">
                 <span className="text-2xl font-display font-bold text-gradient">
-                  EDGY
+                  ROT
                 </span>
                 <span className="text-xl font-display font-medium text-white ml-2">
-                  FASHION
+                  KIT
                 </span>
               </div>
               <p className="text-gray-300 mb-6 leading-relaxed">
@@ -155,7 +155,7 @@ export default function Footer() {
         >
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2024 EDGY FASHION. All rights reserved.
+              © 2025 ROT KIT. All rights reserved.
             </p>
             <div className="flex space-x-6 text-sm">
               <Link href="/privacy" className="text-gray-400 hover:text-accent-400 transition-colors duration-300">
