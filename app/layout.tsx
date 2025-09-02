@@ -6,7 +6,7 @@ import { Toaster } from 'react-hot-toast'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'EDGY FASHION | Streetwear & Urban Style',
+  title: 'ROT KIT | Streetwear & Urban Style',
   description: 'Discover the latest in edgy streetwear fashion. Premium quality clothing with bold designs for the urban rebel.',
   keywords: 'streetwear, urban fashion, edgy clothing, street style, fashion brand',
 }

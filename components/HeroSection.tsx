@@ -27,9 +27,9 @@ export default function HeroSection() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.2 }}
           >
-            <span className="text-white">EDGY</span>
+            <span className="text-white">ROT</span>
             <br />
-            <span className="text-gradient">FASHION</span>
+            <span className="text-gradient">KIT</span>
           </motion.h1>
 
           {/* Subtitle */}
