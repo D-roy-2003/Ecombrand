@@ -10,18 +10,21 @@ A modern, edgy streetwear fashion brand e-commerce website built with Next.js, f
 - **Product Showcase**: Featured products carousel and category browsing
 - **Advanced Filtering**: Search, category, and price range filters
 - **Smooth Animations**: Framer Motion powered transitions and hover effects
+- **User Authentication**: Separate login/register for users and admin
 
 ### Backend
-- **Next.js API Routes**: RESTful API endpoints for products, orders, and admin
-- **Authentication**: Secure JWT-based admin authentication
+- **Next.js API Routes**: RESTful API endpoints for products, orders, and authentication
+- **Dual Authentication**: Separate JWT-based authentication for users and admins
 - **Database**: PostgreSQL with Prisma ORM
 - **Product Management**: Full CRUD operations for products
+- **Admin Management**: Comprehensive admin user system
 
 ### Admin Dashboard
 - **Product Management**: Add, edit, and delete products
 - **Order Management**: View and manage customer orders
 - **Analytics**: Sales metrics and performance insights
 - **Inventory Control**: Stock management and updates
+- **Admin Profile**: Detailed admin information and permissions
 
 ## 🛠️ Tech Stack
 
@@ -36,34 +39,64 @@ A modern, edgy streetwear fashion brand e-commerce website built with Next.js, f
 ## 📁 Project Structure
 
 ```
-edgy-fashion-ecommerce/
+brand/
 ├── app/                          # Next.js 14 app directory
+│   ├── about/                   # About page
+│   │   └── page.tsx
+│   ├── admin/                   # Admin pages
+│   │   ├── page.tsx            # Admin login page
+│   │   └── dashboard/          # Protected admin dashboard
+│   │       └── page.tsx
 │   ├── api/                     # API routes
 │   │   ├── auth/               # Authentication endpoints
-│   │   ├── products/           # Product management
-│   │   └── orders/             # Order management
-│   ├── admin/                  # Admin pages
-│   │   ├── page.tsx           # Admin login
-│   │   └── dashboard/         # Admin dashboard
-│   ├── shop/                   # Shop page
-│   ├── globals.css            # Global styles
-│   ├── layout.tsx             # Root layout
-│   └── page.tsx               # Home page
+│   │   │   ├── admin/          # Admin authentication
+│   │   │   │   ├── login/      # Admin login API
+│   │   │   │   ├── logout/     # Admin logout API
+│   │   │   │   └── me/         # Admin profile API
+│   │   │   ├── login/          # User login API
+│   │   │   ├── logout/         # User logout API
+│   │   │   ├── me/             # User profile API
+│   │   │   └── signup/         # User registration API
+│   │   ├── orders/             # Order management
+│   │   │   └── route.ts
+│   │   └── products/           # Product management
+│   │       ├── [id]/           # Individual product API
+│   │       │   └── route.ts
+│   │       └── route.ts
+│   ├── cart/                    # Shopping cart page
+│   │   └── page.tsx
+│   ├── contact/                 # Contact page
+│   │   └── page.tsx
+│   ├── login/                   # User login/register page
+│   │   └── page.tsx
+│   ├── shop/                    # Shop page
+│   │   └── page.tsx
+│   ├── user/                    # User dashboard
+│   │   └── dashboard/
+│   │       └── page.tsx
+│   ├── globals.css             # Global styles
+│   ├── layout.tsx              # Root layout
+│   └── page.tsx                # Home page
 ├── components/                  # Reusable components
 │   ├── admin/                  # Admin-specific components
-│   ├── Navigation.tsx         # Main navigation
-│   ├── HeroSection.tsx        # Hero banner
-│   ├── FeaturedProducts.tsx   # Product carousel
-│   ├── CategoriesSection.tsx  # Category grid
-│   ├── ProductGrid.tsx        # Product listing
-│   ├── ProductFilters.tsx     # Filter sidebar
-│   └── Footer.tsx             # Site footer
+│   │   ├── AddProductModal.tsx # Add product modal
+│   │   └── EditProductModal.tsx # Edit product modal
+│   ├── CategoriesSection.tsx   # Category grid
+│   ├── FeaturedProducts.tsx    # Product carousel
+│   ├── Footer.tsx              # Site footer
+│   ├── HeroSection.tsx         # Hero banner
+│   ├── Navigation.tsx          # Main navigation
+│   ├── ProductFilters.tsx      # Filter sidebar
+│   └── ProductGrid.tsx         # Product listing
 ├── lib/                        # Utility libraries
-│   ├── db.ts                  # Database connection
-│   ├── auth.ts                # Authentication utilities
-│   └── types.ts               # TypeScript types
+│   ├── auth.ts                 # Authentication utilities
+│   ├── cart.ts                 # Cart management
+│   ├── db.ts                   # Database connection
+│   └── types.ts                # TypeScript types
 ├── prisma/                     # Database schema
-│   └── schema.prisma          # Prisma schema definition
+│   └── schema.prisma           # Prisma schema definition
+├── scripts/                    # Database scripts
+│   └── seed-admin.ts           # Admin user seeding script
 ├── package.json                # Dependencies and scripts
 ├── tailwind.config.js          # Tailwind configuration
 ├── tsconfig.json               # TypeScript configuration
@@ -83,7 +116,7 @@ edgy-fashion-ecommerce/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd edgy-fashion-ecommerce
+   cd brand
    ```
 
 2. **Install dependencies**
@@ -99,45 +132,86 @@ edgy-fashion-ecommerce/
    Edit `.env.local` with your database credentials:
    ```env
    DATABASE_URL="postgresql://username:password@localhost:5432/edgy_fashion_db"
-   NEXTAUTH_SECRET="your-secret-key-here"
-   NEXTAUTH_URL="http://localhost:3000"
    JWT_SECRET="your-jwt-secret-here"
    ```
 
-4. **Set up the database**
+4. **Set up the database and start development**
    ```bash
-   # Generate Prisma client
-   npm run db:generate
-   
-   # Push schema to database
-   npm run db:push
-   ```
-
-5. **Create admin user** (optional)
-   ```sql
-   INSERT INTO users (id, email, name, password, role) 
-   VALUES (
-     'admin-1', 
-     'admin@edgyfashion.com', 
-     'Admin User', 
-     '$2a$12$hashedpassword', 
-     'ADMIN'
-   );
-   ```
-
-6. **Run the development server**
-   ```bash
+   # This will automatically generate Prisma client, push schema, and start dev server
    npm run dev
    ```
 
-7. **Open your browser**
+5. **Seed admin user** (optional)
+   ```bash
+   npm run db:seed-admin
+   ```
+
+6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## 🔐 Admin Access
+## 🔧 Development Commands
 
+### Automated Development
+```bash
+# Development (automatically generates client and pushes schema)
+npm run dev
+
+# If you want to skip Prisma steps sometimes
+npm run dev:clean
+
+# View database
+npm run db:studio
+```
+
+### Manual Database Commands
+```bash
+npm run db:generate  # Generate Prisma client
+npm run db:push      # Push database schema
+npm run db:migrate   # Run database migrations
+npm run db:seed-admin # Seed admin user
+```
+
+### Other Commands
+```bash
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+```
+
+## 🔐 Authentication System
+
+### User Authentication
+- **URL**: `/login`
+- **Features**: User login/register with JWT tokens
+- **Redirects**: Users → `/user/dashboard`, Admins → `/admin/dashboard`
+
+### Admin Authentication
 - **URL**: `/admin`
-- **Default Credentials**: Use the admin user created in the database
-- **Features**: Product management, order tracking, analytics dashboard
+- **Default Credentials**: 
+  - Email: `admin1@email.com`
+  - Password: `Admin@69`
+- **Features**: Admin-only login with comprehensive dashboard
+- **Redirects**: Admins → `/admin/dashboard`
+
+## 📊 Database Schema
+
+The application uses the following main entities:
+
+### User Model
+- **Users**: Customer accounts with orders
+- **Role**: CUSTOMER (default)
+
+### Admin Model
+- **Admins**: Comprehensive admin user system
+- **Fields**: firstName, lastName, phoneNumber, address, city, state, zipCode, country, profileImage, bio, department, permissions, isActive, lastLoginAt, loginAttempts, lockedUntil, twoFactorEnabled, twoFactorSecret
+
+### Product Model
+- **Products**: Product catalog with categories
+- **Categories**: TSHIRTS, HOODIES, ACCESSORIES, PANTS, SHOES
+
+### Order Model
+- **Orders**: Customer orders and order items
+- **OrderItems**: Individual order line items
 
 ## 🎨 Customization
 
@@ -182,49 +256,28 @@ The website is fully responsive with breakpoints:
 ### Environment Variables for Production
 ```env
 DATABASE_URL="your-production-database-url"
-NEXTAUTH_SECRET="strong-production-secret"
-NEXTAUTH_URL="https://yourdomain.com"
 JWT_SECRET="strong-jwt-secret"
 ```
 
-## 🔧 Development Scripts
-
-```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run db:generate  # Generate Prisma client
-npm run db:push      # Push database schema
-npm run db:migrate   # Run database migrations
-```
-
-## 📊 Database Schema
-
-The application uses the following main entities:
-- **Users**: Admin and customer accounts
-- **Products**: Product catalog with categories
-- **Orders**: Customer orders and order items
-- **Categories**: Product classification
-
 ## 🛡️ Security Features
 
-- JWT-based authentication
+- JWT-based authentication for both users and admins
 - Password hashing with bcrypt
 - Protected admin routes
 - Input validation and sanitization
 - CORS protection
+- Separate authentication systems for users and admins
 
 ## 🎯 Future Enhancements
 
 - [ ] Stripe payment integration
-- [ ] User registration and profiles
 - [ ] Shopping cart functionality
 - [ ] Order tracking system
 - [ ] Advanced analytics dashboard
 - [ ] Email notifications
 - [ ] Multi-language support
 - [ ] SEO optimization
+- [ ] Two-factor authentication for admins
 
 ## 🤝 Contributing
 

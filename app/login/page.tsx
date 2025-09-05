@@ -3,12 +3,14 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, Lock, Mail, Shield } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-export default function AdminLoginPage() {
+export default function UserLoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -21,15 +23,25 @@ export default function AdminLoginPage() {
       return
     }
 
+    if (!isLogin && !name) {
+      toast.error('Please enter your name')
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/auth/admin/login', {
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup'
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email, 
+          password, 
+          ...(isLogin ? {} : { name }) 
+        }),
       })
 
       const data = await response.json()
@@ -37,13 +49,19 @@ export default function AdminLoginPage() {
       if (response.ok) {
         // Store token in localStorage for authentication
         if (data.token) {
-          localStorage.setItem('admin-token', data.token)
+          localStorage.setItem('token', data.token)
         }
         
-        toast.success('Admin login successful!')
-        router.push('/admin/dashboard')
+        toast.success(isLogin ? 'Login successful!' : 'Registration successful!')
+        
+        // Redirect based on user role
+        if (data.user.role === 'ADMIN') {
+          router.push('/admin/dashboard')
+        } else {
+          router.push('/user/dashboard')
+        }
       } else {
-        toast.error(data.error || 'Admin login failed')
+        toast.error(data.error || (isLogin ? 'Login failed' : 'Registration failed'))
       }
     } catch (error) {
       toast.error('An error occurred. Please try again.')
@@ -65,26 +83,47 @@ export default function AdminLoginPage() {
           <span className="text-4xl font-display font-bold text-gradient">
             EDGY FASHION
           </span>
-          <p className="text-gray-400 mt-2">Admin Portal</p>
+          <p className="text-gray-400 mt-2">Welcome Back</p>
         </div>
 
         {/* Login Form */}
         <div className="bg-primary-900 border border-primary-800 rounded-lg p-8">
           <div className="flex items-center justify-center mb-6">
             <div className="p-3 bg-accent-600/20 rounded-lg">
-              <Shield className="w-8 h-8 text-accent-500" />
+              <User className="w-8 h-8 text-accent-500" />
             </div>
           </div>
 
           <h2 className="text-2xl font-bold text-white text-center mb-8">
-            ADMIN LOGIN
+            {isLogin ? 'LOGIN' : 'REGISTER'}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Name Field (only for registration) */}
+            {!isLogin && (
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                    placeholder="Enter your full name"
+                    required={!isLogin}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                Admin Email
+                Email Address
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -94,7 +133,7 @@ export default function AdminLoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
-                  placeholder="admin1@email.com"
+                  placeholder="Enter your email"
                   required
                 />
               </div>
@@ -113,7 +152,7 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-12 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
-                  placeholder="Enter admin password"
+                  placeholder="Enter your password"
                   required
                 />
                 <button
@@ -126,23 +165,24 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            {/* Login Button */}
+            {/* Login/Register Button */}
             <button
               type="submit"
               disabled={isLoading}
               className="w-full btn-primary py-3 text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Signing in...' : 'SIGN IN AS ADMIN'}
+              {isLoading ? 'Please wait...' : (isLogin ? 'LOGIN' : 'REGISTER')}
             </button>
           </form>
 
-          {/* Admin Info */}
-          <div className="mt-6 p-4 bg-primary-800 rounded-lg">
-            <p className="text-sm text-gray-400 text-center">
-              <strong>Default Admin Credentials:</strong><br />
-              Email: admin1@email.com<br />
-              Password: Admin@69
-            </p>
+          {/* Toggle between Login and Register */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-accent-500 hover:text-accent-400 transition-colors duration-200"
+            >
+              {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
+            </button>
           </div>
         </div>
 
@@ -155,4 +195,4 @@ export default function AdminLoginPage() {
       </motion.div>
     </div>
   )
-}
+} 

@@ -102,7 +102,7 @@ export default function Navigation() {
   }
 
   const goToLogin = () => {
-    router.push('/admin')
+    router.push('/login')
   }
 
   // Generate user initials

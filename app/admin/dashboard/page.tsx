@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 import { 
   Plus, 
   Package, 
@@ -17,6 +18,28 @@ import {
 import toast from 'react-hot-toast'
 import AddProductModal from '@/components/admin/AddProductModal'
 import EditProductModal from '@/components/admin/EditProductModal'
+
+// Define admin type
+interface Admin {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  phoneNumber?: string
+  address?: string
+  city?: string
+  state?: string
+  zipCode?: string
+  country?: string
+  profileImage?: string
+  bio?: string
+  department?: string
+  permissions: string[]
+  isActive: boolean
+  lastLoginAt?: string
+  createdAt: string
+  updatedAt: string
+}
 
 // Mock data for dashboard
 const mockStats = {
@@ -59,6 +82,54 @@ export default function AdminDashboard() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
+  const [admin, setAdmin] = useState<Admin | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
+
+  // Check admin authentication on component mount
+  useEffect(() => {
+    checkAdminAuth()
+  }, [])
+
+  const checkAdminAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/admin/me', {
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setAdmin(data.admin)
+      } else {
+        // If not authenticated, redirect to admin login
+        router.push('/admin')
+      }
+    } catch (error) {
+      console.error('Error checking admin auth:', error)
+      router.push('/admin')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/admin/logout', {
+        method: 'POST',
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        toast.success('Logged out successfully!')
+        router.push('/admin')
+      } else {
+        toast.error('Logout failed')
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+      toast.error('Logout failed')
+    }
+  }
 
   const handleAddProduct = (newProduct: any) => {
     setProducts([...products, { ...newProduct, id: Date.now().toString() }])
@@ -85,6 +156,18 @@ export default function AdminDashboard() {
     setIsEditModalOpen(true)
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!admin) {
+    return null // Will redirect to login
+  }
+
   return (
     <div className="min-h-screen bg-black">
       {/* Header */}
@@ -100,8 +183,13 @@ export default function AdminDashboard() {
             </div>
             
             <div className="flex items-center space-x-4">
-              <span className="text-gray-300 text-sm">admin@edgyfashion.com</span>
-              <button className="text-gray-400 hover:text-white transition-colors duration-300">
+              <span className="text-gray-300 text-sm">
+                {admin.firstName} {admin.lastName}
+              </span>
+              <button 
+                onClick={handleLogout}
+                className="text-gray-400 hover:text-white transition-colors duration-300"
+              >
                 <LogOut className="w-5 h-5" />
               </button>
             </div>
