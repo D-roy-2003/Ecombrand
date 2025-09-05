@@ -63,7 +63,7 @@ export default function UserDashboard() {
         setRecentOrders(data.recentOrders)
       } else {
         // If not authenticated, redirect to login
-        router.push('/admin')
+        router.push('/user/dashboard')
       }
     } catch (error) {
       console.error('Error fetching user data:', error)

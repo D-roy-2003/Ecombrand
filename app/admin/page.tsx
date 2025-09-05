@@ -47,7 +47,13 @@ export default function UserLoginPage() {
       const data = await response.json()
 
       if (response.ok) {
+        // Store token in localStorage for authentication
+        if (data.token) {
+          localStorage.setItem('token', data.token)
+        }
+        
         toast.success(isLogin ? 'Login successful!' : 'Registration successful!')
+        
         // Redirect based on user role
         if (data.user.role === 'ADMIN') {
           router.push('/admin/dashboard')
