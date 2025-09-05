@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "prisma generate && prisma db push && next dev",
+    "dev:clean": "prisma generate && prisma db push && next dev",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev"
+    "db:migrate": "prisma migrate dev",
+    "db:seed-admin": "tsx scripts/seed-admin.ts",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
@@ -24,7 +27,8 @@
     "react-hook-form": "^7.48.2",
     "react-hot-toast": "^2.4.1",
     "react-image-gallery": "^1.3.0",
-    "stripe": "^14.10.0"
+    "stripe": "^14.10.0",
+    "tsx": "^4.7.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
