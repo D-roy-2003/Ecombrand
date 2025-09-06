@@ -2,8 +2,9 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ShoppingBag, Heart } from 'lucide-react'
+import { ShoppingBag } from 'lucide-react'
 import { addToCart } from '@/lib/cart'
+import WishlistButton from './WishlistButton'
 
 interface Product {
   id: string
@@ -51,9 +52,11 @@ export default function ProductGrid({ products }: ProductGridProps) {
               
               {/* Quick Actions */}
               <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <button className="w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
-                  <Heart className="w-5 h-5" />
-                </button>
+                <WishlistButton 
+                  productId={product.id}
+                  size="md"
+                  className="bg-black/50 hover:bg-black/70 backdrop-blur-sm"
+                />
               </div>
 
               {/* Category Badge */}

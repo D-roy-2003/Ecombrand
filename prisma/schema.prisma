@@ -11,14 +11,23 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      Role     @default(CUSTOMER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  orders    Order[]
+  id          String     @id @default(cuid())
+  email       String     @unique
+  name        String
+  password    String
+  role        Role       @default(CUSTOMER)
+  phoneNumber String?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  country     String?
+  isActive    Boolean    @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  orders      Order[]
+  wishlist    Wishlist[]
 
   @@map("users")
 }
@@ -52,16 +61,22 @@ model Admin {
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  name        String
-  description String
-  price       Float
-  stock       Int
-  category    Category
-  imageUrls   String[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  orderItems  OrderItem[]
+  id            String      @id @default(cuid())
+  name          String
+  description   String
+  price         Float
+  originalPrice Float?
+  stock         Int
+  category      Category
+  imageUrls     String[]
+  isFeatured    Boolean     @default(false)
+  discount      Float?      @default(0)
+  isActive      Boolean     @default(true)
+  displayOrder  Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  orderItems    OrderItem[]
+  wishlist      Wishlist[]
 
   @@map("products")
 }
@@ -110,4 +125,29 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlists")
+}
+
+model Analytics {
+  id          String   @id @default(cuid())
+  date        DateTime @unique
+  totalSales  Float    @default(0)
+  totalOrders Int      @default(0)
+  totalUsers  Int      @default(0)
+  revenue     Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("analytics")
 }

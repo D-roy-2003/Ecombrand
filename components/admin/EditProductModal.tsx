@@ -9,9 +9,13 @@ interface Product {
   name: string
   description: string
   price: number
+  originalPrice?: number
   stock: number
   category: string
-  imageUrl: string
+  imageUrls: string[]
+  isFeatured?: boolean
+  discount?: number
+  isActive?: boolean
 }
 
 interface EditProductModalProps {
@@ -34,9 +38,13 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
     name: '',
     description: '',
     price: '',
+    originalPrice: '',
     stock: '',
     category: 'TSHIRTS',
-    imageUrls: ['']
+    imageUrls: [''],
+    isFeatured: false,
+    discount: '',
+    isActive: true
   })
 
   useEffect(() => {
@@ -45,9 +53,13 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
         name: product.name,
         description: product.description,
         price: product.price.toString(),
+        originalPrice: product.originalPrice?.toString() || '',
         stock: product.stock.toString(),
         category: product.category,
-        imageUrls: [product.imageUrl]
+        imageUrls: product.imageUrls || [''],
+        isFeatured: product.isFeatured || false,
+        discount: product.discount?.toString() || '',
+        isActive: product.isActive !== undefined ? product.isActive : true
       })
     }
   }, [product])
@@ -64,7 +76,9 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
       ...product,
       ...formData,
       price: parseFloat(formData.price),
+      originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
       stock: parseInt(formData.stock),
+      discount: formData.discount ? parseFloat(formData.discount) : 0,
       imageUrls: formData.imageUrls.filter(url => url.trim() !== '')
     }
 
@@ -180,6 +194,29 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Original Price
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.originalPrice}
+                      onChange={(e) => setFormData(prev => ({ ...prev, originalPrice: e.target.value }))}
+                      className="w-full input-field pl-8"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Stock and Discount */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Stock *
                   </label>
                   <input
@@ -191,6 +228,27 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
                     placeholder="0"
                     required
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Discount (%)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.discount}
+                      onChange={(e) => setFormData(prev => ({ ...prev, discount: e.target.value }))}
+                      className="w-full input-field pr-8"
+                      placeholder="0"
+                    />
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                      %
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -211,6 +269,35 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Featured and Active */}
+              <div className="flex space-x-6">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isFeatured"
+                    checked={formData.isFeatured}
+                    onChange={(e) => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))}
+                    className="h-4 w-4 text-accent-600 focus:ring-accent-500 border-primary-700 rounded bg-primary-800"
+                  />
+                  <label htmlFor="isFeatured" className="ml-2 text-sm text-gray-300">
+                    Featured Product
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                    className="h-4 w-4 text-accent-600 focus:ring-accent-500 border-primary-700 rounded bg-primary-800"
+                  />
+                  <label htmlFor="isActive" className="ml-2 text-sm text-gray-300">
+                    Active Product
+                  </label>
+                </div>
               </div>
 
               {/* Image URLs */}

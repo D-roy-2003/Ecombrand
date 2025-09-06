@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, price, stock, category, imageUrls } = body
+    const { name, description, price, originalPrice, stock, category, imageUrls, isFeatured, discount, isActive, displayOrder } = body
 
     if (!name || !description || !price || !stock || !category || !imageUrls) {
       return NextResponse.json(
@@ -86,9 +86,14 @@ export async function POST(request: NextRequest) {
         name,
         description,
         price: parseFloat(price),
+        originalPrice: originalPrice ? parseFloat(originalPrice) : null,
         stock: parseInt(stock),
         category,
-        imageUrls
+        imageUrls,
+        isFeatured: isFeatured || false,
+        discount: discount ? parseFloat(discount) : 0,
+        isActive: isActive !== undefined ? isActive : true,
+        displayOrder: displayOrder ? parseInt(displayOrder) : 0
       }
     })
 

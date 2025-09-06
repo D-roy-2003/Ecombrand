@@ -9,7 +9,8 @@ import {
   X, 
   User, 
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Heart
 } from 'lucide-react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
@@ -145,11 +146,16 @@ export default function Navigation() {
             </Link>
           </div>
 
-          {/* Right side - Cart and User */}
+          {/* Right side - Cart, Wishlist and User */}
           <div className="flex items-center space-x-4">
             {/* Cart */}
-            <Link href="/cart" className="text-gray-300 hover:text-white transition-colors duration-300">
+            <Link href="/cart" className="text-gray-300 hover:text-white transition-colors duration-300" title="Shopping Cart">
               <ShoppingCart className="w-6 h-6" />
+            </Link>
+
+            {/* Wishlist */}
+            <Link href="/wishlist" className="text-gray-300 hover:text-white transition-colors duration-300" title="Wishlist">
+              <Heart className="w-6 h-6" />
             </Link>
 
             {/* User Menu */}
@@ -265,6 +271,14 @@ export default function Navigation() {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Contact
+                </Link>
+                <Link
+                  href="/wishlist"
+                  className="block px-3 py-2 text-gray-300 hover:text-white transition-colors duration-300 flex items-center space-x-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Heart className="w-4 h-4" />
+                  <span>Wishlist</span>
                 </Link>
               </div>
             </motion.div>
