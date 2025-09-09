@@ -74,27 +74,33 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, description, price, originalPrice, stock, category, imageUrls, isFeatured, discount, isActive, displayOrder } = body
 
-    if (!name || !description || !price || !stock || !category || !imageUrls) {
+    // Fix validation - check for required fields but allow empty imageUrls
+    if (!name || !description || !price || !stock || !category) {
       return NextResponse.json(
-        { error: 'All fields are required' },
+        { error: 'Name, description, price, stock, and category are required' },
         { status: 400 }
       )
     }
+
+    // Filter out empty image URLs
+    const validImageUrls = Array.isArray(imageUrls) 
+      ? imageUrls.filter(url => url && url.trim() !== '')
+      : []
 
     const product = await prisma.product.create({
       data: {
         name,
         description,
         price: parseFloat(price),
-        originalPrice: originalPrice ? parseFloat(originalPrice) : null,
+        originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
         stock: parseInt(stock),
         category,
-        imageUrls,
+        imageUrls: validImageUrls,
         isFeatured: isFeatured || false,
         discount: discount ? parseFloat(discount) : 0,
         isActive: isActive !== undefined ? isActive : true,
         displayOrder: displayOrder ? parseInt(displayOrder) : 0
-      }
+      } as any
     })
 
     return NextResponse.json(product, { status: 201 })

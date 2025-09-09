@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Upload, Plus, Trash2, Link, Image as ImageIcon, FileImage } from 'lucide-react'
+import { uploadImage } from '@/lib/supabase'
+import toast from 'react-hot-toast'
 
 interface AddProductModalProps {
   isOpen: boolean
@@ -35,42 +37,79 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
   const [uploadMode, setUploadMode] = useState<'url' | 'file'>('url')
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!formData.name || !formData.description || !formData.price || !formData.stock) {
-      alert('Please fill in all required fields')
+      toast.error('Please fill in all required fields')
       return
     }
 
-    const product = {
-      ...formData,
-      price: parseFloat(formData.price),
-      originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
-      stock: parseInt(formData.stock),
-      discount: formData.discount ? parseFloat(formData.discount) : 0,
-      imageUrls: uploadMode === 'url' 
-        ? formData.imageUrls.filter(url => url.trim() !== '')
-        : previewUrls
-    }
+    setUploading(true)
 
-    onAdd(product)
-    setFormData({
-      name: '',
-      description: '',
-      price: '',
-      originalPrice: '',
-      stock: '',
-      category: 'TSHIRTS',
-      imageUrls: [''],
-      isFeatured: false,
-      discount: '',
-      isActive: true
-    })
-    setUploadedFiles([])
-    setPreviewUrls([])
+    try {
+      let finalImageUrls: string[] = []
+
+      if (uploadMode === 'file') {
+        // Check if files are selected
+        if (uploadedFiles.length === 0) {
+          toast.error('Please select at least one image file')
+          setUploading(false)
+          return
+        }
+
+        try {
+          // Upload files to Supabase
+          const uploadPromises = uploadedFiles.map(file => uploadImage(file, 'products'))
+          finalImageUrls = await Promise.all(uploadPromises)
+        } catch (uploadError) {
+          console.error('Upload error:', uploadError)
+          toast.error('Failed to upload images. Please check your Supabase configuration.')
+          setUploading(false)
+          return
+        }
+      } else {
+        // Use URL inputs
+        finalImageUrls = formData.imageUrls.filter(url => url.trim() !== '')
+      }
+
+      const product = {
+        ...formData,
+        price: parseFloat(formData.price),
+        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
+        stock: parseInt(formData.stock),
+        discount: formData.discount ? parseFloat(formData.discount) : 0,
+        imageUrls: finalImageUrls
+      }
+
+      onAdd(product)
+      
+      // Reset form
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        originalPrice: '',
+        stock: '',
+        category: 'TSHIRTS',
+        imageUrls: [''],
+        isFeatured: false,
+        discount: '',
+        isActive: true
+      })
+      setUploadedFiles([])
+      setPreviewUrls([])
+      
+      toast.success('Product added successfully!')
+    } catch (error) {
+      console.error('Error adding product:', error)
+      toast.error('Failed to add product')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const addImageUrl = () => {
@@ -99,7 +138,7 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
     const imageFiles = files.filter(file => file.type.startsWith('image/'))
     
     if (imageFiles.length === 0) {
-      alert('Please select valid image files')
+      toast.error('Please select valid image files')
       return
     }
 
@@ -129,10 +168,8 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
   const switchUploadMode = (mode: 'url' | 'file') => {
     setUploadMode(mode)
     if (mode === 'file' && uploadedFiles.length === 0) {
-      // Clear URL data when switching to file mode
       setFormData(prev => ({ ...prev, imageUrls: [''] }))
     } else if (mode === 'url' && formData.imageUrls.length === 0) {
-      // Clear file data when switching to URL mode
       setUploadedFiles([])
       setPreviewUrls([])
     }
@@ -362,7 +399,7 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
                     }`}
                   >
                     <Upload className="w-4 h-4" />
-                    <span>Upload Files</span>
+                    <span>Upload to Supabase</span>
                   </button>
                 </div>
 
@@ -413,7 +450,7 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
                           <FileImage className="w-8 h-8 text-gray-400" />
                         </div>
                         <div>
-                          <p className="text-white font-medium mb-1">Upload Product Images</p>
+                          <p className="text-white font-medium mb-1">Upload the product images</p>
                           <p className="text-gray-400 text-sm">Click to browse or drag and drop</p>
                           <p className="text-gray-500 text-xs mt-1">PNG, JPG, GIF up to 10MB each</p>
                         </div>
@@ -433,7 +470,7 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
                     {/* Uploaded Files Preview */}
                     {previewUrls.length > 0 && (
                       <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-gray-300">Uploaded Images:</h4>
+                        <h4 className="text-sm font-medium text-gray-300">Selected Images:</h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                           {previewUrls.map((url, index) => (
                             <div key={index} className="relative group">
@@ -474,9 +511,10 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary"
+                  disabled={uploading}
+                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Add Product
+                  {uploading ? 'Uploading...' : 'Add Product'}
                 </button>
               </div>
             </form>

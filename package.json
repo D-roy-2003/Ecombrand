@@ -12,10 +12,12 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed-admin": "tsx scripts/seed-admin.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "install-supabase": "npm install @supabase/supabase-js"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
+    "@supabase/supabase-js": "^2.57.4",
     "bcryptjs": "^2.4.3",
     "framer-motion": "^10.16.16",
     "jsonwebtoken": "^9.0.2",

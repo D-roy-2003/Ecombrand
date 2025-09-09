@@ -11,7 +11,7 @@ interface Product {
   name: string
   price: number
   category: string
-  imageUrl: string
+  imageUrls: string[]  // Changed from imageUrl to imageUrls
   stock: number
 }
 
@@ -44,7 +44,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
             <div className="relative overflow-hidden">
               <Link href={`/product/${product.id}`}>
                 <img
-                  src={product.imageUrl}
+                  src={product.imageUrls[0] || '/placeholder.jpg'}  // Use first image from array
                   alt={product.name}
                   className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
                 />
@@ -106,7 +106,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
                       id: product.id,
                       name: product.name,
                       price: product.price,
-                      imageUrl: product.imageUrl
+                      imageUrl: product.imageUrls[0]  // Use first image from array
                     })}
                   >
                     <ShoppingBag className="w-4 h-4 mr-2" />
