@@ -146,9 +146,29 @@ export default function AdminDashboard() {
     checkAdminAuth()
   }, [])
 
-  // Load data when tab changes
+  // Load all data immediately when admin is authenticated
   useEffect(() => {
     if (admin) {
+      const loadAllData = async () => {
+        try {
+          await Promise.all([
+            loadProducts(),
+            loadUsers(),
+            loadOrders(),
+            loadAnalytics(),
+            loadWishlist()
+          ])
+        } catch (error) {
+          console.error('Error loading initial data:', error)
+          toast.error('Failed to load some data')
+        }
+      }
+      loadAllData()
+    }
+  }, [admin])
+
+  useEffect(() => {
+    if (admin && activeTab !== 'overview') {
       loadData()
     }
   }, [admin, activeTab])

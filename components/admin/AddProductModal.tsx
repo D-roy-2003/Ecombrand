@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Upload, Plus, Trash2 } from 'lucide-react'
+import { X, Upload, Plus, Trash2, Link, Image as ImageIcon, FileImage } from 'lucide-react'
 
 interface AddProductModalProps {
   isOpen: boolean
@@ -32,6 +32,11 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
     isActive: true
   })
 
+  const [uploadMode, setUploadMode] = useState<'url' | 'file'>('url')
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -46,7 +51,9 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
       originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
       stock: parseInt(formData.stock),
       discount: formData.discount ? parseFloat(formData.discount) : 0,
-      imageUrls: formData.imageUrls.filter(url => url.trim() !== '')
+      imageUrls: uploadMode === 'url' 
+        ? formData.imageUrls.filter(url => url.trim() !== '')
+        : previewUrls
     }
 
     onAdd(product)
@@ -62,6 +69,8 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
       discount: '',
       isActive: true
     })
+    setUploadedFiles([])
+    setPreviewUrls([])
   }
 
   const addImageUrl = () => {
@@ -83,6 +92,50 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
       ...prev,
       imageUrls: prev.imageUrls.map((url, i) => i === index ? value : url)
     }))
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const imageFiles = files.filter(file => file.type.startsWith('image/'))
+    
+    if (imageFiles.length === 0) {
+      alert('Please select valid image files')
+      return
+    }
+
+    const newFiles = [...uploadedFiles, ...imageFiles]
+    setUploadedFiles(newFiles)
+
+    // Create preview URLs
+    const newPreviewUrls = imageFiles.map(file => URL.createObjectURL(file))
+    setPreviewUrls(prev => [...prev, ...newPreviewUrls])
+  }
+
+  const removeUploadedFile = (index: number) => {
+    const newFiles = uploadedFiles.filter((_, i) => i !== index)
+    const newPreviewUrls = previewUrls.filter((_, i) => i !== index)
+    
+    // Revoke the URL to free memory
+    URL.revokeObjectURL(previewUrls[index])
+    
+    setUploadedFiles(newFiles)
+    setPreviewUrls(newPreviewUrls)
+  }
+
+  const openFileDialog = () => {
+    fileInputRef.current?.click()
+  }
+
+  const switchUploadMode = (mode: 'url' | 'file') => {
+    setUploadMode(mode)
+    if (mode === 'file' && uploadedFiles.length === 0) {
+      // Clear URL data when switching to file mode
+      setFormData(prev => ({ ...prev, imageUrls: [''] }))
+    } else if (mode === 'url' && formData.imageUrls.length === 0) {
+      // Clear file data when switching to URL mode
+      setUploadedFiles([])
+      setPreviewUrls([])
+    }
   }
 
   return (
@@ -279,41 +332,135 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
                 </div>
               </div>
 
-              {/* Image URLs */}
+              {/* Image Upload Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Image URLs
+                  Product Images
                 </label>
-                <div className="space-y-3">
-                  {formData.imageUrls.map((url, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <input
-                        type="url"
-                        value={url}
-                        onChange={(e) => updateImageUrl(index, e.target.value)}
-                        className="flex-1 input-field"
-                        placeholder="https://example.com/image.jpg"
-                      />
-                      {formData.imageUrls.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeImageUrl(index)}
-                          className="p-2 text-red-400 hover:text-red-300 transition-colors duration-200"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                
+                {/* Upload Mode Toggle */}
+                <div className="flex space-x-1 bg-primary-800 rounded-lg p-1 mb-4">
                   <button
                     type="button"
-                    onClick={addImageUrl}
-                    className="flex items-center space-x-2 text-accent-400 hover:text-accent-300 transition-colors duration-200"
+                    onClick={() => switchUploadMode('url')}
+                    className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                      uploadMode === 'url'
+                        ? 'bg-accent-600 text-white'
+                        : 'text-gray-300 hover:text-white hover:bg-primary-700'
+                    }`}
                   >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Another Image URL</span>
+                    <Link className="w-4 h-4" />
+                    <span>Image URLs</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchUploadMode('file')}
+                    className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                      uploadMode === 'file'
+                        ? 'bg-accent-600 text-white'
+                        : 'text-gray-300 hover:text-white hover:bg-primary-700'
+                    }`}
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>Upload Files</span>
                   </button>
                 </div>
+
+                {/* URL Input Mode */}
+                {uploadMode === 'url' && (
+                  <div className="space-y-3">
+                    {formData.imageUrls.map((url, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <input
+                          type="url"
+                          value={url}
+                          onChange={(e) => updateImageUrl(index, e.target.value)}
+                          className="flex-1 input-field"
+                          placeholder="https://example.com/image.jpg"
+                        />
+                        {formData.imageUrls.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeImageUrl(index)}
+                            className="p-2 text-red-400 hover:text-red-300 transition-colors duration-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addImageUrl}
+                      className="flex items-center space-x-2 text-accent-400 hover:text-accent-300 transition-colors duration-200"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Another Image URL</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* File Upload Mode */}
+                {uploadMode === 'file' && (
+                  <div className="space-y-4">
+                    {/* Upload Area */}
+                    <div
+                      onClick={openFileDialog}
+                      className="border-2 border-dashed border-primary-700 rounded-lg p-8 text-center cursor-pointer hover:border-accent-500 transition-colors duration-200"
+                    >
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="p-4 bg-primary-800 rounded-full">
+                          <FileImage className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <div>
+                          <p className="text-white font-medium mb-1">Upload Product Images</p>
+                          <p className="text-gray-400 text-sm">Click to browse or drag and drop</p>
+                          <p className="text-gray-500 text-xs mt-1">PNG, JPG, GIF up to 10MB each</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Hidden File Input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+
+                    {/* Uploaded Files Preview */}
+                    {previewUrls.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-gray-300">Uploaded Images:</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {previewUrls.map((url, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={url}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-24 object-cover rounded-lg border border-primary-700"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeUploadedFile(index)}
+                                className="absolute -top-2 -right-2 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                              <div className="absolute bottom-1 left-1 right-1">
+                                <p className="text-xs text-white bg-black/50 rounded px-2 py-1 truncate">
+                                  {uploadedFiles[index]?.name}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Actions */}
