@@ -22,7 +22,12 @@ import {
   Truck,
   XCircle,
   Star,
-  TrendingDown
+  TrendingDown,
+  User,
+  Settings,
+  Camera,
+  Lock,
+  Key
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import AddProductModal from '@/components/admin/AddProductModal'
@@ -140,6 +145,32 @@ export default function AdminDashboard() {
   const [iframeKey, setIframeKey] = useState(0)
   const [productPositions, setProductPositions] = useState<{[key: string]: number}>({})
   const router = useRouter()
+
+  // Add these state variables after the existing useState declarations
+  const [profileData, setProfileData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    department: '',
+    bio: '',
+    profileImage: ''
+  })
+
+  // Add this useEffect to populate profile data when admin loads
+  useEffect(() => {
+    if (admin) {
+      setProfileData({
+        firstName: admin.firstName || '',
+        lastName: admin.lastName || '',
+        email: admin.email || '',
+        phoneNumber: admin.phoneNumber || '',
+        department: admin.department || '',
+        bio: admin.bio || '',
+        profileImage: admin.profileImage || ''
+      })
+    }
+  }, [admin])
 
   // Check admin authentication on component mount
   useEffect(() => {
@@ -426,6 +457,91 @@ export default function AdminDashboard() {
     }
   }
 
+  // Add profile picture upload function
+  const handleProfileImageUpload = async (file: File) => {
+    try {
+      console.log('Starting upload for file:', file.name)
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'admin')
+
+      const response = await fetch('/api/upload/profile', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Upload successful, URL:', data.url)
+        
+        // Update local state immediately
+        setProfileData(prev => {
+          console.log('Updating profileData with:', data.url)
+          return { ...prev, profileImage: data.url }
+        })
+        setAdmin(prev => {
+          console.log('Updating admin with:', data.url)
+          return prev ? { ...prev, profileImage: data.url } : null
+        })
+        
+        // Save to database
+        const saveResponse = await fetch('/api/admin/profile', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ profileImage: data.url }),
+          credentials: 'include'
+        })
+        
+        if (saveResponse.ok) {
+          toast.success('Profile picture uploaded and saved successfully!')
+        } else {
+          toast.error('Image uploaded but failed to save to database')
+        }
+      } else {
+        const errorData = await response.json()
+        console.error('Upload failed:', errorData)
+        toast.error('Failed to upload profile picture')
+      }
+    } catch (error) {
+      console.error('Error uploading profile picture:', error)
+      toast.error('Failed to upload profile picture')
+    }
+  }
+
+  // Update the handleProfileUpdate function
+  const handleProfileUpdate = async () => {
+    try {
+      const response = await fetch('/api/admin/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const updatedAdmin = await response.json()
+        setAdmin(updatedAdmin)
+        toast.success('Profile updated successfully!')
+      } else {
+        toast.error('Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      toast.error('Failed to update profile')
+    }
+  }
+
+  // Add this debugging useEffect to see the current state
+  useEffect(() => {
+    console.log('Admin profileImage:', admin?.profileImage)
+    console.log('ProfileData profileImage:', profileData.profileImage)
+  }, [admin?.profileImage, profileData.profileImage])
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -473,9 +589,17 @@ export default function AdminDashboard() {
               </button>
               <div className="flex items-center space-x-3 bg-primary-800/30 rounded-lg px-4 py-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {admin.firstName[0]}{admin.lastName[0]}
-              </span>
+                  {admin.profileImage ? (
+                    <img 
+                      src={admin.profileImage} 
+                      alt="Profile" 
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white font-semibold text-sm">
+                      {admin.firstName[0]}{admin.lastName[0]}
+                    </span>
+                  )}
                 </div>
                 <div className="hidden sm:block">
                   <div className="text-sm font-medium text-white">
@@ -505,7 +629,9 @@ export default function AdminDashboard() {
             { id: 'orders', name: 'Orders', icon: '📋' },
             { id: 'users', name: 'Users', icon: '👥' },
             { id: 'analytics', name: 'Analytics', icon: '📈' },
-            { id: 'website', name: 'Website', icon: '🌐' }
+            { id: 'website', name: 'Website', icon: '🌐' },
+            { id: 'profile', name: 'Your Details', icon: '👤' },
+            { id: 'settings', name: 'Settings', icon: '⚙️' }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1419,6 +1545,291 @@ export default function AdminDashboard() {
                   >
                     📊 View Analytics
                   </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Your Details Tab */}
+        {activeTab === 'profile' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-8"
+          >
+            <div className="bg-gradient-to-r from-primary-900 to-primary-800 border border-primary-700 rounded-xl p-8">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-3 bg-accent-600/20 rounded-lg">
+                  <User className="w-8 h-8 text-accent-400" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Your Details</h2>
+                  <p className="text-gray-400">Manage your personal information and profile</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Profile Image */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-white">Profile Picture</h3>
+                  <div className="flex items-center gap-6">
+                    <div className="relative">
+                      <div className="w-24 h-24 bg-primary-800 rounded-full flex items-center justify-center border-2 border-primary-700 overflow-hidden">
+                        {(profileData.profileImage || admin?.profileImage) ? (
+                          <img 
+                            src={profileData.profileImage || admin?.profileImage} 
+                            alt="Profile" 
+                            className="w-full h-full rounded-full object-cover"
+                            onError={(e) => {
+                              console.error('Image failed to load:', profileData.profileImage || admin?.profileImage)
+                              e.currentTarget.style.display = 'none'
+                            }}
+                            onLoad={() => console.log('Image loaded successfully:', profileData.profileImage || admin?.profileImage)}
+                          />
+                        ) : (
+                          <User className="w-12 h-12 text-gray-400" />
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            handleProfileImageUpload(file)
+                          }
+                        }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <button className="absolute -bottom-2 -right-2 p-2 bg-accent-600 hover:bg-accent-700 rounded-full transition-colors">
+                        <Camera className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                    <div>
+                      <button 
+                        onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
+                        className="px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors"
+                      >
+                        Upload Photo
+                      </button>
+                      <p className="text-sm text-gray-400 mt-2">JPG, PNG up to 2MB</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Basic Information */}
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">First Name</label>
+                      <input
+                        type="text"
+                        value={profileData.firstName}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
+                        className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Last Name</label>
+                      <input
+                        type="text"
+                        value={profileData.lastName}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
+                        className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                    <input
+                      type="email"
+                      value={profileData.email}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={profileData.phoneNumber}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                      placeholder="Enter phone number"
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Department</label>
+                    <input
+                      type="text"
+                      value={profileData.department}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, department: e.target.value }))}
+                      placeholder="Enter department"
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Bio</label>
+                    <textarea
+                      value={profileData.bio}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                      placeholder="Tell us about yourself"
+                      rows={3}
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={handleProfileUpdate}
+                      className="px-6 py-3 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors"
+                    >
+                      Save Changes
+                    </button>
+                    <button 
+                      onClick={() => setProfileData({
+                        firstName: admin?.firstName || '',
+                        lastName: admin?.lastName || '',
+                        email: admin?.email || '',
+                        phoneNumber: admin?.phoneNumber || '',
+                        department: admin?.department || '',
+                        bio: admin?.bio || '',
+                        profileImage: admin?.profileImage || ''
+                      })}
+                      className="px-6 py-3 border border-primary-700 hover:border-primary-600 text-gray-300 hover:text-white rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-8"
+          >
+            <div className="bg-gradient-to-r from-primary-900 to-primary-800 border border-primary-700 rounded-xl p-8">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-3 bg-accent-600/20 rounded-lg">
+                  <Settings className="w-8 h-8 text-accent-400" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Settings</h2>
+                  <p className="text-gray-400">Manage your account settings and preferences</p>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                {/* Change Password */}
+                <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Lock className="w-6 h-6 text-accent-400" />
+                    <h3 className="text-lg font-semibold text-white">Change Password</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Current Password</label>
+                      <input
+                        type="password"
+                        placeholder="Enter current password"
+                        className="w-full px-4 py-3 bg-primary-900 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">New Password</label>
+                      <input
+                        type="password"
+                        placeholder="Enter new password"
+                        className="w-full px-4 py-3 bg-primary-900 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Confirm New Password</label>
+                      <input
+                        type="password"
+                        placeholder="Confirm new password"
+                        className="w-full px-4 py-3 bg-primary-900 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <button className="px-6 py-3 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors">
+                        Update Password
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Account Information */}
+                <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Key className="w-6 h-6 text-accent-400" />
+                    <h3 className="text-lg font-semibold text-white">Account Information</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Admin ID</label>
+                      <input
+                        type="text"
+                        value={admin.id}
+                        className="w-full px-4 py-3 bg-primary-900 border border-primary-700 rounded-lg text-gray-400 cursor-not-allowed"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Account Status</label>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${admin.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        <span className="text-white">{admin.isActive ? 'Active' : 'Inactive'}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Created At</label>
+                      <input
+                        type="text"
+                        value={new Date(admin.createdAt).toLocaleDateString()}
+                        className="w-full px-4 py-3 bg-primary-900 border border-primary-700 rounded-lg text-gray-400 cursor-not-allowed"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Last Login</label>
+                      <input
+                        type="text"
+                        value={admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleDateString() : 'Never'}
+                        className="w-full px-4 py-3 bg-primary-900 border border-primary-700 rounded-lg text-gray-400 cursor-not-allowed"
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Permissions */}
+                <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <CheckCircle className="w-6 h-6 text-accent-400" />
+                    <h3 className="text-lg font-semibold text-white">Permissions</h3>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {admin.permissions.map((permission, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span className="text-gray-300 capitalize">{permission}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
