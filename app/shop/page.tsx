@@ -6,6 +6,7 @@ import Navigation from '@/components/Navigation'
 import ProductGrid from '@/components/ProductGrid'
 import ProductFilters from '@/components/ProductFilters'
 import Footer from '@/components/Footer'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 // Define the Product type
 interface Product {
@@ -51,26 +52,27 @@ export default function ShopPage() {
         setLoading(false)
       }
     }
-    
+
     fetchProducts()
   }, [])
 
+  // Filter products based on current filters
   useEffect(() => {
-    let filtered = [...products]
+    let filtered = products
 
     // Category filter
     if (filters.category !== 'ALL') {
       filtered = filtered.filter(product => product.category === filters.category)
     }
 
-    // Price filter
+    // Price range filter
     filtered = filtered.filter(product => 
       product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1]
     )
 
     // Search filter
     if (filters.search) {
-      filtered = filtered.filter(product => 
+      filtered = filtered.filter(product =>
         product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
         product.description.toLowerCase().includes(filters.search.toLowerCase())
       )
@@ -79,28 +81,56 @@ export default function ShopPage() {
     setFilteredProducts(filtered)
   }, [products, filters])
 
-  // Handle filter changes
   const handleFilterChange = (newFilters: Partial<Filters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }))
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading products...</div>
+      <div className="min-h-screen bg-black">
+        <Navigation />
+        <div className="pt-8">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="section-padding"
+          >
+            <div className="container-custom">
+              <div className="text-center mb-12">
+                <h1 className="text-5xl md:text-6xl font-display font-bold mb-4">
+                  <span className="text-white">SHOP</span>{' '}
+                  <span className="text-gradient">COLLECTION</span>
+                </h1>
+                <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+                  Discover our latest streetwear collection designed for the urban rebel
+                </p>
+              </div>
+              
+              {/* Loading State */}
+              <div className="flex justify-center items-center py-20">
+                <LoadingSpinner 
+                  text="Loading products..." 
+                  size="lg"
+                  className="text-center"
+                />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+        <Footer />
       </div>
     )
   }
 
   return (
-    <main className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black">
       <Navigation />
-      
-      <div className="pt-5">
+      <div className="pt-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.6 }}
           className="section-padding"
         >
           <div className="container-custom">
@@ -117,7 +147,7 @@ export default function ShopPage() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
               {/* Filters Sidebar */}
               <div className="lg:col-span-1">
-                <ProductFilters 
+                <ProductFilters
                   filters={filters}
                   onFilterChange={handleFilterChange}
                 />
@@ -125,26 +155,18 @@ export default function ShopPage() {
 
               {/* Products Grid */}
               <div className="lg:col-span-3">
-                <div className="mb-6 flex justify-between items-center">
-                  <p className="text-gray-300">
+                <div className="flex justify-between items-center mb-6">
+                  <p className="text-gray-400">
                     Showing {filteredProducts.length} of {products.length} products
                   </p>
-                  <select className="input-field text-sm">
-                    <option>Sort by: Featured</option>
-                    <option>Price: Low to High</option>
-                    <option>Price: High to Low</option>
-                    <option>Newest First</option>
-                  </select>
                 </div>
-
                 <ProductGrid products={filteredProducts} />
               </div>
             </div>
           </div>
         </motion.div>
       </div>
-
       <Footer />
-    </main>
+    </div>
   )
 }
