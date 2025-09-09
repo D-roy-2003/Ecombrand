@@ -7,11 +7,29 @@ import ProductGrid from '@/components/ProductGrid'
 import ProductFilters from '@/components/ProductFilters'
 import Footer from '@/components/Footer'
 
+// Define the Product type
+interface Product {
+  id: string
+  name: string
+  description: string
+  price: number
+  category: string
+  imageUrls: string[]
+  stock: number
+}
+
+// Define the Filters type
+interface Filters {
+  category: string
+  priceRange: [number, number]
+  search: string
+}
+
 export default function ShopPage() {
-  const [products, setProducts] = useState([])
-  const [filteredProducts, setFilteredProducts] = useState([])
+  const [products, setProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<Filters>({
     category: 'ALL',
     priceRange: [0, 500],
     search: ''
@@ -61,6 +79,11 @@ export default function ShopPage() {
     setFilteredProducts(filtered)
   }, [products, filters])
 
+  // Handle filter changes
+  const handleFilterChange = (newFilters: Partial<Filters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }))
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -70,37 +93,58 @@ export default function ShopPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <main className="min-h-screen bg-black">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          <ProductFilters 
-            filters={filters}
-            onFiltersChange={setFilters}
-          />
-          
-          <div className="flex-1">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold text-white">
-                Shop ({filteredProducts.length} products)
+      <div className="pt-5">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="section-padding"
+        >
+          <div className="container-custom">
+            <div className="text-center mb-12">
+              <h1 className="text-5xl md:text-6xl font-display font-bold mb-4">
+                <span className="text-white">SHOP</span>{' '}
+                <span className="text-gradient">COLLECTION</span>
               </h1>
-              <div className="flex items-center space-x-4">
-                <select className="px-4 py-2 bg-primary-800 border border-primary-700 rounded-lg text-white">
-                  <option>Sort by: Featured</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                  <option>Newest</option>
-                </select>
+              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+                Discover our latest streetwear collection designed for the urban rebel
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              {/* Filters Sidebar */}
+              <div className="lg:col-span-1">
+                <ProductFilters 
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                />
+              </div>
+
+              {/* Products Grid */}
+              <div className="lg:col-span-3">
+                <div className="mb-6 flex justify-between items-center">
+                  <p className="text-gray-300">
+                    Showing {filteredProducts.length} of {products.length} products
+                  </p>
+                  <select className="input-field text-sm">
+                    <option>Sort by: Featured</option>
+                    <option>Price: Low to High</option>
+                    <option>Price: High to Low</option>
+                    <option>Newest First</option>
+                  </select>
+                </div>
+
+                <ProductGrid products={filteredProducts} />
               </div>
             </div>
-            
-            <ProductGrid products={filteredProducts} />
           </div>
-        </div>
+        </motion.div>
       </div>
-      
+
       <Footer />
-    </div>
+    </main>
   )
 }
