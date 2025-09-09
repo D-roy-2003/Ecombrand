@@ -8,7 +8,9 @@ export async function GET(
 ) {
   try {
     const product = await prisma.product.findUnique({
-      where: { id: params.id }
+      where: {
+        id: params.id
+      }
     })
 
     if (!product) {
