@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Plus, Trash2 } from 'lucide-react'
+import { X, Plus, Trash2, Upload, Link, FileImage } from 'lucide-react'
+import { uploadImage } from '@/lib/supabase'
+import toast from 'react-hot-toast'
 
 interface Product {
   id: string
@@ -47,6 +49,12 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
     isActive: true
   })
 
+  const [uploadMode, setUploadMode] = useState<'url' | 'file'>('url')
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     if (product) {
       setFormData({
@@ -64,25 +72,65 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
     }
   }, [product])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!formData.name || !formData.description || !formData.price || !formData.stock) {
-      alert('Please fill in all required fields')
+      toast.error('Please fill in all required fields')
       return
     }
 
-    const updatedProduct = {
-      ...product,
-      ...formData,
-      price: parseFloat(formData.price),
-      originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
-      stock: parseInt(formData.stock),
-      discount: formData.discount ? parseFloat(formData.discount) : 0,
-      imageUrls: formData.imageUrls.filter(url => url.trim() !== '')
-    }
+    setUploading(true)
 
-    onEdit(updatedProduct)
+    try {
+      let finalImageUrls: string[] = []
+
+      if (uploadMode === 'file') {
+        // Check if files are selected
+        if (uploadedFiles.length === 0) {
+          toast.error('Please select at least one image file')
+          setUploading(false)
+          return
+        }
+
+        try {
+          // Upload files to Supabase
+          const uploadPromises = uploadedFiles.map(file => uploadImage(file, 'products'))
+          finalImageUrls = await Promise.all(uploadPromises)
+        } catch (uploadError) {
+          console.error('Upload error:', uploadError)
+          toast.error('Failed to upload images. Please check your Supabase configuration.')
+          setUploading(false)
+          return
+        }
+      } else {
+        // Use URL inputs
+        finalImageUrls = formData.imageUrls.filter(url => url.trim() !== '')
+      }
+
+      const updatedProduct = {
+        ...product,
+        ...formData,
+        price: parseFloat(formData.price),
+        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
+        stock: parseInt(formData.stock),
+        discount: formData.discount ? parseFloat(formData.discount) : 0,
+        imageUrls: finalImageUrls
+      }
+
+      onEdit(updatedProduct)
+      
+      // Reset form
+      setUploadedFiles([])
+      setPreviewUrls([])
+      
+      toast.success('Product updated successfully!')
+    } catch (error) {
+      console.error('Error updating product:', error)
+      toast.error('Failed to update product')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const addImageUrl = () => {
@@ -104,6 +152,48 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
       ...prev,
       imageUrls: prev.imageUrls.map((url, i) => i === index ? value : url)
     }))
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const imageFiles = files.filter(file => file.type.startsWith('image/'))
+    
+    if (imageFiles.length === 0) {
+      toast.error('Please select valid image files')
+      return
+    }
+
+    const newFiles = [...uploadedFiles, ...imageFiles]
+    setUploadedFiles(newFiles)
+
+    // Create preview URLs
+    const newPreviewUrls = imageFiles.map(file => URL.createObjectURL(file))
+    setPreviewUrls(prev => [...prev, ...newPreviewUrls])
+  }
+
+  const removeUploadedFile = (index: number) => {
+    const newFiles = uploadedFiles.filter((_, i) => i !== index)
+    const newPreviewUrls = previewUrls.filter((_, i) => i !== index)
+    
+    // Revoke the URL to free memory
+    URL.revokeObjectURL(previewUrls[index])
+    
+    setUploadedFiles(newFiles)
+    setPreviewUrls(newPreviewUrls)
+  }
+
+  const openFileDialog = () => {
+    fileInputRef.current?.click()
+  }
+
+  const switchUploadMode = (mode: 'url' | 'file') => {
+    setUploadMode(mode)
+    if (mode === 'file' && uploadedFiles.length === 0) {
+      setFormData(prev => ({ ...prev, imageUrls: [''] }))
+    } else if (mode === 'url' && formData.imageUrls.length === 0) {
+      setUploadedFiles([])
+      setPreviewUrls([])
+    }
   }
 
   return (
@@ -129,7 +219,7 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-primary-800">
-              <h2 className="text-xl font-semibold text-white">Edit Product</h2>
+              <h2 className="text-xl font-semibold text-white">Update Product</h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-white transition-colors duration-200"
@@ -300,41 +390,135 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
                 </div>
               </div>
 
-              {/* Image URLs */}
+              {/* Image Upload Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Image URLs
+                  Product Images
                 </label>
-                <div className="space-y-3">
-                  {formData.imageUrls.map((url, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <input
-                        type="url"
-                        value={url}
-                        onChange={(e) => updateImageUrl(index, e.target.value)}
-                        className="flex-1 input-field"
-                        placeholder="https://example.com/image.jpg"
-                      />
-                      {formData.imageUrls.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeImageUrl(index)}
-                          className="p-2 text-red-400 hover:text-red-300 transition-colors duration-200"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                
+                {/* Upload Mode Toggle */}
+                <div className="flex space-x-1 bg-primary-800 rounded-lg p-1 mb-4">
                   <button
                     type="button"
-                    onClick={addImageUrl}
-                    className="flex items-center space-x-2 text-accent-400 hover:text-accent-300 transition-colors duration-200"
+                    onClick={() => switchUploadMode('url')}
+                    className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                      uploadMode === 'url'
+                        ? 'bg-accent-600 text-white'
+                        : 'text-gray-300 hover:text-white hover:bg-primary-700'
+                    }`}
                   >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Another Image URL</span>
+                    <Link className="w-4 h-4" />
+                    <span>Image URLs</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchUploadMode('file')}
+                    className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                      uploadMode === 'file'
+                        ? 'bg-accent-600 text-white'
+                        : 'text-gray-300 hover:text-white hover:bg-primary-700'
+                    }`}
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>Upload to Supabase</span>
                   </button>
                 </div>
+
+                {/* URL Input Mode */}
+                {uploadMode === 'url' && (
+                  <div className="space-y-3">
+                    {formData.imageUrls.map((url, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <input
+                          type="url"
+                          value={url}
+                          onChange={(e) => updateImageUrl(index, e.target.value)}
+                          className="flex-1 input-field"
+                          placeholder="https://example.com/image.jpg"
+                        />
+                        {formData.imageUrls.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeImageUrl(index)}
+                            className="p-2 text-red-400 hover:text-red-300 transition-colors duration-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addImageUrl}
+                      className="flex items-center space-x-2 text-accent-400 hover:text-accent-300 transition-colors duration-200"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Another Image URL</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* File Upload Mode */}
+                {uploadMode === 'file' && (
+                  <div className="space-y-4">
+                    {/* Upload Area */}
+                    <div
+                      onClick={openFileDialog}
+                      className="border-2 border-dashed border-primary-700 rounded-lg p-8 text-center cursor-pointer hover:border-accent-500 transition-colors duration-200"
+                    >
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="p-4 bg-primary-800 rounded-full">
+                          <FileImage className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <div>
+                          <p className="text-white font-medium mb-1">Upload the product images</p>
+                          <p className="text-gray-400 text-sm">Click to browse or drag and drop</p>
+                          <p className="text-gray-500 text-xs mt-1">PNG, JPG, GIF up to 10MB each</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Hidden File Input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+
+                    {/* Uploaded Files Preview */}
+                    {previewUrls.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-gray-300">Selected Images:</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {previewUrls.map((url, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={url}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-24 object-cover rounded-lg border border-primary-700"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeUploadedFile(index)}
+                                className="absolute -top-2 -right-2 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                              <div className="absolute bottom-1 left-1 right-1">
+                                <p className="text-xs text-white bg-black/50 rounded px-2 py-1 truncate">
+                                  {uploadedFiles[index]?.name}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Actions */}
@@ -348,9 +532,10 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary"
+                  disabled={uploading}
+                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Update Product
+                  {uploading ? 'Uploading...' : 'Update Product'}
                 </button>
               </div>
             </form>
