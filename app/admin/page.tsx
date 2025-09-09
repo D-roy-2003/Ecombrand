@@ -141,7 +141,7 @@ export default function AdminLoginPage() {
             <p className="text-sm text-gray-400 text-center">
               <strong>Default Admin Credentials:</strong><br />
               Email: admin1@email.com<br />
-              Password: Admin@69
+              Password: Admin@2003
             </p>
           </div>
         </div>

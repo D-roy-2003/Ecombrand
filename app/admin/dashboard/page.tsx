@@ -157,6 +157,13 @@ export default function AdminDashboard() {
     profileImage: ''
   })
 
+  // Add these state variables after the existing useState declarations
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+
   // Add this useEffect to populate profile data when admin loads
   useEffect(() => {
     if (admin) {
@@ -541,6 +548,54 @@ export default function AdminDashboard() {
     console.log('Admin profileImage:', admin?.profileImage)
     console.log('ProfileData profileImage:', profileData.profileImage)
   }, [admin?.profileImage, profileData.profileImage])
+
+  // Add this function to handle password change
+  const handlePasswordChange = async () => {
+    try {
+      // Validation
+      if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+        toast.error('All fields are required')
+        return
+      }
+
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        toast.error('New passwords do not match')
+        return
+      }
+
+      if (passwordData.newPassword.length < 6) {
+        toast.error('New password must be at least 6 characters')
+        return
+      }
+
+      const response = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        }),
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        toast.success('Password updated successfully!')
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        })
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || 'Failed to update password')
+      }
+    } catch (error) {
+      console.error('Error changing password:', error)
+      toast.error('Failed to update password')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -1744,6 +1799,8 @@ export default function AdminDashboard() {
                       <label className="block text-sm font-medium text-gray-300 mb-2">Current Password</label>
                       <input
                         type="password"
+                        value={passwordData.currentPassword}
+                        onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
                         placeholder="Enter current password"
                         className="w-full px-4 py-3 bg-primary-900 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
                       />
@@ -1752,6 +1809,8 @@ export default function AdminDashboard() {
                       <label className="block text-sm font-medium text-gray-300 mb-2">New Password</label>
                       <input
                         type="password"
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
                         placeholder="Enter new password"
                         className="w-full px-4 py-3 bg-primary-900 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
                       />
@@ -1760,12 +1819,17 @@ export default function AdminDashboard() {
                       <label className="block text-sm font-medium text-gray-300 mb-2">Confirm New Password</label>
                       <input
                         type="password"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                         placeholder="Confirm new password"
                         className="w-full px-4 py-3 bg-primary-900 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
                       />
                     </div>
                     <div className="flex items-end">
-                      <button className="px-6 py-3 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors">
+                      <button 
+                        onClick={handlePasswordChange}
+                        className="px-6 py-3 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors"
+                      >
                         Update Password
                       </button>
                     </div>
