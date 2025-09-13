@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
     const search = searchParams.get('search')
+    const featured = searchParams.get('featured')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '12')
     const skip = (page - 1) * limit
@@ -22,6 +23,10 @@ export async function GET(request: NextRequest) {
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } }
       ]
+    }
+
+    if (featured === 'true') {
+      where.isFeatured = true
     }
 
     const [products, total] = await Promise.all([

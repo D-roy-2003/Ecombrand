@@ -78,47 +78,82 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { items, totalPrice, userId } = body
 
-    if (!items || !totalPrice) {
+    if (!items || !totalPrice || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
         { error: 'Items and total price are required' },
         { status: 400 }
       )
     }
 
-    const order = await prisma.order.create({
-      data: {
-        userId: userId || 'guest',
-        totalPrice: parseFloat(totalPrice),
-        items: {
-          create: items.map((item: any) => ({
-            productId: item.id,
-            quantity: item.quantity,
-            price: item.price
-          }))
-        }
-      },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        }
-      }
-    })
-
-    // Update product stock
+    // Validate stock availability before creating order
     for (const item of items) {
-      await prisma.product.update({
+      const product = await prisma.product.findUnique({
         where: { id: item.id },
+        select: { stock: true, name: true }
+      })
+
+      if (!product) {
+        return NextResponse.json(
+          { error: `Product not found: ${item.name || item.id}` },
+          { status: 404 }
+        )
+      }
+
+      if (product.stock < item.quantity) {
+        return NextResponse.json(
+          { error: `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}` },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Use transaction to ensure atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the order
+      const order = await tx.order.create({
         data: {
-          stock: {
-            decrement: item.quantity
+          userId: userId || 'guest',
+          totalPrice: parseFloat(totalPrice),
+          items: {
+            create: items.map((item: any) => ({
+              productId: item.id,
+              quantity: item.quantity,
+              price: item.price
+            }))
+          }
+        },
+        include: {
+          items: {
+            include: {
+              product: true
+            }
           }
         }
       })
-    }
 
-    return NextResponse.json(order, { status: 201 })
+      // Update product stock atomically
+      for (const item of items) {
+        await tx.product.update({
+          where: { id: item.id },
+          data: {
+            stock: {
+              decrement: item.quantity
+            }
+          }
+        })
+      }
+
+      // Clear user's cart if authenticated
+      if (userId && userId !== 'guest') {
+        await tx.cart.deleteMany({
+          where: { userId: userId }
+        })
+      }
+
+      return order
+    })
+
+    return NextResponse.json(result, { status: 201 })
   } catch (error) {
     console.error('Order creation error:', error)
     return NextResponse.json(

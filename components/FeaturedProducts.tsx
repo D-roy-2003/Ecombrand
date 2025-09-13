@@ -5,48 +5,48 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react'
 import { addToCart } from '@/lib/cart'
+import toast from 'react-hot-toast'
 
-// Mock featured products data
-const featuredProducts = [
-  {
-    id: '1',
-    name: 'REBEL HOODIE',
-    price: 89.99,
-    imageUrl: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500&h=600&fit=crop',
-    category: 'HOODIES'
-  },
-  {
-    id: '2',
-    name: 'URBAN TEE',
-    price: 49.99,
-    imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=600&fit=crop',
-    category: 'TSHIRTS'
-  },
-  {
-    id: '3',
-    name: 'STREET PANTS',
-    price: 129.99,
-    imageUrl: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=500&h=600&fit=crop',
-    category: 'PANTS'
-  },
-  {
-    id: '4',
-    name: 'EDGE SNEAKERS',
-    price: 199.99,
-    imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&h=600&fit=crop',
-    category: 'SHOES'
-  }
-]
+interface FeaturedProduct {
+  id: string
+  name: string
+  price: number
+  originalPrice?: number
+  imageUrls: string[]
+  category: string
+}
 
 export default function FeaturedProducts() {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % featuredProducts.length)
-    }, 5000)
-    return () => clearInterval(timer)
+    const fetchFeaturedProducts = async () => {
+      try {
+        const response = await fetch('/api/products?featured=true')
+        if (response.ok) {
+          const data = await response.json()
+          setFeaturedProducts(data.products || [])
+        }
+      } catch (error) {
+        console.error('Error fetching featured products:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchFeaturedProducts()
   }, [])
+
+  useEffect(() => {
+    if (featuredProducts.length > 0) {
+      const timer = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % featuredProducts.length)
+      }, 5000)
+      return () => clearInterval(timer)
+    }
+  }, [featuredProducts.length])
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % featuredProducts.length)
@@ -54,6 +54,54 @@ export default function FeaturedProducts() {
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev - 1 + featuredProducts.length) % featuredProducts.length)
+  }
+
+  if (loading) {
+    return (
+      <section className="section-padding bg-primary-900">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
+              <span className="text-white">FEATURED</span>{' '}
+              <span className="text-gradient">PRODUCTS</span>
+            </h2>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              Loading featured products...
+            </p>
+          </motion.div>
+        </div>
+      </section>
+    )
+  }
+
+  if (featuredProducts.length === 0) {
+    return (
+      <section className="section-padding bg-primary-900">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
+              <span className="text-white">FEATURED</span>{' '}
+              <span className="text-gradient">PRODUCTS</span>
+            </h2>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              No featured products available at the moment
+            </p>
+          </motion.div>
+        </div>
+      </section>
+    )
   }
 
   return (
@@ -89,7 +137,7 @@ export default function FeaturedProducts() {
               <div className="relative group">
                 <div className="relative overflow-hidden rounded-lg">
                   <img
-                    src={featuredProducts[currentIndex].imageUrl}
+                    src={featuredProducts[currentIndex].imageUrls[0] || '/placeholder.jpg'}
                     alt={featuredProducts[currentIndex].name}
                     className="w-full h-96 md:h-[500px] object-cover transition-transform duration-700 group-hover:scale-110"
                   />
@@ -105,9 +153,22 @@ export default function FeaturedProducts() {
                     <h3 className="text-3xl md:text-4xl font-bold text-white mb-2">
                       {featuredProducts[currentIndex].name}
                     </h3>
-                    <p className="text-2xl font-bold text-accent-400 mb-6">
-                      ${featuredProducts[currentIndex].price}
-                    </p>
+                    <div className="mb-6">
+                      {featuredProducts[currentIndex].originalPrice && featuredProducts[currentIndex].originalPrice! > featuredProducts[currentIndex].price ? (
+                        <>
+                          <span className="text-lg text-gray-400 line-through block">
+                            ${featuredProducts[currentIndex].originalPrice}
+                          </span>
+                          <span className="text-2xl font-bold text-accent-400">
+                            ${featuredProducts[currentIndex].price}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-2xl font-bold text-accent-400">
+                          ${featuredProducts[currentIndex].price}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex gap-4 justify-center">
                       <Link 
                         href={`/product/${featuredProducts[currentIndex].id}`}
@@ -117,12 +178,20 @@ export default function FeaturedProducts() {
                       </Link>
                       <button
                         className="btn-secondary"
-                        onClick={() => addToCart({
-                          id: featuredProducts[currentIndex].id,
-                          name: featuredProducts[currentIndex].name,
-                          price: featuredProducts[currentIndex].price,
-                          imageUrl: featuredProducts[currentIndex].imageUrl
-                        })}
+                        onClick={async () => {
+                          const result = await addToCart({
+                            id: featuredProducts[currentIndex].id,
+                            name: featuredProducts[currentIndex].name,
+                            price: featuredProducts[currentIndex].price,
+                            imageUrl: featuredProducts[currentIndex].imageUrls[0] || '/placeholder.jpg'
+                          })
+                          
+                          if (result.success) {
+                            toast.success('Item added to cart!')
+                          } else {
+                            toast.error(result.message || 'Failed to add item to cart')
+                          }
+                        }}
                       >
                         <ShoppingBag className="w-5 h-5 mr-2" />
                         ADD TO CART

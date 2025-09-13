@@ -158,20 +158,24 @@ export default function Navigation() {
               <Heart className="w-6 h-6" />
             </Link>
 
-            {/* User Menu */}
-            {!isLoading && (
-              <div className="relative" ref={dropdownRef}>
-                {user ? (
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                      className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-300 p-2 rounded-lg hover:bg-primary-800"
-                    >
-                      <div className="h-8 w-8 rounded-full bg-accent-600 flex items-center justify-center text-white font-bold text-sm">
-                        {getUserInitials(user.name)}
-                      </div>
-                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
-                    </button>
+            {/* User Menu - Fixed width container to prevent layout shift */}
+            <div className="relative w-24 flex justify-end" ref={dropdownRef}>
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="h-8 w-8 rounded-full bg-primary-700 animate-pulse"></div>
+                  <div className="w-4 h-4 bg-primary-700 rounded animate-pulse"></div>
+                </div>
+              ) : user ? (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-300 p-2 rounded-lg hover:bg-primary-800"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-accent-600 flex items-center justify-center text-white font-bold text-sm">
+                      {getUserInitials(user.name)}
+                    </div>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
 
                     {/* User Dropdown */}
                     <AnimatePresence>
@@ -216,13 +220,12 @@ export default function Navigation() {
                 ) : (
                   <button
                     onClick={goToLogin}
-                    className="bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-lg transition-colors duration-300"
+                    className="bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-lg transition-colors duration-300 text-sm"
                   >
                     Login
                   </button>
                 )}
-              </div>
-            )}
+            </div>
 
             {/* Mobile menu button */}
             <button

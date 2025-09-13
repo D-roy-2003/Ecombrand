@@ -5,11 +5,14 @@ import Link from 'next/link'
 import { ShoppingBag } from 'lucide-react'
 import { addToCart } from '@/lib/cart'
 import WishlistButton from './WishlistButton'
+import toast from 'react-hot-toast'
 
 interface Product {
   id: string
   name: string
   price: number
+  originalPrice?: number
+  discount?: number
   category: string
   imageUrls: string[]  // Changed from imageUrl to imageUrls
   stock: number
@@ -66,6 +69,15 @@ export default function ProductGrid({ products }: ProductGridProps) {
                 </span>
               </div>
 
+              {/* Discount Badge */}
+              {product.originalPrice && product.originalPrice > product.price && (
+                <div className="absolute top-4 left-4 mt-8">
+                  <span className="px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-full">
+                    -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                  </span>
+                </div>
+              )}
+
               {/* Stock Status */}
               {product.stock < 10 && product.stock > 0 && (
                 <div className="absolute bottom-4 left-4">
@@ -96,18 +108,42 @@ export default function ProductGrid({ products }: ProductGridProps) {
                   {product.category} • {product.stock} in stock
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-accent-400">
-                    ${product.price}
-                  </span>
+                  <div className="flex flex-col">
+                    {product.originalPrice && product.originalPrice > product.price ? (
+                      <>
+                        <span className="text-lg text-gray-400 line-through">
+                          ${product.originalPrice}
+                        </span>
+                        <span className="text-2xl font-bold text-accent-400">
+                          ${product.price}
+                        </span>
+                        <span className="text-sm text-green-400">
+                          Save ${(product.originalPrice - product.price).toFixed(2)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-2xl font-bold text-accent-400">
+                        ${product.price}
+                      </span>
+                    )}
+                  </div>
                   <button 
                     className="btn-primary text-sm py-2 px-4"
                     disabled={product.stock === 0}
-                    onClick={() => addToCart({
-                      id: product.id,
-                      name: product.name,
-                      price: product.price,
-                      imageUrl: product.imageUrls[0]  // Use first image from array
-                    })}
+                    onClick={async () => {
+                      const result = await addToCart({
+                        id: product.id,
+                        name: product.name,
+                        price: product.price,
+                        imageUrl: product.imageUrls[0]  // Use first image from array
+                      })
+                      
+                      if (result.success) {
+                        toast.success('Item added to cart!')
+                      } else {
+                        toast.error(result.message || 'Failed to add item to cart')
+                      }
+                    }}
                   >
                     <ShoppingBag className="w-4 h-4 mr-2" />
                     ADD TO CART
