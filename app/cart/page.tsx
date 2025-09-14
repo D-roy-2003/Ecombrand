@@ -1,124 +1,306 @@
 "use client"
 
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { 
+  Plus, 
+  Minus, 
+  Trash2, 
+  ShoppingBag, 
+  ArrowLeft,
+  X
+} from 'lucide-react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
-import { readCart, updateQuantity, removeFromCart, clearCart, cartTotal, CartItem } from '@/lib/cart'
-import { motion } from 'framer-motion'
-import { Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { getCartItems, updateQuantity, removeFromCart, clearCart, getCartTotal, isUserAuthenticated } from '@/lib/cart'
+import { CartItem } from '@/lib/cart'
+import toast from 'react-hot-toast'
 
 export default function CartPage() {
-  const [items, setItems] = useState<CartItem[]>([])
-  const [total, setTotal] = useState<number>(0)
+  const router = useRouter()
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [total, setTotal] = useState(0)
+  const [updating, setUpdating] = useState<string | null>(null)
 
-  const refresh = () => {
-    const current = readCart()
-    setItems(current)
-    setTotal(cartTotal())
+  const loadCartItems = async () => {
+    if (!isUserAuthenticated()) {
+      setCartItems([])
+      setTotal(0)
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const items = await getCartItems()
+      const cartTotal = await getCartTotal()
+      setCartItems(items)
+      setTotal(cartTotal)
+    } catch (error) {
+      console.error('Error loading cart items:', error)
+      toast.error('Failed to load cart items')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
-    refresh()
+    loadCartItems()
   }, [])
 
-  const handleQty = (id: string, qty: number) => {
-    updateQuantity(id, qty)
-    refresh()
+  const handleQuantityChange = async (productId: string, newQuantity: number) => {
+    if (newQuantity < 0) return
+
+    setUpdating(productId)
+    try {
+      const result = await updateQuantity(productId, newQuantity)
+      if (result.success) {
+        await loadCartItems() // Reload cart items
+        toast.success('Cart updated')
+      } else {
+        toast.error(result.message || 'Failed to update quantity')
+      }
+    } catch (error) {
+      console.error('Error updating quantity:', error)
+      toast.error('Failed to update quantity')
+    } finally {
+      setUpdating(null)
+    }
   }
 
-  const handleRemove = (id: string) => {
-    removeFromCart(id)
-    refresh()
+  const handleRemoveItem = async (productId: string) => {
+    setUpdating(productId)
+    try {
+      const result = await removeFromCart(productId)
+      if (result.success) {
+        await loadCartItems() // Reload cart items
+        toast.success('Item removed from cart')
+      } else {
+        toast.error(result.message || 'Failed to remove item')
+      }
+    } catch (error) {
+      console.error('Error removing item:', error)
+      toast.error('Failed to remove item')
+    } finally {
+      setUpdating(null)
+    }
   }
 
-  const handleClear = () => {
-    clearCart()
-    refresh()
+  const handleClearCart = async () => {
+    setUpdating('clear')
+    try {
+      const result = await clearCart()
+      if (result.success) {
+        setCartItems([])
+        setTotal(0)
+        toast.success('Cart cleared')
+      } else {
+        toast.error(result.message || 'Failed to clear cart')
+      }
+    } catch (error) {
+      console.error('Error clearing cart:', error)
+      toast.error('Failed to clear cart')
+    } finally {
+      setUpdating(null)
+    }
+  }
+
+  const handleCheckout = () => {
+    // Navigate to checkout page
+    router.push('/checkout')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Navigation />
+        <div className="pt-20 flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-accent-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading cart...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (
-    <main className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black">
       <Navigation />
+      
+      <div className="pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Back Button */}
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Continue Shopping
+          </button>
 
-      {/* Header */}
-      <section className="relative pt-28 md:pt-32 pb-10 border-b border-primary-800 bg-gradient-to-b from-black via-primary-900/40 to-black">
-        <div className="container-custom px-4">
-          <h1 className="text-4xl md:text-6xl font-display font-bold mb-2 text-white">Your Cart</h1>
-          <p className="text-gray-300">Review your items and proceed to checkout</p>
-        </div>
-      </section>
-
-      <section className="section-padding">
-        <div className="container-custom">
-          {items.length === 0 ? (
+          {!isUserAuthenticated() ? (
             <div className="text-center py-16">
-              <p className="text-gray-300 mb-6">Your cart is empty.</p>
-              <Link href="/shop" className="btn-primary">Continue Shopping</Link>
+              <ShoppingBag className="w-24 h-24 text-gray-600 mx-auto mb-6" />
+              <h1 className="text-2xl font-bold text-white mb-4">Please Login</h1>
+              <p className="text-gray-400 mb-8">You need to be logged in to view your cart</p>
+              <button
+                onClick={() => router.push('/login')}
+                className="btn-primary"
+              >
+                Go to Login
+              </button>
+            </div>
+          ) : cartItems.length === 0 ? (
+            <div className="text-center py-16">
+              <ShoppingBag className="w-24 h-24 text-gray-600 mx-auto mb-6" />
+              <h1 className="text-2xl font-bold text-white mb-4">Your Cart is Empty</h1>
+              <p className="text-gray-400 mb-8">Add some products to get started</p>
+              <button
+                onClick={() => router.push('/shop')}
+                className="btn-primary"
+              >
+                Continue Shopping
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Items */}
-              <div className="lg:col-span-2 space-y-4">
-                {items.map((item, idx) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: idx * 0.05 }}
-                    className="card flex items-center gap-4"
-                  >
-                    <img src={item.imageUrl} alt={item.name} className="w-24 h-24 object-cover" />
-                    <div className="flex-1">
-                      <h3 className="text-white font-semibold">{item.name}</h3>
-                      <p className="text-accent-400 font-bold">${(item.price).toFixed(2)}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        className="px-3 py-1 border border-primary-700 text-white"
-                        onClick={() => handleQty(item.id, Math.max(1, item.quantity - 1))}
-                      >
-                        -
-                      </button>
-                      <span className="w-10 text-center text-white">{item.quantity}</span>
-                      <button
-                        className="px-3 py-1 border border-primary-700 text-white"
-                        onClick={() => handleQty(item.id, item.quantity + 1)}
-                      >
-                        +
-                      </button>
-                    </div>
-                    <button
-                      className="text-red-400 hover:text-red-300"
-                      onClick={() => handleRemove(item.id)}
+              {/* Cart Items */}
+              <div className="lg:col-span-2">
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-white mb-2">Your Cart</h1>
+                  <p className="text-gray-400">Review your items and proceed to checkout</p>
+                </div>
+
+                <div className="space-y-6">
+                  {cartItems.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-primary-900 border border-primary-800 rounded-lg p-6"
                     >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </motion.div>
-                ))}
+                      <div className="flex items-center gap-6">
+                        {/* Product Image */}
+                        <div className="w-20 h-20 bg-primary-700 rounded-lg overflow-hidden flex-shrink-0">
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        {/* Product Details */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
+                            {item.name}
+                          </h3>
+                          <p className="text-accent-400 font-bold text-xl">
+                            ${item.price}
+                          </p>
+                          {item.sizes && item.sizes.length > 0 && (
+                            <p className="text-sm text-gray-400 mt-1">
+                              Sizes: {item.sizes.join(', ')}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Quantity Controls */}
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                            disabled={updating === item.productId || item.quantity <= 1}
+                            className="w-10 h-10 rounded-lg bg-primary-700 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors duration-200"
+                          >
+                            <Minus className="w-4 h-4 text-white" />
+                          </button>
+                          <span className="w-12 text-center text-white font-medium text-lg">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                            disabled={updating === item.productId}
+                            className="w-10 h-10 rounded-lg bg-primary-700 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors duration-200"
+                          >
+                            <Plus className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+
+                        {/* Item Total */}
+                        <div className="text-right">
+                          <p className="text-white font-bold text-lg">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </p>
+                        </div>
+
+                        {/* Remove Button */}
+                        <button
+                          onClick={() => handleRemoveItem(item.productId)}
+                          disabled={updating === item.productId}
+                          className="p-2 text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
 
-              {/* Summary */}
-              <div className="card h-fit">
-                <h3 className="text-white text-xl font-semibold mb-4">Order Summary</h3>
-                <div className="flex items-center justify-between text-gray-300 mb-2">
-                  <span>Subtotal</span>
-                  <span>${total.toFixed(2)}</span>
+              {/* Order Summary */}
+              <div className="lg:col-span-1">
+                <div className="bg-primary-900 border border-primary-800 rounded-lg p-6 sticky top-24">
+                  <h2 className="text-xl font-bold text-white mb-6">Order Summary</h2>
+                  
+                  <div className="space-y-4 mb-6">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-300">Subtotal</span>
+                      <span className="text-white font-semibold">
+                        ${total.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-300">Shipping</span>
+                      <span className="text-gray-300">Calculated at checkout</span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-primary-700 pt-4 mb-6">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-bold text-white">Total</span>
+                      <span className="text-xl font-bold text-accent-400">
+                        ${total.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleCheckout}
+                      className="w-full btn-primary text-lg py-3"
+                    >
+                      Checkout
+                    </button>
+                    <button
+                      onClick={handleClearCart}
+                      disabled={updating === 'clear'}
+                      className="w-full px-4 py-3 border border-red-600 text-red-400 hover:bg-red-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 rounded-lg"
+                    >
+                      {updating === 'clear' ? 'Clearing...' : 'Clear Cart'}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-gray-500 text-sm mb-6">
-                  <span>Shipping</span>
-                  <span>Calculated at checkout</span>
-                </div>
-                <button className="btn-primary w-full mb-3">Checkout</button>
-                <button className="btn-secondary w-full" onClick={handleClear}>Clear Cart</button>
               </div>
             </div>
           )}
         </div>
-      </section>
+      </div>
 
       <Footer />
-    </main>
+    </div>
   )
 }
 

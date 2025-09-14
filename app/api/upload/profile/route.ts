@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyToken } from '@/lib/auth'
+import { prisma } from '@/lib/db'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -77,11 +78,21 @@ export async function POST(request: NextRequest) {
       .from('edgyfashion_rotkit')
       .getPublicUrl(data.path)
 
-    // Add debugging to the upload API
-    console.log('Uploaded file path:', data.path)
-    console.log('Generated public URL:', publicUrl)
+    // Update the database with the new profile image URL
+    if (decoded.role === 'CUSTOMER') {
+      await prisma.user.update({
+        where: { id: decoded.id },
+        data: { profileImage: publicUrl } as any
+      })
+    } else if (decoded.role === 'ADMIN') {
+      await prisma.admin.update({
+        where: { id: decoded.id },
+        data: { profileImage: publicUrl } as any
+      })
+    }
 
     return NextResponse.json({ 
+      imageUrl: publicUrl,
       url: publicUrl,
       path: data.path,
       bucket: 'edgyfashion_rotkit'

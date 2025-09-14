@@ -23,11 +23,13 @@ import {
   Trash2,
   ShoppingBag,
   Lock,
-  EyeOff
+  EyeOff,
+  Plus,
+  Minus
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useWishlist } from '@/lib/useWishlist'
-import { addToCart, readCart, writeCart, CartItem, updateQuantity, removeFromCart, isUserAuthenticated, setCurrentUserId, clearUserCart, clearAllCartData } from '@/lib/cart'
+import { addToCart, readCart, writeCart, CartItem, updateQuantity, removeFromCart, isUserAuthenticated, setCurrentUserId, clearAllCartData, getCartItems, getCartTotal } from '@/lib/cart'
 
 // Define user type
 interface User {
@@ -54,34 +56,17 @@ interface Stats {
   loyaltyPoints: number
 }
 
-// Country codes data - 10 popular countries
-const countryCodes = [
-  { code: '+1', country: 'US', flag: '🇺' },
-  { code: '+1', country: 'CA', flag: '🇨' },
-  { code: '+44', country: 'UK', flag: '🇬' },
-  { code: '+49', country: 'DE', flag: '🇩' },
-  { code: '+33', country: 'FR', flag: '🇫' },
-  { code: '+39', country: 'IT', flag: '🇮' },
-  { code: '+34', country: 'ES', flag: '🇪' },
-  { code: '+61', country: 'AU', flag: '🇦' },
-  { code: '+81', country: 'JP', flag: '🇯🇵' },
-  { code: '+91', country: 'IN', flag: '🇮🇳' }
-]
-
 export default function UserDashboard() {
-  const [activeTab, setActiveTab] = useState('overview')
-  const [user, setUser] = useState<User | null>(null)
-  const [stats, setStats] = useState<Stats | null>(null)
-  const [recentOrders, setRecentOrders] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-
-  // Add profile data state
+  const [user, setUser] = useState<User | null>(null)
+  const [stats, setStats] = useState<Stats>({ totalOrders: 0, totalSpent: 0, wishlistItems: 0, loyaltyPoints: 0 })
+  const [activeTab, setActiveTab] = useState('overview')
+  const [loading, setLoading] = useState(true)
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
     phoneNumber: '',
-    countryCode: '+1',
+    countryCode: '',
     address: '',
     city: '',
     state: '',
@@ -89,18 +74,7 @@ export default function UserDashboard() {
     country: '',
     profileImage: ''
   })
-
-  // State for country code dropdown
   const [isCountryCodeOpen, setIsCountryCodeOpen] = useState(false)
-  
-  // Ref for country code dropdown
-  const countryCodeRef = useRef<HTMLDivElement>(null)
-
-  // Wishlist functionality
-  const { wishlist, removeFromWishlist, isLoading: wishlistLoading } = useWishlist()
-  const [isRemoving, setIsRemoving] = useState<string | null>(null)
-
-  // Password change state
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -112,20 +86,42 @@ export default function UserDashboard() {
     confirm: false
   })
   const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [cartTotal, setCartTotal] = useState(0)
+  const [cartLoading, setCartLoading] = useState(false)
+  const countryCodeRef = useRef<HTMLDivElement>(null)
 
-  // Fetch user data on component mount
+  const countryCodes = [
+    { code: '+1', country: 'US/Canada' },
+    { code: '+44', country: 'UK' },
+    { code: '+91', country: 'India' },
+    { code: '+86', country: 'China' },
+    { code: '+81', country: 'Japan' },
+    { code: '+49', country: 'Germany' },
+    { code: '+33', country: 'France' },
+    { code: '+39', country: 'Italy' },
+    { code: '+34', country: 'Spain' },
+    { code: '+61', country: 'Australia' },
+    { code: '+55', country: 'Brazil' },
+    { code: '+7', country: 'Russia' },
+    { code: '+82', country: 'South Korea' },
+    { code: '+31', country: 'Netherlands' },
+    { code: '+46', country: 'Sweden' }
+  ]
+
+  const { wishlist, addToWishlist, removeFromWishlist, fetchWishlist } = useWishlist()
+
   useEffect(() => {
     fetchUserData()
   }, [])
 
-  // Update profile data when user loads
   useEffect(() => {
     if (user) {
       setProfileData({
         name: user.name || '',
         email: user.email || '',
         phoneNumber: user.phoneNumber || '',
-        countryCode: user.countryCode || '+1',
+        countryCode: user.countryCode || '',
         address: user.address || '',
         city: user.city || '',
         state: user.state || '',
@@ -136,7 +132,14 @@ export default function UserDashboard() {
     }
   }, [user])
 
-  // Handle click outside to close dropdown
+  // Load cart items when cart tab is active
+  useEffect(() => {
+    if (activeTab === 'cart') {
+      loadCartItems()
+    }
+  }, [activeTab])
+
+  // Close country code dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (countryCodeRef.current && !countryCodeRef.current.contains(event.target as Node)) {
@@ -144,59 +147,61 @@ export default function UserDashboard() {
       }
     }
 
-    if (isCountryCodeOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
+    document.addEventListener('mousedown', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [isCountryCodeOpen])
+  }, [])
 
   const fetchUserData = async () => {
     try {
       const response = await fetch('/api/auth/me', {
         credentials: 'include'
       })
-
+      
       if (response.ok) {
         const data = await response.json()
         setUser(data.user)
         setStats(data.stats)
-        setRecentOrders(data.recentOrders)
-        
-        // Set user ID for cart
         setCurrentUserId(data.user.id)
       } else {
-        // If not authenticated, redirect to login
         router.push('/login')
       }
     } catch (error) {
       console.error('Error fetching user data:', error)
-      toast.error('Failed to load user data')
+      router.push('/login')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
+    }
+  }
+
+  const loadCartItems = async () => {
+    setCartLoading(true)
+    try {
+      const items = await getCartItems()
+      const total = await getCartTotal()
+      setCartItems(items)
+      setCartTotal(total)
+    } catch (error) {
+      console.error('Error loading cart items:', error)
+      toast.error('Failed to load cart items')
+    } finally {
+      setCartLoading(false)
     }
   }
 
   const handleLogout = async () => {
     try {
-      // Clear all cart data
-      clearAllCartData()
-      
-      // Call logout API
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       })
 
       if (response.ok) {
-        toast.success('Logged out successfully!')
-        
-        // Force reload to clear all state
-        setTimeout(() => {
-          window.location.href = '/'
-        }, 1000)
+        clearAllCartData()
+        setCurrentUserId(null)
+        toast.success('Logged out successfully')
+        router.push('/')
       } else {
         toast.error('Logout failed')
       }
@@ -207,19 +212,17 @@ export default function UserDashboard() {
   }
 
   const goHome = () => {
-    console.log('Home button clicked')
-    // Force navigation using window.location
     window.location.href = '/'
   }
 
-  // Add profile picture upload function
-  const handleProfileImageUpload = async (file: File) => {
-    try {
-      console.log('Starting upload for file:', file.name)
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('folder', 'users')
+  const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
       const response = await fetch('/api/upload/profile', {
         method: 'POST',
         body: formData,
@@ -228,66 +231,30 @@ export default function UserDashboard() {
 
       if (response.ok) {
         const data = await response.json()
-        console.log('Upload successful, URL:', data.url)
         
-        // Update local state immediately
-        setProfileData(prev => {
-          console.log('Updating profileData with:', data.url)
-          return { ...prev, profileImage: data.url }
-        })
-        setUser(prev => {
-          console.log('Updating user with:', data.url)
-          return prev ? { ...prev, profileImage: data.url } : null
-        })
+        // Update both profileData and user state
+        setProfileData(prev => ({ ...prev, profileImage: data.imageUrl }))
+        setUser(prev => prev ? { ...prev, profileImage: data.imageUrl } : null)
         
-        // Save to database
-        const saveResponse = await fetch('/api/user/profile', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ profileImage: data.url }),
-          credentials: 'include'
-        })
-        
-        if (saveResponse.ok) {
-          toast.success('Profile picture uploaded and saved successfully!')
-        } else {
-          toast.error('Image uploaded but failed to save to database')
-        }
+        toast.success('Profile image updated successfully!')
       } else {
-        const errorData = await response.json()
-        console.error('Upload failed:', errorData)
         toast.error('Failed to upload profile picture')
       }
     } catch (error) {
-      console.error('Error uploading profile picture:', error)
+      console.error('Error uploading profile image:', error)
       toast.error('Failed to upload profile picture')
     }
   }
 
-  // Handle phone number input with 10-digit validation
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    
-    // Remove any non-digit characters
-    const digitsOnly = value.replace(/\D/g, '')
-    
-    // Limit to 10 digits
-    if (digitsOnly.length <= 10) {
-      setProfileData(prev => ({ ...prev, phoneNumber: digitsOnly }))
+    const value = e.target.value.replace(/\D/g, '') // Only allow digits
+    if (value.length <= 10) {
+      setProfileData(prev => ({ ...prev, phoneNumber: value }))
     }
   }
 
-  // Update the handleProfileUpdate function
   const handleProfileUpdate = async () => {
     try {
-      // Validate phone number before saving
-      if (profileData.phoneNumber && profileData.phoneNumber.length !== 10) {
-        toast.error('Phone number must be exactly 10 digits')
-        return
-      }
-
       const response = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: {
@@ -298,9 +265,8 @@ export default function UserDashboard() {
       })
 
       if (response.ok) {
-        const updatedUser = await response.json()
-        setUser(updatedUser)
         toast.success('Profile updated successfully!')
+        fetchUserData() // Refresh user data
       } else {
         toast.error('Failed to update profile')
       }
@@ -310,32 +276,19 @@ export default function UserDashboard() {
     }
   }
 
-  // Handle password change
   const handlePasswordChange = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('New passwords do not match')
+      return
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters long')
+      return
+    }
+
+    setIsChangingPassword(true)
     try {
-      // Validate passwords
-      if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-        toast.error('All password fields are required')
-        return
-      }
-
-      if (passwordData.newPassword.length < 6) {
-        toast.error('New password must be at least 6 characters long')
-        return
-      }
-
-      if (passwordData.newPassword !== passwordData.confirmPassword) {
-        toast.error('New passwords do not match')
-        return
-      }
-
-      if (passwordData.currentPassword === passwordData.newPassword) {
-        toast.error('New password must be different from current password')
-        return
-      }
-
-      setIsChangingPassword(true)
-
       const response = await fetch('/api/user/change-password', {
         method: 'POST',
         headers: {
@@ -350,14 +303,10 @@ export default function UserDashboard() {
 
       if (response.ok) {
         toast.success('Password changed successfully!')
-        setPasswordData({
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        })
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
       } else {
-        const errorData = await response.json()
-        toast.error(errorData.error || 'Failed to change password')
+        const error = await response.json()
+        toast.error(error.error || 'Failed to change password')
       }
     } catch (error) {
       console.error('Error changing password:', error)
@@ -367,35 +316,17 @@ export default function UserDashboard() {
     }
   }
 
-  // Generate user initials
-  const getUserInitials = (name: string): string => {
-    if (!name) return 'U'
-    return name
-      .split(' ')
-      .map((word: string) => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
-  // Handle wishlist removal
-  const handleRemoveFromWishlist = async (productId: string) => {
-    setIsRemoving(productId)
-    await removeFromWishlist(productId)
-    setIsRemoving(null)
-  }
-
-  // Handle add to cart from wishlist
-  const handleAddToCart = async (product: any) => {
+  const handleAddToCart = async (productId: string) => {
     const result = await addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      imageUrl: product.imageUrls[0]
-    })
+      id: productId,
+      name: '',
+      price: 0,
+      imageUrl: ''
+    }, 1)
     
     if (result.success) {
       toast.success('Added to cart!')
+      loadCartItems() // Refresh cart items
     } else if (result.requiresLogin) {
       toast.error('Please login to add products to the cart')
     } else {
@@ -403,7 +334,55 @@ export default function UserDashboard() {
     }
   }
 
-  if (isLoading) {
+  const handleRemoveFromWishlist = async (productId: string) => {
+    const success = await removeFromWishlist(productId)
+    if (success) {
+      fetchWishlist() // Refresh wishlist
+    }
+  }
+
+  const handleQuantityChange = async (productId: string, newQuantity: number) => {
+    if (newQuantity < 0) return
+
+    try {
+      const result = await updateQuantity(productId, newQuantity)
+      if (result.success) {
+        await loadCartItems() // Reload cart items
+        toast.success('Cart updated')
+      } else {
+        toast.error(result.message || 'Failed to update quantity')
+      }
+    } catch (error) {
+      console.error('Error updating quantity:', error)
+      toast.error('Failed to update quantity')
+    }
+  }
+
+  const handleRemoveFromCart = async (productId: string) => {
+    try {
+      const result = await removeFromCart(productId)
+      if (result.success) {
+        await loadCartItems() // Reload cart items
+        toast.success('Item removed from cart')
+      } else {
+        toast.error(result.message || 'Failed to remove item')
+      }
+    } catch (error) {
+      console.error('Error removing item:', error)
+      toast.error('Failed to remove item')
+    }
+  }
+
+  const getUserInitials = (name: string): string => {
+    if (!name) return 'U'
+    return name
+      .split(' ')
+      .map((word: string) => word.charAt(0))
+      .join('')
+      .toUpperCase()
+  }
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white text-xl">Loading...</div>
@@ -414,7 +393,15 @@ export default function UserDashboard() {
   if (!user) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Please log in to access your dashboard</div>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white mb-4">Please log in</h1>
+          <button 
+            onClick={() => router.push('/login')}
+            className="btn-primary"
+          >
+            Go to Login
+          </button>
+        </div>
       </div>
     )
   }
@@ -426,40 +413,38 @@ export default function UserDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <span className="text-2xl font-display font-bold text-gradient">
-                ROT KIT
-              </span>
-              <span className="text-gray-400">|</span>
-              <span className="text-white font-medium">My Account</span>
+              <h1 className="text-xl font-semibold text-white">ROT KIT</h1>
+              <div className="h-6 w-px bg-primary-700"></div>
+              <h2 className="text-lg text-gray-300">My Account</h2>
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Home Button */}
-              <Link href="/" className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-300 px-3 py-2 rounded-lg hover:bg-primary-800">
+              <button
+                onClick={goHome}
+                className="p-2 text-gray-400 hover:text-white transition-colors duration-200"
+                title="Home"
+              >
                 <Home className="w-5 h-5" />
-                <span>Home</span>
-              </Link>
+              </button>
               
-              {/* User Profile */}
-              <div className="flex items-center space-x-2">
-                <div className="h-8 w-8 rounded-full bg-accent-600 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-full bg-accent-400 flex items-center justify-center text-white font-semibold text-sm">
                   {user.profileImage ? (
-                    <img 
-                      src={user.profileImage} 
-                      alt="Profile" 
+                    <img
+                      src={user.profileImage}
+                      alt={user.name}
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
                     getUserInitials(user.name)
                   )}
                 </div>
-                <span className="text-gray-300 text-sm">{user.name}</span>
+                <span className="text-white font-medium">{user.name}</span>
               </div>
               
-              {/* Logout Button */}
-              <button 
+              <button
                 onClick={handleLogout}
-                className="text-gray-400 hover:text-red-400 transition-colors duration-300 p-2 rounded-lg hover:bg-red-600/20"
+                className="p-2 text-gray-400 hover:text-white transition-colors duration-200"
                 title="Logout"
               >
                 <LogOut className="w-5 h-5" />
@@ -476,6 +461,7 @@ export default function UserDashboard() {
             { id: 'overview', label: 'Overview', icon: User },
             { id: 'orders', label: 'Orders', icon: Package },
             { id: 'wishlist', label: 'Wishlist', icon: Heart },
+            { id: 'cart', label: 'Cart', icon: ShoppingCart },
             { id: 'profile', label: 'Profile', icon: Settings },
             { id: 'settings', label: 'Settings', icon: Settings }
           ].map((tab) => (
@@ -495,614 +481,529 @@ export default function UserDashboard() {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {activeTab === 'overview' && (
-            <div className="space-y-8">
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-400 text-sm">Total Orders</p>
-                      <p className="text-2xl font-bold text-white">{stats?.totalOrders || 0}</p>
-                    </div>
-                    <Package className="w-8 h-8 text-accent-500" />
+        {activeTab === 'overview' && (
+          <div className="space-y-8">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-400">Total Orders</p>
+                    <p className="text-2xl font-bold text-white">{stats.totalOrders}</p>
                   </div>
-                </div>
-                
-                <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-400 text-sm">Total Spent</p>
-                      <p className="text-2xl font-bold text-white">${stats?.totalSpent?.toFixed(2) || '0.00'}</p>
-                    </div>
-                    <CreditCard className="w-8 h-8 text-accent-500" />
-                  </div>
-                </div>
-                
-                <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-400 text-sm">Wishlist Items</p>
-                      <p className="text-2xl font-bold text-white">{wishlist.length}</p>
-                    </div>
-                    <Heart className="w-8 h-8 text-accent-500" />
-                  </div>
-                </div>
-                
-                <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-400 text-sm">Loyalty Points</p>
-                      <p className="text-2xl font-bold text-white">{stats?.loyaltyPoints || 0}</p>
-                    </div>
-                    <Star className="w-8 h-8 text-accent-500" />
+                  <div className="w-12 h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
+                    <Package className="w-6 h-6 text-accent-400" />
                   </div>
                 </div>
               </div>
 
-              {/* Recent Orders */}
               <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-                <h3 className="text-xl font-bold text-white mb-4">Recent Orders</h3>
-                {recentOrders && recentOrders.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentOrders.map((order: any) => (
-                      <div key={order.id} className="flex items-center justify-between p-4 bg-primary-800 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-accent-600 rounded-lg flex items-center justify-center">
-                            <Package className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <p className="text-white font-medium">Order #{order.id.slice(-8)}</p>
-                            <p className="text-gray-400 text-sm">{new Date(order.createdAt).toLocaleDateString()}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-white font-bold">${order.totalPrice.toFixed(2)}</p>
-                          <p className={`text-sm ${
-                            order.status === 'DELIVERED' ? 'text-green-400' :
-                            order.status === 'SHIPPED' ? 'text-blue-400' :
-                            order.status === 'PROCESSING' ? 'text-yellow-400' :
-                            'text-gray-400'
-                          }`}>
-                            {order.status}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-400">Total Spent</p>
+                    <p className="text-2xl font-bold text-white">${stats.totalSpent.toFixed(2)}</p>
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400">No orders yet</p>
-                    <button 
-                      onClick={() => router.push('/shop')}
-                      className="mt-4 bg-accent-600 hover:bg-accent-700 text-white px-6 py-2 rounded-lg transition-colors duration-300"
+                  <div className="w-12 h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-6 h-6 text-accent-400" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-400">Wishlist Items</p>
+                    <p className="text-2xl font-bold text-white">{wishlist.length}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
+                    <Heart className="w-6 h-6 text-accent-400" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-400">Loyalty Points</p>
+                    <p className="text-2xl font-bold text-white">{stats.loyaltyPoints}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
+                    <Star className="w-6 h-6 text-accent-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Orders */}
+            <div className="bg-primary-900 border border-primary-800 rounded-lg p-8">
+              <h3 className="text-xl font-semibold text-white mb-6">Recent Orders</h3>
+              <div className="text-center py-12">
+                <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400 mb-6">No orders yet</p>
+                <button
+                  onClick={() => router.push('/shop')}
+                  className="btn-primary"
+                >
+                  Start Shopping
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cart Tab */}
+        {activeTab === 'cart' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">Your Cart</h2>
+              <Link
+                href="/cart"
+                className="text-accent-400 hover:text-accent-300 transition-colors duration-200"
+              >
+                View Full Cart →
+              </Link>
+            </div>
+
+            {cartLoading ? (
+              <div className="text-center py-12">
+                <div className="w-8 h-8 border-2 border-accent-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-400">Loading cart...</p>
+              </div>
+            ) : cartItems.length === 0 ? (
+              <div className="text-center py-12">
+                <ShoppingCart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400 mb-6">Your cart is empty</p>
+                <button
+                  onClick={() => router.push('/shop')}
+                  className="btn-primary"
+                >
+                  Start Shopping
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {cartItems.slice(0, 3).map((item) => (
+                  <div key={item.id} className="bg-primary-900 border border-primary-800 rounded-lg p-4">
+                    <div className="flex items-center gap-4">
+                      {/* Product Image */}
+                      <div className="w-16 h-16 bg-primary-700 rounded-lg overflow-hidden flex-shrink-0">
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {/* Product Details */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white font-medium text-sm line-clamp-2 mb-1">
+                          {item.name}
+                        </h3>
+                        <p className="text-accent-400 font-semibold">
+                          ${item.price}
+                        </p>
+                        {item.sizes && item.sizes.length > 0 && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            Sizes: {item.sizes.join(', ')}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Quantity Controls */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
+                          className="w-8 h-8 rounded-full bg-primary-700 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors duration-200"
+                        >
+                          <Minus className="w-4 h-4 text-white" />
+                        </button>
+                        <span className="w-8 text-center text-white font-medium">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                          className="w-8 h-8 rounded-full bg-primary-700 hover:bg-primary-600 flex items-center justify-center transition-colors duration-200"
+                        >
+                          <Plus className="w-4 h-4 text-white" />
+                        </button>
+                      </div>
+
+                      {/* Item Total */}
+                      <div className="text-right">
+                        <p className="text-white font-bold">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </p>
+                      </div>
+
+                      {/* Remove Button */}
+                      <button
+                        onClick={() => handleRemoveFromCart(item.productId)}
+                        className="p-2 text-red-400 hover:text-red-300 transition-colors duration-200"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {cartItems.length > 3 && (
+                  <div className="text-center">
+                    <p className="text-gray-400 mb-4">
+                      And {cartItems.length - 3} more items...
+                    </p>
+                    <Link
+                      href="/cart"
+                      className="btn-primary"
                     >
-                      Start Shopping
-                    </button>
+                      View All Items
+                    </Link>
                   </div>
                 )}
-              </div>
-            </div>
-          )}
 
-          {/* Profile Tab - Updated to match admin UI */}
-          {activeTab === 'profile' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="space-y-8"
-            >
-              <div className="bg-gradient-to-r from-primary-900 to-primary-800 border border-primary-700 rounded-xl p-8">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 bg-accent-600/20 rounded-lg">
-                    <User className="w-8 h-8 text-accent-400" />
+                {/* Cart Summary */}
+                <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-lg font-semibold text-white">Total</span>
+                    <span className="text-xl font-bold text-accent-400">
+                      ${cartTotal.toFixed(2)}
+                    </span>
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">Your Details</h2>
-                    <p className="text-gray-400">Manage your personal information and profile</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Left Column - Profile Picture */}
-              <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-white">Profile Picture</h3>
-                    <div className="flex items-center gap-6">
-                      <div className="relative">
-                        <div className="w-24 h-24 bg-primary-800 rounded-full flex items-center justify-center border-2 border-primary-700 overflow-hidden">
-                          {(profileData.profileImage || user?.profileImage) ? (
-                            <img 
-                              src={profileData.profileImage || user?.profileImage} 
-                              alt="Profile" 
-                              className="w-full h-full rounded-full object-cover"
-                              onError={(e) => {
-                                console.error('Image failed to load:', profileData.profileImage || user?.profileImage)
-                                e.currentTarget.style.display = 'none'
-                              }}
-                              onLoad={() => console.log('Image loaded successfully:', profileData.profileImage || user?.profileImage)}
-                            />
-                          ) : (
-                            <User className="w-12 h-12 text-gray-400" />
-                          )}
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              handleProfileImageUpload(file)
-                            }
-                          }}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-                        <button className="absolute -bottom-2 -right-2 p-2 bg-accent-600 hover:bg-accent-700 rounded-full transition-colors">
-                          <Camera className="w-4 h-4 text-white" />
-                        </button>
-                      </div>
-                      <div>
-                        <button 
-                          onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
-                          className="px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors"
-                        >
-                          Upload Photo
-                        </button>
-                        <p className="text-sm text-gray-400 mt-2">JPG, PNG up to 2MB</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column - Personal Information */}
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">First Name</label>
-                  <input 
-                    type="text" 
-                          value={profileData.name.split(' ')[0] || ''}
-                          onChange={(e) => {
-                            const lastName = profileData.name.split(' ').slice(1).join(' ')
-                            setProfileData(prev => ({ ...prev, name: `${e.target.value} ${lastName}`.trim() }))
-                          }}
-                          className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Last Name</label>
-                        <input
-                          type="text"
-                          value={profileData.name.split(' ').slice(1).join(' ') || ''}
-                          onChange={(e) => {
-                            const firstName = profileData.name.split(' ')[0] || ''
-                            setProfileData(prev => ({ ...prev, name: `${firstName} ${e.target.value}`.trim() }))
-                          }}
-                          className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
-                  <input 
-                    type="email" 
-                        value={profileData.email}
-                        onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                        className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
-                      />
-                    </div>
-
-                    {/* Country Code and Phone Number */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
-                      <div className="flex gap-2">
-                        {/* Country Code Dropdown */}
-                        <div className="relative" ref={countryCodeRef}>
-                          <button
-                            type="button"
-                            onClick={() => setIsCountryCodeOpen(!isCountryCodeOpen)}
-                            className="flex items-center gap-2 px-3 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white hover:bg-primary-700 transition-colors min-w-[100px]"
-                          >
-                            <span className="text-lg">
-                              {countryCodes.find(cc => cc.code === profileData.countryCode)?.flag || '🇺🇸'}
-                            </span>
-                            <span className="text-sm">
-                              {profileData.countryCode}
-                            </span>
-                            <ChevronDown className="w-4 h-4" />
-                          </button>
-                          
-                          {isCountryCodeOpen && (
-                            <div className="absolute top-full left-0 mt-1 w-48 bg-primary-800 border border-primary-700 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                              {countryCodes.map((country, index) => (
-                                <button
-                                  key={index}
-                                  type="button"
-                                  onClick={() => {
-                                    setProfileData(prev => ({ ...prev, countryCode: country.code }))
-                                    setIsCountryCodeOpen(false)
-                                  }}
-                                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-primary-700 transition-colors"
-                                >
-                                  <span className="text-lg">{country.flag}</span>
-                                  <span className="text-sm font-medium">{country.code}</span>
-                                  <span className="text-sm text-gray-400">{country.country}</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        
-                        {/* Phone Number Input */}
-                        <input
-                          type="tel"
-                          value={profileData.phoneNumber}
-                          onChange={handlePhoneNumberChange}
-                          placeholder="Enter 10-digit phone number"
-                          maxLength={10}
-                          className={`flex-1 px-4 py-3 bg-primary-800 border rounded-lg text-white focus:outline-none ${
-                            profileData.phoneNumber && profileData.phoneNumber.length !== 10
-                              ? 'border-red-500 focus:border-red-500'
-                              : 'border-primary-700 focus:border-accent-500'
-                          }`}
-                        />
-                      </div>
-                      {profileData.phoneNumber && profileData.phoneNumber.length !== 10 && (
-                        <p className="text-red-400 text-sm mt-1">
-                          Phone number must be exactly 10 digits
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Address</label>
-                      <input
-                        type="text"
-                        value={profileData.address}
-                        onChange={(e) => setProfileData(prev => ({ ...prev, address: e.target.value }))}
-                        placeholder="Enter your address"
-                        className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">City</label>
-                        <input
-                          type="text"
-                          value={profileData.city}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, city: e.target.value }))}
-                          placeholder="Enter city"
-                          className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">State</label>
-                        <input
-                          type="text"
-                          value={profileData.state}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, state: e.target.value }))}
-                          placeholder="Enter state"
-                          className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">ZIP Code</label>
-                        <input
-                          type="text"
-                          value={profileData.zipCode}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, zipCode: e.target.value }))}
-                          placeholder="Enter ZIP code"
-                          className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Country</label>
-                        <input
-                          type="text"
-                          value={profileData.country}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, country: e.target.value }))}
-                          placeholder="Enter country"
-                          className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <button 
-                        onClick={handleProfileUpdate}
-                        className="px-6 py-3 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors"
-                      >
-                        Save Changes
-                      </button>
-                      <button 
-                        onClick={() => setProfileData({
-                          name: user?.name || '',
-                          email: user?.email || '',
-                          phoneNumber: user?.phoneNumber || '',
-                          countryCode: user?.countryCode || '+1',
-                          address: user?.address || '',
-                          city: user?.city || '',
-                          state: user?.state || '',
-                          zipCode: user?.zipCode || '',
-                          country: user?.country || '',
-                          profileImage: user?.profileImage || ''
-                        })}
-                        className="px-6 py-3 border border-primary-700 hover:border-primary-600 text-gray-300 hover:text-white rounded-lg transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Other tabs content */}
-          {activeTab === 'orders' && (
-            <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Your Orders</h3>
-              <p className="text-gray-400">Order management coming soon...</p>
-            </div>
-          )}
-
-          {activeTab === 'wishlist' && (
-            <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-white">Your Wishlist</h3>
-                <span className="text-gray-400">{wishlist.length} {wishlist.length === 1 ? 'item' : 'items'}</span>
-              </div>
-
-              {wishlistLoading ? (
-                <div className="text-center py-8">
-                  <div className="text-white text-lg">Loading your wishlist...</div>
-                </div>
-              ) : wishlist.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="text-6xl mb-4">❤️</div>
-                  <h3 className="text-2xl font-semibold text-white mb-4">Your wishlist is empty</h3>
-                  <p className="text-gray-400 mb-8">Start adding products you love to your wishlist!</p>
-                  <Link 
-                    href="/shop"
-                    className="btn-primary inline-flex items-center space-x-2"
+                  <Link
+                    href="/cart"
+                    className="w-full btn-primary text-center block"
                   >
-                    <ShoppingBag className="w-5 h-5" />
-                    <span>Start Shopping</span>
+                    Go to Cart
                   </Link>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {wishlist.map((item, index) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      className="group"
-                    >
-                      <div className="bg-primary-800 border border-primary-700 rounded-lg overflow-hidden hover:border-accent-500 transition-all duration-300">
-                        {/* Product Image */}
-                        <div className="relative overflow-hidden">
-                          <Link href={`/product/${item.product.id}`}>
-                            <img
-                              src={item.product.imageUrls[0] || '/placeholder.jpg'}
-                              alt={item.product.name}
-                              className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
-                            />
-                          </Link>
-                          
-                          {/* Remove from Wishlist */}
-                          <div className="absolute top-4 right-4">
-                            <button
-                              onClick={() => handleRemoveFromWishlist(item.product.id)}
-                              disabled={isRemoving === item.product.id}
-                              className="w-10 h-10 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 disabled:opacity-50"
-                              title="Remove from wishlist"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
+              </div>
+            )}
+          </div>
+        )}
 
-                          {/* Product Status */}
-                          {!item.product.isActive && (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                              <span className="px-4 py-2 bg-red-600 text-white font-medium rounded">
-                                UNAVAILABLE
-                              </span>
-                            </div>
-                          )}
+        {/* Wishlist Tab */}
+        {activeTab === 'wishlist' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white">Your Wishlist</h2>
+            
+            {wishlist.length === 0 ? (
+              <div className="text-center py-12">
+                <Heart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400 mb-6">Your wishlist is empty</p>
+                <button
+                  onClick={() => router.push('/shop')}
+                  className="btn-primary"
+                >
+                  Start Shopping
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {wishlist.map((item) => (
+                  <div key={item.id} className="bg-primary-900 border border-primary-800 rounded-lg p-4">
+                    <div className="aspect-square bg-primary-700 rounded-lg overflow-hidden mb-4">
+                      <img
+                        src={item.product.imageUrls[0] || '/placeholder.jpg'}
+                        alt={item.product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <h3 className="text-white font-medium mb-2 line-clamp-2">
+                      {item.product.name}
+                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-accent-400 font-bold text-lg">
+                        ${item.product.price}
+                      </span>
+                      {item.product.discount && item.product.discount > 0 && (
+                        <span className="text-sm text-gray-400 line-through">
+                          ${item.product.originalPrice}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleAddToCart(item.product.id)}
+                        className="flex-1 btn-primary text-sm py-2"
+                      >
+                        ADD TO CART
+                      </button>
+                      <button
+                        onClick={() => handleRemoveFromWishlist(item.product.id)}
+                        className="px-3 py-2 border border-red-600 text-red-400 hover:bg-red-600 hover:text-white transition-colors duration-200 rounded-lg"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-                          {item.product.stock === 0 && item.product.isActive && (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                              <span className="px-4 py-2 bg-yellow-600 text-white font-medium rounded">
-                                OUT OF STOCK
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Product Info */}
-                        <div className="p-4">
-                          <div className="mb-4">
-                            <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-accent-400 transition-colors duration-300">
-                              <Link href={`/product/${item.product.id}`}>
-                                {item.product.name}
-                              </Link>
-                            </h3>
-                            
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="text-2xl font-bold text-accent-400">
-                                ${item.product.price}
-                              </div>
-                              {item.product.discount && item.product.discount > 0 && (
-                                <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
-                                  -{item.product.discount}% off
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <div className="text-sm text-gray-400">
-                                Added {new Date(item.createdAt).toLocaleDateString()}
-                              </div>
-                              <div className="text-sm text-gray-400">
-                                {item.product.stock} in stock
-                              </div>
-                            </div>
-                          </div>
-
-                          <button 
-                            className="w-full btn-primary text-sm py-3 flex items-center justify-center space-x-2"
-                            disabled={!item.product.isActive || item.product.stock === 0}
-                            onClick={() => handleAddToCart(item.product)}
-                          >
-                            <ShoppingBag className="w-4 h-4" />
-                            <span>
-                              {!item.product.isActive ? 'Unavailable' : 
-                               item.product.stock === 0 ? 'Out of Stock' : 
-                               'Add to Cart'}
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'settings' && (
-            <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="p-3 bg-accent-600/20 rounded-lg">
-                  <Lock className="w-8 h-8 text-accent-400" />
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
+          <div className="space-y-8">
+            <h2 className="text-2xl font-bold text-white">Profile Information</h2>
+            
+            <div className="bg-primary-900 border border-primary-800 rounded-lg p-8">
+              <div className="flex items-center space-x-6 mb-8">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full bg-accent-400 flex items-center justify-center text-white font-bold text-2xl">
+                    {user.profileImage ? (
+                      <img
+                        src={user.profileImage}
+                        alt={user.name}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      getUserInitials(user.name)
+                    )}
+                  </div>
+                  <label className="absolute bottom-0 right-0 w-8 h-8 bg-accent-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-accent-700 transition-colors duration-200">
+                    <Camera className="w-4 h-4 text-white" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfileImageUpload}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-white">Account Settings</h3>
-                  <p className="text-gray-400">Manage your account security and preferences</p>
+                  <h3 className="text-xl font-semibold text-white">{user.name}</h3>
+                  <p className="text-gray-400">{user.email}</p>
                 </div>
               </div>
 
-              {/* Password Change Section */}
-              <div className="bg-primary-800 border border-primary-700 rounded-lg p-6">
-                <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <Lock className="w-5 h-5" />
-                  Change Password
-                </h4>
-                <p className="text-gray-400 text-sm mb-6">Update your password to keep your account secure</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.name}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full input-field"
+                  />
+                </div>
 
-                <div className="space-y-4 max-w-md">
-                  {/* Current Password */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Current Password</label>
-                    <div className="relative">
-                      <input
-                        type={showPasswords.current ? "text" : "password"}
-                        value={passwordData.currentPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                        className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white focus:border-accent-500 focus:outline-none pr-12"
-                        placeholder="Enter current password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                      >
-                        {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={profileData.email}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full input-field"
+                  />
+                </div>
 
-                  {/* New Password */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">New Password</label>
-                    <div className="relative">
-                      <input
-                        type={showPasswords.new ? "text" : "password"}
-                        value={passwordData.newPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                        className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white focus:border-accent-500 focus:outline-none pr-12"
-                        placeholder="Enter new password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                      >
-                        {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">Password must be at least 6 characters long</p>
-                  </div>
-
-                  {/* Confirm Password */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Confirm New Password</label>
-                    <div className="relative">
-                  <input 
-                        type={showPasswords.confirm ? "text" : "password"}
-                        value={passwordData.confirmPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white focus:border-accent-500 focus:outline-none pr-12"
-                        placeholder="Confirm new password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                      >
-                        {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Password Change Button */}
-                  <div className="flex gap-4 pt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Country Code
+                  </label>
+                  <div className="relative" ref={countryCodeRef}>
                     <button
-                      onClick={handlePasswordChange}
-                      disabled={isChangingPassword}
-                      className="px-6 py-3 bg-accent-600 hover:bg-accent-700 disabled:bg-accent-600/50 text-white rounded-lg transition-colors flex items-center gap-2"
+                      type="button"
+                      onClick={() => setIsCountryCodeOpen(!isCountryCodeOpen)}
+                      className="w-full input-field text-left flex items-center justify-between"
                     >
-                      {isChangingPassword ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Changing...
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="w-4 h-4" />
-                          Change Password
-                        </>
-                      )}
+                      <span>{profileData.countryCode || 'Select Country'}</span>
+                      <ChevronDown className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => setPasswordData({
-                        currentPassword: '',
-                        newPassword: '',
-                        confirmPassword: ''
-                      })}
-                      className="px-6 py-3 border border-primary-600 hover:border-primary-500 text-gray-300 hover:text-white rounded-lg transition-colors"
-                    >
-                      Clear
-                    </button>
+                    {isCountryCodeOpen && (
+                      <div className="absolute z-10 w-full mt-1 bg-primary-800 border border-primary-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {countryCodes.map((country) => (
+                          <button
+                            key={country.code}
+                            onClick={() => {
+                              setProfileData(prev => ({ ...prev, countryCode: country.code }))
+                              setIsCountryCodeOpen(false)
+                            }}
+                            className="w-full px-4 py-2 text-left text-white hover:bg-primary-700 transition-colors duration-200"
+                          >
+                            {country.code} - {country.country}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={profileData.phoneNumber}
+                    onChange={handlePhoneNumberChange}
+                    placeholder="10-digit phone number"
+                    className="w-full input-field"
+                    maxLength={10}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Address
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.address}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, address: e.target.value }))}
+                    className="w-full input-field"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.city}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, city: e.target.value }))}
+                    className="w-full input-field"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    State
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.state}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, state: e.target.value }))}
+                    className="w-full input-field"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    ZIP Code
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.zipCode}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, zipCode: e.target.value }))}
+                    className="w-full input-field"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Country
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.country}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, country: e.target.value }))}
+                    className="w-full input-field"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <button
+                  onClick={handleProfileUpdate}
+                  className="btn-primary"
+                >
+                  Update Profile
+                </button>
               </div>
             </div>
-          )}
-        </motion.div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="space-y-8">
+            <h2 className="text-2xl font-bold text-white">Account Settings</h2>
+            
+            <div className="bg-primary-900 border border-primary-800 rounded-lg p-8">
+              <h3 className="text-xl font-semibold text-white mb-6">Change Password</h3>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Current Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswords.current ? 'text' : 'password'}
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                      className="w-full input-field pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors duration-200"
+                    >
+                      {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswords.new ? 'text' : 'password'}
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                      className="w-full input-field pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors duration-200"
+                    >
+                      {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Confirm New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPasswords.confirm ? 'text' : 'password'}
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      className="w-full input-field pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors duration-200"
+                    >
+                      {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handlePasswordChange}
+                  disabled={isChangingPassword}
+                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isChangingPassword ? 'Changing...' : 'Change Password'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

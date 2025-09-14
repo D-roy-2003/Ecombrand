@@ -2,86 +2,63 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShoppingCart, Plus, Minus, Trash2, X } from 'lucide-react'
-import { readCart, writeCart, CartItem, updateQuantity, removeFromCart, isUserAuthenticated } from '@/lib/cart'
-import { cartService, DatabaseCartItem } from '@/lib/cartService'
+import { X, Plus, Minus, ShoppingBag, Trash2 } from 'lucide-react'
+import { getCartItems, updateQuantity, removeFromCart, clearCart, getCartTotal, isUserAuthenticated } from '@/lib/cart'
+import { CartItem } from '@/lib/cart'
 import toast from 'react-hot-toast'
 
 interface EnhancedCartProps {
   isOpen: boolean
   onClose: () => void
-  isAuthenticated?: boolean
 }
 
-export default function EnhancedCart({ isOpen, onClose, isAuthenticated = false }: EnhancedCartProps) {
-  const [localCartItems, setLocalCartItems] = useState<CartItem[]>([])
-  const [dbCartItems, setDbCartItems] = useState<DatabaseCartItem[]>([])
+export default function EnhancedCart({ isOpen, onClose }: EnhancedCartProps) {
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(false)
-
-  // Load cart items on mount and when authentication status changes
-  useEffect(() => {
-    loadCartItems()
-  }, [isAuthenticated])
-
-  // Auto-refresh cart items every 30 seconds to check for expired items
-  useEffect(() => {
-    const interval = setInterval(() => {
-      loadCartItems()
-    }, 30000) // 30 seconds
-
-    return () => clearInterval(interval)
-  }, [isAuthenticated])
+  const [total, setTotal] = useState(0)
 
   const loadCartItems = async () => {
-    if (isAuthenticated) {
-      try {
-        const dbItems = await cartService.getDbCart()
-        setDbCartItems(dbItems)
-        
-        // Sync local cart to database if local cart has items
-        const localItems = readCart()
-        if (localItems.length > 0) {
-          await cartService.syncLocalToDbCart(localItems)
-          writeCart([]) // Clear local cart after sync
-          // Reload database cart
-          const updatedDbItems = await cartService.getDbCart()
-          setDbCartItems(updatedDbItems)
-        }
-      } catch (error) {
-        console.error('Error loading database cart:', error)
-        // Fallback to local cart
-        setLocalCartItems(readCart())
-      }
-    } else {
-      // For non-authenticated users, show empty cart
-      setLocalCartItems([])
-      setDbCartItems([])
+    if (!isUserAuthenticated()) {
+      setCartItems([])
+      setTotal(0)
+      return
     }
-  }
-
-  const handleQuantityChange = async (productId: string, newQuantity: number) => {
-    if (newQuantity < 1) return
 
     setLoading(true)
     try {
-      if (isAuthenticated) {
-        // Update database cart
-        const success = await cartService.addToDbCart(productId, newQuantity - getCurrentQuantity(productId))
-        if (success) {
-          await loadCartItems()
-          toast.success('Cart updated')
-        } else {
-          toast.error('Failed to update cart')
-        }
-      } else {
-        // Update local cart
-        updateQuantity(productId, newQuantity)
-        setLocalCartItems(readCart())
+      const items = await getCartItems()
+      const cartTotal = await getCartTotal()
+      setCartItems(items)
+      setTotal(cartTotal)
+    } catch (error) {
+      console.error('Error loading cart items:', error)
+      toast.error('Failed to load cart items')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (isOpen) {
+      loadCartItems()
+    }
+  }, [isOpen])
+
+  const handleQuantityChange = async (productId: string, newQuantity: number) => {
+    if (newQuantity < 0) return
+
+    setLoading(true)
+    try {
+      const result = await updateQuantity(productId, newQuantity)
+      if (result.success) {
+        await loadCartItems() // Reload cart items
         toast.success('Cart updated')
+      } else {
+        toast.error(result.message || 'Failed to update quantity')
       }
     } catch (error) {
       console.error('Error updating quantity:', error)
-      toast.error('Failed to update cart')
+      toast.error('Failed to update quantity')
     } finally {
       setLoading(false)
     }
@@ -90,18 +67,12 @@ export default function EnhancedCart({ isOpen, onClose, isAuthenticated = false 
   const handleRemoveItem = async (productId: string) => {
     setLoading(true)
     try {
-      if (isAuthenticated) {
-        const success = await cartService.removeFromDbCart(productId)
-        if (success) {
-          await loadCartItems()
-          toast.success('Item removed from cart')
-        } else {
-          toast.error('Failed to remove item')
-        }
-      } else {
-        removeFromCart(productId)
-        setLocalCartItems(readCart())
+      const result = await removeFromCart(productId)
+      if (result.success) {
+        await loadCartItems() // Reload cart items
         toast.success('Item removed from cart')
+      } else {
+        toast.error(result.message || 'Failed to remove item')
       }
     } catch (error) {
       console.error('Error removing item:', error)
@@ -111,39 +82,29 @@ export default function EnhancedCart({ isOpen, onClose, isAuthenticated = false 
     }
   }
 
-  const getCurrentQuantity = (productId: string): number => {
-    if (isAuthenticated) {
-      const item = dbCartItems.find(item => item.productId === productId)
-      return item?.quantity || 0
-    } else {
-      const item = localCartItems.find(item => item.id === productId)
-      return item?.quantity || 0
+  const handleClearCart = async () => {
+    setLoading(true)
+    try {
+      const result = await clearCart()
+      if (result.success) {
+        setCartItems([])
+        setTotal(0)
+        toast.success('Cart cleared')
+      } else {
+        toast.error(result.message || 'Failed to clear cart')
+      }
+    } catch (error) {
+      console.error('Error clearing cart:', error)
+      toast.error('Failed to clear cart')
+    } finally {
+      setLoading(false)
     }
   }
-
-  const getCartItems = () => {
-    if (isAuthenticated) {
-      return cartService.dbCartToLocalCart(dbCartItems)
-    }
-    return localCartItems
-  }
-
-  const getTotalPrice = () => {
-    const items = getCartItems()
-    return items.reduce((total, item) => total + (item.price * item.quantity), 0)
-  }
-
-  const getTotalItems = () => {
-    const items = getCartItems()
-    return items.reduce((total, item) => total + item.quantity, 0)
-  }
-
-  const cartItems = getCartItems()
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -153,21 +114,19 @@ export default function EnhancedCart({ isOpen, onClose, isAuthenticated = false 
             onClick={onClose}
           />
 
-          {/* Cart Sidebar */}
+          {/* Cart Panel */}
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="ml-auto w-full max-w-md bg-primary-900 border-l border-primary-800 flex flex-col h-full"
+            initial={{ opacity: 0, x: 400 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 400 }}
+            transition={{ duration: 0.3 }}
+            className="relative bg-primary-900 border border-primary-800 rounded-lg w-full max-w-md max-h-[80vh] overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-primary-800">
-              <div className="flex items-center space-x-3">
-                <ShoppingCart className="w-6 h-6 text-accent-400" />
-                <h2 className="text-xl font-semibold text-white">
-                  Shopping Cart ({getTotalItems()})
-                </h2>
+              <div className="flex items-center gap-3">
+                <ShoppingBag className="w-6 h-6 text-accent-400" />
+                <h2 className="text-xl font-semibold text-white">Shopping Cart</h2>
               </div>
               <button
                 onClick={onClose}
@@ -177,115 +136,150 @@ export default function EnhancedCart({ isOpen, onClose, isAuthenticated = false 
               </button>
             </div>
 
-            {/* Cart Items */}
-            <div className="flex-1 overflow-y-auto p-6">
-              {cartItems.length === 0 ? (
-                <div className="text-center py-12">
-                  <ShoppingCart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-400 mb-2">Your cart is empty</h3>
-                  <p className="text-gray-500">Add some products to get started</p>
+            {/* Cart Content */}
+            <div className="flex flex-col h-full max-h-[calc(80vh-140px)]">
+              {!isUserAuthenticated() ? (
+                <div className="flex-1 flex items-center justify-center p-6">
+                  <div className="text-center">
+                    <ShoppingBag className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-400 mb-4">Please login to view your cart</p>
+                    <button
+                      onClick={onClose}
+                      className="btn-primary"
+                    >
+                      Go to Login
+                    </button>
+                  </div>
+                </div>
+              ) : loading ? (
+                <div className="flex-1 flex items-center justify-center p-6">
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-2 border-accent-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-400">Loading cart...</p>
+                  </div>
+                </div>
+              ) : cartItems.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center p-6">
+                  <div className="text-center">
+                    <ShoppingBag className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-400 mb-4">Your cart is empty</p>
+                    <button
+                      onClick={onClose}
+                      className="btn-primary"
+                    >
+                      Continue Shopping
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {cartItems.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className="bg-primary-800 border border-primary-700 rounded-lg p-4"
-                    >
-                      <div className="flex items-start space-x-4">
+                <>
+                  {/* Cart Items */}
+                  <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                    {cartItems.map((item) => (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="flex items-center gap-4 p-4 bg-primary-800 rounded-lg"
+                      >
                         {/* Product Image */}
-                        <div className="flex-shrink-0">
+                        <div className="w-16 h-16 bg-primary-700 rounded-lg overflow-hidden flex-shrink-0">
                           <img
                             src={item.imageUrl}
                             alt={item.name}
-                            className="w-16 h-16 object-cover rounded-lg"
+                            className="w-full h-full object-cover"
                           />
                         </div>
 
-                        {/* Product Info */}
+                        {/* Product Details */}
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-white font-medium truncate">{item.name}</h4>
-                          <p className="text-accent-400 font-semibold">${item.price}</p>
-                          
-                          {/* Quantity Controls */}
-                          <div className="flex items-center space-x-3 mt-3">
-                            <button
-                              onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                              disabled={loading || item.quantity <= 1}
-                              className="p-1 rounded-full bg-primary-700 text-gray-300 hover:text-white hover:bg-primary-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            
-                            <span className="text-white font-medium w-8 text-center">
-                              {item.quantity}
-                            </span>
-                            
-                            <button
-                              onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                              disabled={loading}
-                              className="p-1 rounded-full bg-primary-700 text-gray-300 hover:text-white hover:bg-primary-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
-                          </div>
+                          <h3 className="text-white font-medium text-sm line-clamp-2 mb-1">
+                            {item.name}
+                          </h3>
+                          <p className="text-accent-400 font-semibold">
+                            ${item.price}
+                          </p>
+                          {item.sizes && item.sizes.length > 0 && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              Sizes: {item.sizes.join(', ')}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Quantity Controls */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                            disabled={loading || item.quantity <= 1}
+                            className="w-8 h-8 rounded-full bg-primary-700 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors duration-200"
+                          >
+                            <Minus className="w-4 h-4 text-white" />
+                          </button>
+                          <span className="w-8 text-center text-white font-medium">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                            disabled={loading}
+                            className="w-8 h-8 rounded-full bg-primary-700 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors duration-200"
+                          >
+                            <Plus className="w-4 h-4 text-white" />
+                          </button>
                         </div>
 
                         {/* Remove Button */}
                         <button
-                          onClick={() => handleRemoveItem(item.id)}
+                          onClick={() => handleRemoveItem(item.productId)}
                           disabled={loading}
-                          className="text-red-400 hover:text-red-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
-                      </div>
-
-                      {/* Item Total */}
-                      <div className="mt-3 pt-3 border-t border-primary-700">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-400">Subtotal:</span>
-                          <span className="text-white font-semibold">
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            {cartItems.length > 0 && (
-              <div className="border-t border-primary-800 p-6">
-                <div className="space-y-4">
-                  {/* Total */}
-                  <div className="flex justify-between items-center text-lg">
-                    <span className="text-white font-semibold">Total:</span>
-                    <span className="text-accent-400 font-bold">
-                      ${getTotalPrice().toFixed(2)}
-                    </span>
+                      </motion.div>
+                    ))}
                   </div>
 
-                  {/* Checkout Button */}
-                  <button className="w-full btn-primary">
-                    Proceed to Checkout
-                  </button>
+                  {/* Cart Footer */}
+                  <div className="border-t border-primary-800 p-6 space-y-4">
+                    {/* Total */}
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold text-white">Total:</span>
+                      <span className="text-xl font-bold text-accent-400">
+                        ${total.toFixed(2)}
+                      </span>
+                    </div>
 
-                  {/* Cart Expiry Notice */}
-                  {!isAuthenticated && (
-                    <p className="text-xs text-gray-500 text-center">
-                      Items in cart will expire after 2 hours
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
+                    {/* Actions */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleClearCart}
+                        disabled={loading}
+                        className="flex-1 px-4 py-2 border border-red-600 text-red-400 hover:bg-red-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 rounded-lg"
+                      >
+                        Clear Cart
+                      </button>
+                      <button
+                        onClick={onClose}
+                        className="flex-1 px-4 py-2 border border-primary-700 text-gray-300 hover:border-primary-600 hover:text-white transition-colors duration-200 rounded-lg"
+                      >
+                        Continue Shopping
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Navigate to checkout
+                          onClose()
+                          // Add checkout navigation here
+                        }}
+                        className="flex-1 btn-primary"
+                      >
+                        Checkout
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </motion.div>
         </div>
       )}

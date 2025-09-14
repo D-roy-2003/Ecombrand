@@ -163,6 +163,114 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  try {
+    const token = request.cookies.get('user-token')?.value
+    
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const decoded = verifyToken(token)
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      )
+    }
+
+    const { productId, quantity } = await request.json()
+
+    if (!productId || quantity === undefined) {
+      return NextResponse.json(
+        { error: 'Product ID and quantity are required' },
+        { status: 400 }
+      )
+    }
+
+    if (quantity < 0) {
+      return NextResponse.json(
+        { error: 'Quantity must be non-negative' },
+        { status: 400 }
+      )
+    }
+
+    // Check if product exists
+    const product = await prisma.product.findUnique({
+      where: { id: productId }
+    })
+
+    if (!product) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      )
+    }
+
+    // Check if item exists in cart
+    const existingCartItem = await prisma.cart.findUnique({
+      where: {
+        userId_productId: {
+          userId: decoded.id,
+          productId: productId
+        }
+      }
+    })
+
+    if (!existingCartItem) {
+      return NextResponse.json(
+        { error: 'Item not found in cart' },
+        { status: 404 }
+      )
+    }
+
+    if (quantity === 0) {
+      // Remove item from cart
+      await prisma.cart.delete({
+        where: {
+          userId_productId: {
+            userId: decoded.id,
+            productId: productId
+          }
+        }
+      })
+    } else {
+      // Check stock availability
+      if (quantity > product.stock) {
+        return NextResponse.json(
+          { error: `Only ${product.stock} items available in stock` },
+          { status: 400 }
+        )
+      }
+
+      // Update quantity
+      await prisma.cart.update({
+        where: {
+          userId_productId: {
+            userId: decoded.id,
+            productId: productId
+          }
+        },
+        data: {
+          quantity: quantity,
+          addedAt: new Date()
+        }
+      })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Cart update error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   try {
     const token = request.cookies.get('user-token')?.value

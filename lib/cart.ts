@@ -5,18 +5,21 @@ export interface CartItem {
   imageUrl: string
   quantity: number
   addedAt: number // timestamp
+  productId: string
+  sizes?: string[]
 }
 
-const CART_KEY_PREFIX = 'rk_cart_v3_'
-const CART_EXPIRY_HOURS = 2
-
-function isItemExpired(addedAt: number): boolean {
-  const now = Date.now()
-  const expiryTime = CART_EXPIRY_HOURS * 60 * 60 * 1000 // 2 hours in milliseconds
-  return (now - addedAt) > expiryTime
+// Check if user is authenticated
+export function isUserAuthenticated(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return !!window.localStorage.getItem('current_user_id')
+  } catch {
+    return false
+  }
 }
 
-// Get current user ID from localStorage or return null if not logged in
+// Get current user ID from localStorage
 function getCurrentUserId(): string | null {
   if (typeof window === 'undefined') return null
   try {
@@ -40,164 +43,255 @@ export function setCurrentUserId(userId: string | null) {
   }
 }
 
-// Get cart key for current user
-function getCartKey(): string {
-  const userId = getCurrentUserId()
-  return userId ? `${CART_KEY_PREFIX}${userId}` : `${CART_KEY_PREFIX}guest`
-}
-
-export function readCart(): CartItem[] {
-  if (typeof window === 'undefined') return []
-  try {
-    const cartKey = getCartKey()
-    const raw = window.localStorage.getItem(cartKey)
-    if (!raw) return []
-    
-    const items = JSON.parse(raw) as CartItem[]
-    // Filter out expired items
-    const validItems = items.filter(item => !isItemExpired(item.addedAt))
-    
-    // If some items were expired, update localStorage
-    if (validItems.length !== items.length) {
-      writeCart(validItems)
-    }
-    
-    return validItems
-  } catch {
-    return []
-  }
-}
-
-export function writeCart(items: CartItem[]) {
-  if (typeof window === 'undefined') return
-  try {
-    const cartKey = getCartKey()
-    window.localStorage.setItem(cartKey, JSON.stringify(items))
-  } catch (error) {
-    console.error('Error writing cart:', error)
-  }
-}
-
-// Check if user is authenticated
-export function isUserAuthenticated(): boolean {
-  return getCurrentUserId() !== null
-}
-
-export async function addToCart(item: Omit<CartItem, 'quantity' | 'addedAt'>, quantity: number = 1): Promise<{ success: boolean; message?: string; availableStock?: number; requiresLogin?: boolean }> {
+// Add item to cart (database-based)
+export async function addToCart(item: Omit<CartItem, 'quantity' | 'addedAt' | 'productId'>, quantity: number = 1): Promise<{ success: boolean; message?: string; availableStock?: number; requiresLogin?: boolean }> {
   try {
     // Check if user is authenticated
     if (!isUserAuthenticated()) {
       return { 
         success: false, 
-        message: 'Please login to add products to the cart',
-        requiresLogin: true
+        requiresLogin: true,
+        message: 'Please login to add products to the cart'
       }
     }
 
-    // Check current stock availability
-    const stockCheck = await fetch(`/api/products/stock/${item.id}`)
-    if (!stockCheck.ok) {
-      return { success: false, message: 'Unable to verify stock availability' }
-    }
-    
-    const { availableStock } = await stockCheck.json()
-    const items = readCart()
-    const existingItem = items.find((i) => i.id === item.id)
-    const currentCartQuantity = existingItem?.quantity || 0
-    const totalRequestedQuantity = currentCartQuantity + quantity
-    
-    if (totalRequestedQuantity > availableStock) {
+    const response = await fetch('/api/cart', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        productId: item.id,
+        quantity: quantity
+      })
+    })
+
+    if (response.ok) {
+      return { success: true }
+    } else {
+      const error = await response.json()
       return { 
         success: false, 
-        message: `Only ${availableStock} items available in stock. You already have ${currentCartQuantity} in your cart.`,
-        availableStock 
+        message: error.error || 'Failed to add to cart',
+        availableStock: error.availableStock
       }
     }
-    
-    const now = Date.now()
-    const idx = items.findIndex((i) => i.id === item.id)
-    
-    if (idx >= 0) {
-      items[idx].quantity += quantity
-      items[idx].addedAt = now
-    } else {
-      items.push({ ...item, quantity, addedAt: now })
-    }
-    
-    writeCart(items)
-    return { success: true }
   } catch (error) {
     console.error('Error adding to cart:', error)
-    return { success: false, message: 'Failed to add item to cart' }
+    return { 
+      success: false, 
+      message: 'Failed to add to cart' 
+    }
   }
 }
 
-export function updateQuantity(id: string, quantity: number) {
-  if (!isUserAuthenticated()) return
-  const items = readCart().map((i) => i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i)
-  writeCart(items)
-}
-
-export function removeFromCart(id: string) {
-  if (!isUserAuthenticated()) return
-  const items = readCart().filter((i) => i.id !== id)
-  writeCart(items)
-}
-
-export function clearCart() {
-  if (!isUserAuthenticated()) return
-  writeCart([])
-}
-
-export function cartCount(): number {
-  if (!isUserAuthenticated()) return 0
-  return readCart().reduce((sum, i) => sum + i.quantity, 0)
-}
-
-export function cartTotal(): number {
-  if (!isUserAuthenticated()) return 0
-  return readCart().reduce((sum, i) => sum + i.price * i.quantity, 0)
-}
-
-// Clear cart for specific user (used on logout)
-export function clearUserCart(userId: string) {
-  if (typeof window === 'undefined') return
+// Get cart items (database-based)
+export async function getCartItems(): Promise<CartItem[]> {
   try {
-    const cartKey = `${CART_KEY_PREFIX}${userId}`
-    window.localStorage.removeItem(cartKey)
+    if (!isUserAuthenticated()) {
+      return []
+    }
+
+    const response = await fetch('/api/cart', {
+      credentials: 'include'
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      return data.cartItems.map((item: any) => ({
+        id: item.product.id,
+        productId: item.product.id,
+        name: item.product.name,
+        price: item.product.price,
+        imageUrl: item.product.imageUrls[0] || '/placeholder.jpg',
+        quantity: item.quantity,
+        addedAt: new Date(item.addedAt).getTime(),
+        sizes: item.product.sizes || []
+      }))
+    } else {
+      console.error('Failed to fetch cart items')
+      return []
+    }
   } catch (error) {
-    console.error('Error clearing user cart:', error)
+    console.error('Error fetching cart items:', error)
+    return []
   }
 }
 
-// Clear all guest carts (cleanup)
-export function clearGuestCarts() {
-  if (typeof window === 'undefined') return
+// Update cart item quantity (database-based)
+export async function updateQuantity(productId: string, quantity: number): Promise<{ success: boolean; message?: string }> {
   try {
-    const guestCartKey = `${CART_KEY_PREFIX}guest`
-    window.localStorage.removeItem(guestCartKey)
+    if (!isUserAuthenticated()) {
+      return { 
+        success: false, 
+        message: 'Please login to update cart' 
+      }
+    }
+
+    const response = await fetch('/api/cart', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        productId: productId,
+        quantity: quantity
+      })
+    })
+
+    if (response.ok) {
+      return { success: true }
+    } else {
+      const error = await response.json()
+      return { 
+        success: false, 
+        message: error.error || 'Failed to update quantity' 
+      }
+    }
   } catch (error) {
-    console.error('Error clearing guest carts:', error)
+    console.error('Error updating quantity:', error)
+    return { 
+      success: false, 
+      message: 'Failed to update quantity' 
+    }
   }
 }
 
-// Clear all cart data (used on logout)
+// Remove item from cart (database-based)
+export async function removeFromCart(productId: string): Promise<{ success: boolean; message?: string }> {
+  try {
+    if (!isUserAuthenticated()) {
+      return { 
+        success: false, 
+        message: 'Please login to remove items from cart' 
+      }
+    }
+
+    const response = await fetch('/api/cart', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        productId: productId
+      })
+    })
+
+    if (response.ok) {
+      return { success: true }
+    } else {
+      const error = await response.json()
+      return { 
+        success: false, 
+        message: error.error || 'Failed to remove item' 
+      }
+    }
+  } catch (error) {
+    console.error('Error removing from cart:', error)
+    return { 
+      success: false, 
+      message: 'Failed to remove item' 
+    }
+  }
+}
+
+// Clear entire cart (database-based)
+export async function clearCart(): Promise<{ success: boolean; message?: string }> {
+  try {
+    if (!isUserAuthenticated()) {
+      return { 
+        success: false, 
+        message: 'Please login to clear cart' 
+      }
+    }
+
+    const response = await fetch('/api/cart', {
+      method: 'DELETE',
+      credentials: 'include'
+    })
+
+    if (response.ok) {
+      return { success: true }
+    } else {
+      const error = await response.json()
+      return { 
+        success: false, 
+        message: error.error || 'Failed to clear cart' 
+      }
+    }
+  } catch (error) {
+    console.error('Error clearing cart:', error)
+    return { 
+      success: false, 
+      message: 'Failed to clear cart' 
+    }
+  }
+}
+
+// Get cart count (database-based)
+export async function getCartCount(): Promise<number> {
+  try {
+    const cartItems = await getCartItems()
+    return cartItems.reduce((total, item) => total + item.quantity, 0)
+  } catch (error) {
+    console.error('Error getting cart count:', error)
+    return 0
+  }
+}
+
+// Get cart total (database-based)
+export async function getCartTotal(): Promise<number> {
+  try {
+    const cartItems = await getCartItems()
+    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
+  } catch (error) {
+    console.error('Error getting cart total:', error)
+    return 0
+  }
+}
+
+// Clear all cart data (for logout)
 export function clearAllCartData() {
   if (typeof window === 'undefined') return
   try {
-    // Clear current user ID
-    window.localStorage.removeItem('current_user_id')
-    
-    // Clear all cart data for all users
+    // Clear localStorage cart data (for backward compatibility)
     const keys = Object.keys(window.localStorage)
     keys.forEach(key => {
-      if (key.startsWith(CART_KEY_PREFIX)) {
+      if (key.startsWith('rk_cart_v3_')) {
         window.localStorage.removeItem(key)
       }
     })
+    window.localStorage.removeItem('current_user_id')
   } catch (error) {
-    console.error('Error clearing all cart data:', error)
+    console.error('Error clearing cart data:', error)
   }
+}
+
+// Legacy functions for backward compatibility
+export function readCart(): CartItem[] {
+  // This function is now async in the new system
+  // Return empty array for backward compatibility
+  return []
+}
+
+export function writeCart(items: CartItem[]): void {
+  // This function is now handled by API calls
+  // No-op for backward compatibility
+}
+
+export function cartCount(): number {
+  // This function is now async in the new system
+  // Return 0 for backward compatibility
+  return 0
+}
+
+export function cartTotal(): number {
+  // This function is now async in the new system
+  // Return 0 for backward compatibility
+  return 0
 }
 
 
