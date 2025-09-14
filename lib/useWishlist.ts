@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
+import { isUserAuthenticated } from './cart'
 
 interface WishlistItem {
   id: string
@@ -21,6 +22,12 @@ export const useWishlist = () => {
   const [isLoading, setIsLoading] = useState(false)
 
   const fetchWishlist = async () => {
+    // Check if user is authenticated before making API call
+    if (!isUserAuthenticated()) {
+      setWishlist([])
+      return
+    }
+
     try {
       setIsLoading(true)
       const response = await fetch('/api/wishlist', {
@@ -33,6 +40,9 @@ export const useWishlist = () => {
       if (response.ok) {
         const data = await response.json()
         setWishlist(data.wishlist || [])
+      } else if (response.status === 401) {
+        // User is not authenticated
+        setWishlist([])
       } else {
         console.error('Failed to fetch wishlist:', response.status)
       }
@@ -44,6 +54,12 @@ export const useWishlist = () => {
   }
 
   const addToWishlist = async (productId: string) => {
+    // Check if user is authenticated before making API call
+    if (!isUserAuthenticated()) {
+      toast.error('Please login to add products to your wishlist')
+      return false
+    }
+
     try {
       setIsLoading(true)
       const response = await fetch('/api/wishlist', {
@@ -60,6 +76,9 @@ export const useWishlist = () => {
         setWishlist(prev => [newItem, ...prev])
         toast.success('Added to wishlist!')
         return true
+      } else if (response.status === 401) {
+        toast.error('Please login to add products to your wishlist')
+        return false
       } else {
         const error = await response.json()
         toast.error(error.error || 'Failed to add to wishlist')
@@ -75,6 +94,12 @@ export const useWishlist = () => {
   }
 
   const removeFromWishlist = async (productId: string) => {
+    // Check if user is authenticated before making API call
+    if (!isUserAuthenticated()) {
+      toast.error('Please login to manage your wishlist')
+      return false
+    }
+
     try {
       setIsLoading(true)
       const response = await fetch(`/api/wishlist?productId=${productId}`, {
@@ -86,6 +111,9 @@ export const useWishlist = () => {
         setWishlist(prev => prev.filter(item => item.product.id !== productId))
         toast.success('Removed from wishlist!')
         return true
+      } else if (response.status === 401) {
+        toast.error('Please login to manage your wishlist')
+        return false
       } else {
         toast.error('Failed to remove from wishlist')
         return false
