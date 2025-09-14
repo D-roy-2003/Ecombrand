@@ -14,11 +14,12 @@ import {
   Plus, 
   Minus,
   ArrowLeft,
-  CheckCircle
+  CheckCircle,
+  ShoppingCart
 } from 'lucide-react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
-import { addToCart } from '@/lib/cart'
+import { addToCart, isUserAuthenticated } from '@/lib/cart'
 import toast from 'react-hot-toast'
 
 interface Product {
@@ -76,13 +77,20 @@ export default function ProductPage() {
 
     setAddingToCart(true)
     try {
-      await addToCart({
+      const result = await addToCart({
         id: product.id,
         name: product.name,
         price: product.price,
         imageUrl: product.imageUrls[0]
       }, quantity)
-      toast.success('Added to cart!')
+      
+      if (result.success) {
+        toast.success('Added to cart!')
+      } else if (result.requiresLogin) {
+        toast.error('Please login to add products to the cart')
+      } else {
+        toast.error(result.message || 'Failed to add to cart')
+      }
     } catch (error) {
       toast.error('Failed to add to cart')
     } finally {
@@ -269,12 +277,21 @@ export default function ProductPage() {
               <div className="space-y-4">
                 <div className="flex gap-4">
                   <button
+                    className="btn-primary text-lg py-4 px-8 flex items-center justify-center space-x-2"
+                    disabled={addingToCart || product.stock === 0}
                     onClick={handleAddToCart}
-                    disabled={product.stock === 0 || addingToCart}
-                    className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <ShoppingBag className="w-5 h-5 mr-2" />
-                    {addingToCart ? 'Adding...' : product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    {addingToCart ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Adding...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-5 h-5" />
+                        <span>ADD TO CART</span>
+                      </>
+                    )}
                   </button>
                   
                   <button

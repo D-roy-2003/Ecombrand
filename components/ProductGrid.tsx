@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ShoppingBag } from 'lucide-react'
-import { addToCart } from '@/lib/cart'
+import { addToCart, isUserAuthenticated } from '@/lib/cart'
 import WishlistButton from './WishlistButton'
 import toast from 'react-hot-toast'
 
@@ -140,6 +140,8 @@ export default function ProductGrid({ products }: ProductGridProps) {
                       
                       if (result.success) {
                         toast.success('Item added to cart!')
+                      } else if (result.requiresLogin) {
+                        toast.error('Please login to add products to the cart')
                       } else {
                         toast.error(result.message || 'Failed to add item to cart')
                       }

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { setCurrentUserId } from '@/lib/cart'
 
 export default function UserLoginPage() {
   const [email, setEmail] = useState('')
@@ -50,6 +51,11 @@ export default function UserLoginPage() {
         // Store token in localStorage for authentication
         if (data.token) {
           localStorage.setItem('token', data.token)
+        }
+        
+        // Set user ID for cart system
+        if (data.user && data.user.id) {
+          setCurrentUserId(data.user.id)
         }
         
         toast.success(isLogin ? 'Login successful!' : 'Registration successful!')

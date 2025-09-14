@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ShoppingBag, Trash2, ArrowLeft } from 'lucide-react'
 import { useWishlist } from '@/lib/useWishlist'
-import { addToCart } from '@/lib/cart'
+import { addToCart, isUserAuthenticated } from '@/lib/cart'
 import toast from 'react-hot-toast'
 
 export default function WishlistPage() {
@@ -18,14 +18,21 @@ export default function WishlistPage() {
     setIsRemoving(null)
   }
 
-  const handleAddToCart = (product: any) => {
-    addToCart({
+  const handleAddToCart = async (product: any) => {
+    const result = await addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       imageUrl: product.imageUrls[0]
     })
-    toast.success('Added to cart!')
+    
+    if (result.success) {
+      toast.success('Added to cart!')
+    } else if (result.requiresLogin) {
+      toast.error('Please login to add products to the cart')
+    } else {
+      toast.error(result.message || 'Failed to add to cart')
+    }
   }
 
   if (isLoading) {
@@ -141,7 +148,7 @@ export default function WishlistPage() {
                         <div className="text-2xl font-bold text-accent-400">
                           ${item.product.price}
                         </div>
-                        {item.product.discount > 0 && (
+                        {item.product.discount && item.product.discount > 0 && (
                           <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
                             -{item.product.discount}% off
                           </span>

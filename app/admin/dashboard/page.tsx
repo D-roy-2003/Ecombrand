@@ -32,6 +32,7 @@ import {
 import toast from 'react-hot-toast'
 import AddProductModal from '@/components/admin/AddProductModal'
 import EditProductModal from '@/components/admin/EditProductModal'
+import { clearAllCartData } from '@/lib/cart'
 
 // Define admin type
 interface Admin {
@@ -300,6 +301,9 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
+      // Clear all cart data
+      clearAllCartData()
+      
       const response = await fetch('/api/auth/admin/logout', {
         method: 'POST',
         credentials: 'include'

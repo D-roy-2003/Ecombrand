@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingCart, Plus, Minus, Trash2, X } from 'lucide-react'
-import { readCart, writeCart, CartItem, updateQuantity, removeFromCart } from '@/lib/cart'
+import { readCart, writeCart, CartItem, updateQuantity, removeFromCart, isUserAuthenticated } from '@/lib/cart'
 import { cartService, DatabaseCartItem } from '@/lib/cartService'
 import toast from 'react-hot-toast'
 
@@ -49,11 +49,13 @@ export default function EnhancedCart({ isOpen, onClose, isAuthenticated = false 
         }
       } catch (error) {
         console.error('Error loading database cart:', error)
-        toast.error('Failed to load cart items')
+        // Fallback to local cart
+        setLocalCartItems(readCart())
       }
     } else {
-      const localItems = readCart()
-      setLocalCartItems(localItems)
+      // For non-authenticated users, show empty cart
+      setLocalCartItems([])
+      setDbCartItems([])
     }
   }
 

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import { clearAllCartData } from '@/lib/cart'
 
 // Define user type
 interface User {
@@ -74,6 +75,9 @@ export default function Navigation() {
 
   const handleLogout = async () => {
     try {
+      // Clear all cart data first
+      clearAllCartData()
+      
       // Call logout API
       const response = await fetch('/api/auth/logout', {
         method: 'POST',

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react'
-import { addToCart } from '@/lib/cart'
+import { addToCart, isUserAuthenticated } from '@/lib/cart'
 import toast from 'react-hot-toast'
 
 interface FeaturedProduct {
@@ -188,12 +188,13 @@ export default function FeaturedProducts() {
                           
                           if (result.success) {
                             toast.success('Item added to cart!')
+                          } else if (result.requiresLogin) {
+                            toast.error('Please login to add products to the cart')
                           } else {
                             toast.error(result.message || 'Failed to add item to cart')
                           }
                         }}
                       >
-                        <ShoppingBag className="w-5 h-5 mr-2" />
                         ADD TO CART
                       </button>
                     </div>

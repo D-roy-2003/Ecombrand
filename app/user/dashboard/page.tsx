@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useWishlist } from '@/lib/useWishlist'
-import { addToCart } from '@/lib/cart'
+import { addToCart, readCart, writeCart, CartItem, updateQuantity, removeFromCart, isUserAuthenticated, setCurrentUserId, clearUserCart, clearAllCartData } from '@/lib/cart'
 
 // Define user type
 interface User {
@@ -164,6 +164,9 @@ export default function UserDashboard() {
         setUser(data.user)
         setStats(data.stats)
         setRecentOrders(data.recentOrders)
+        
+        // Set user ID for cart
+        setCurrentUserId(data.user.id)
       } else {
         // If not authenticated, redirect to login
         router.push('/login')
@@ -178,6 +181,9 @@ export default function UserDashboard() {
 
   const handleLogout = async () => {
     try {
+      // Clear all cart data
+      clearAllCartData()
+      
       // Call logout API
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
@@ -380,14 +386,21 @@ export default function UserDashboard() {
   }
 
   // Handle add to cart from wishlist
-  const handleAddToCart = (product: any) => {
-    addToCart({
+  const handleAddToCart = async (product: any) => {
+    const result = await addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       imageUrl: product.imageUrls[0]
     })
-    toast.success('Added to cart!')
+    
+    if (result.success) {
+      toast.success('Added to cart!')
+    } else if (result.requiresLogin) {
+      toast.error('Please login to add products to the cart')
+    } else {
+      toast.error(result.message || 'Failed to add to cart')
+    }
   }
 
   if (isLoading) {
