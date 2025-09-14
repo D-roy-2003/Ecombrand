@@ -21,7 +21,9 @@ import {
   Camera,
   ChevronDown,
   Trash2,
-  ShoppingBag
+  ShoppingBag,
+  Lock,
+  EyeOff
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useWishlist } from '@/lib/useWishlist'
@@ -54,14 +56,14 @@ interface Stats {
 
 // Country codes data - 10 popular countries
 const countryCodes = [
-  { code: '+1', country: 'US', flag: '🇺🇸' },
-  { code: '+1', country: 'CA', flag: '🇨🇦' },
-  { code: '+44', country: 'UK', flag: '🇬🇧' },
-  { code: '+49', country: 'DE', flag: '🇩🇪' },
-  { code: '+33', country: 'FR', flag: '🇫🇷' },
-  { code: '+39', country: 'IT', flag: '🇮🇹' },
-  { code: '+34', country: 'ES', flag: '🇪🇸' },
-  { code: '+61', country: 'AU', flag: '🇦🇺' },
+  { code: '+1', country: 'US', flag: '🇺' },
+  { code: '+1', country: 'CA', flag: '🇨' },
+  { code: '+44', country: 'UK', flag: '🇬' },
+  { code: '+49', country: 'DE', flag: '🇩' },
+  { code: '+33', country: 'FR', flag: '🇫' },
+  { code: '+39', country: 'IT', flag: '🇮' },
+  { code: '+34', country: 'ES', flag: '🇪' },
+  { code: '+61', country: 'AU', flag: '🇦' },
   { code: '+81', country: 'JP', flag: '🇯🇵' },
   { code: '+91', country: 'IN', flag: '🇮🇳' }
 ]
@@ -97,6 +99,19 @@ export default function UserDashboard() {
   // Wishlist functionality
   const { wishlist, removeFromWishlist, isLoading: wishlistLoading } = useWishlist()
   const [isRemoving, setIsRemoving] = useState<string | null>(null)
+
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  })
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -186,7 +201,9 @@ export default function UserDashboard() {
   }
 
   const goHome = () => {
-    router.push('/')
+    console.log('Home button clicked')
+    // Force navigation using window.location
+    window.location.href = '/'
   }
 
   // Add profile picture upload function
@@ -287,8 +304,66 @@ export default function UserDashboard() {
     }
   }
 
+  // Handle password change
+  const handlePasswordChange = async () => {
+    try {
+      // Validate passwords
+      if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+        toast.error('All password fields are required')
+        return
+      }
+
+      if (passwordData.newPassword.length < 6) {
+        toast.error('New password must be at least 6 characters long')
+        return
+      }
+
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        toast.error('New passwords do not match')
+        return
+      }
+
+      if (passwordData.currentPassword === passwordData.newPassword) {
+        toast.error('New password must be different from current password')
+        return
+      }
+
+      setIsChangingPassword(true)
+
+      const response = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        }),
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        toast.success('Password changed successfully!')
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        })
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || 'Failed to change password')
+      }
+    } catch (error) {
+      console.error('Error changing password:', error)
+      toast.error('Failed to change password')
+    } finally {
+      setIsChangingPassword(false)
+    }
+  }
+
   // Generate user initials
   const getUserInitials = (name: string): string => {
+    if (!name) return 'U'
     return name
       .split(' ')
       .map((word: string) => word.charAt(0))
@@ -347,13 +422,10 @@ export default function UserDashboard() {
             
             <div className="flex items-center space-x-4">
               {/* Home Button */}
-              <button
-                onClick={goHome}
-                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-300 px-3 py-2 rounded-lg hover:bg-primary-800"
-              >
+              <Link href="/" className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-300 px-3 py-2 rounded-lg hover:bg-primary-800">
                 <Home className="w-5 h-5" />
                 <span>Home</span>
-              </button>
+              </Link>
               
               {/* User Profile */}
               <div className="flex items-center space-x-2">
@@ -444,7 +516,7 @@ export default function UserDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-400 text-sm">Wishlist Items</p>
-                      <p className="text-2xl font-bold text-white">{stats?.wishlistItems || 0}</p>
+                      <p className="text-2xl font-bold text-white">{wishlist.length}</p>
                     </div>
                     <Heart className="w-8 h-8 text-accent-500" />
                   </div>
@@ -528,7 +600,7 @@ export default function UserDashboard() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Left Column - Profile Picture */}
-                  <div className="space-y-4">
+              <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-white">Profile Picture</h3>
                     <div className="flex items-center gap-6">
                       <div className="relative">
@@ -578,19 +650,19 @@ export default function UserDashboard() {
                   {/* Right Column - Personal Information */}
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">First Name</label>
-                        <input
-                          type="text"
+                  <input 
+                    type="text" 
                           value={profileData.name.split(' ')[0] || ''}
                           onChange={(e) => {
                             const lastName = profileData.name.split(' ').slice(1).join(' ')
                             setProfileData(prev => ({ ...prev, name: `${e.target.value} ${lastName}`.trim() }))
                           }}
                           className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
-                        />
-                      </div>
-                      <div>
+                  />
+                </div>
+                <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">Last Name</label>
                         <input
                           type="text"
@@ -606,8 +678,8 @@ export default function UserDashboard() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
-                      <input
-                        type="email"
+                  <input 
+                    type="email" 
                         value={profileData.email}
                         onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
                         className="w-full px-4 py-3 bg-primary-800 border border-primary-700 rounded-lg text-white focus:border-accent-500 focus:outline-none"
@@ -900,8 +972,121 @@ export default function UserDashboard() {
 
           {activeTab === 'settings' && (
             <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Account Settings</h3>
-              <p className="text-gray-400">Settings management coming soon...</p>
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-3 bg-accent-600/20 rounded-lg">
+                  <Lock className="w-8 h-8 text-accent-400" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white">Account Settings</h3>
+                  <p className="text-gray-400">Manage your account security and preferences</p>
+                </div>
+              </div>
+
+              {/* Password Change Section */}
+              <div className="bg-primary-800 border border-primary-700 rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <Lock className="w-5 h-5" />
+                  Change Password
+                </h4>
+                <p className="text-gray-400 text-sm mb-6">Update your password to keep your account secure</p>
+
+                <div className="space-y-4 max-w-md">
+                  {/* Current Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Current Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords.current ? "text" : "password"}
+                        value={passwordData.currentPassword}
+                        onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                        className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white focus:border-accent-500 focus:outline-none pr-12"
+                        placeholder="Enter current password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                      >
+                        {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* New Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">New Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords.new ? "text" : "password"}
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                        className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white focus:border-accent-500 focus:outline-none pr-12"
+                        placeholder="Enter new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                      >
+                        {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">Password must be at least 6 characters long</p>
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Confirm New Password</label>
+                    <div className="relative">
+                  <input 
+                        type={showPasswords.confirm ? "text" : "password"}
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white focus:border-accent-500 focus:outline-none pr-12"
+                        placeholder="Confirm new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                      >
+                        {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Password Change Button */}
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      onClick={handlePasswordChange}
+                      disabled={isChangingPassword}
+                      className="px-6 py-3 bg-accent-600 hover:bg-accent-700 disabled:bg-accent-600/50 text-white rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      {isChangingPassword ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Changing...
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-4 h-4" />
+                          Change Password
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setPasswordData({
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: ''
+                      })}
+                      className="px-6 py-3 border border-primary-600 hover:border-primary-500 text-gray-300 hover:text-white rounded-lg transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </motion.div>
