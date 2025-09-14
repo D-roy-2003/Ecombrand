@@ -21,6 +21,7 @@ interface User {
   name: string
   email: string
   role: string
+  profileImage?: string
   createdAt: string
   updatedAt: string
 }
@@ -108,6 +109,7 @@ export default function Navigation() {
 
   // Generate user initials
   const getUserInitials = (name: string): string => {
+    if (!name) return 'U'
     return name
       .split(' ')
       .map((word: string) => word.charAt(0))
@@ -171,8 +173,20 @@ export default function Navigation() {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-300 p-2 rounded-lg hover:bg-primary-800"
                   >
-                    <div className="h-8 w-8 rounded-full bg-accent-600 flex items-center justify-center text-white font-bold text-sm">
-                      {getUserInitials(user.name)}
+                    <div className="h-8 w-8 rounded-full bg-accent-600 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                      {user.profileImage ? (
+                        <img 
+                          src={user.profileImage} 
+                          alt={user.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // If image fails to load, hide it to show initials
+                            e.currentTarget.style.display = 'none'
+                          }}
+                        />
+                      ) : (
+                        getUserInitials(user.name)
+                      )}
                     </div>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                   </button>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { 
   ShoppingCart, 
   Package, 
@@ -18,9 +19,13 @@ import {
   Bell,
   Home,
   Camera,
-  ChevronDown
+  ChevronDown,
+  Trash2,
+  ShoppingBag
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useWishlist } from '@/lib/useWishlist'
+import { addToCart } from '@/lib/cart'
 
 // Define user type
 interface User {
@@ -88,6 +93,10 @@ export default function UserDashboard() {
   
   // Ref for country code dropdown
   const countryCodeRef = useRef<HTMLDivElement>(null)
+
+  // Wishlist functionality
+  const { wishlist, removeFromWishlist, isLoading: wishlistLoading } = useWishlist()
+  const [isRemoving, setIsRemoving] = useState<string | null>(null)
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -286,6 +295,24 @@ export default function UserDashboard() {
       .join('')
       .toUpperCase()
       .slice(0, 2)
+  }
+
+  // Handle wishlist removal
+  const handleRemoveFromWishlist = async (productId: string) => {
+    setIsRemoving(productId)
+    await removeFromWishlist(productId)
+    setIsRemoving(null)
+  }
+
+  // Handle add to cart from wishlist
+  const handleAddToCart = (product: any) => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      imageUrl: product.imageUrls[0]
+    })
+    toast.success('Added to cart!')
   }
 
   if (isLoading) {
@@ -747,8 +774,127 @@ export default function UserDashboard() {
 
           {activeTab === 'wishlist' && (
             <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Your Wishlist</h3>
-              <p className="text-gray-400">Wishlist management coming soon...</p>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-white">Your Wishlist</h3>
+                <span className="text-gray-400">{wishlist.length} {wishlist.length === 1 ? 'item' : 'items'}</span>
+              </div>
+
+              {wishlistLoading ? (
+                <div className="text-center py-8">
+                  <div className="text-white text-lg">Loading your wishlist...</div>
+                </div>
+              ) : wishlist.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="text-6xl mb-4">❤️</div>
+                  <h3 className="text-2xl font-semibold text-white mb-4">Your wishlist is empty</h3>
+                  <p className="text-gray-400 mb-8">Start adding products you love to your wishlist!</p>
+                  <Link 
+                    href="/shop"
+                    className="btn-primary inline-flex items-center space-x-2"
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                    <span>Start Shopping</span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {wishlist.map((item, index) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      className="group"
+                    >
+                      <div className="bg-primary-800 border border-primary-700 rounded-lg overflow-hidden hover:border-accent-500 transition-all duration-300">
+                        {/* Product Image */}
+                        <div className="relative overflow-hidden">
+                          <Link href={`/product/${item.product.id}`}>
+                            <img
+                              src={item.product.imageUrls[0] || '/placeholder.jpg'}
+                              alt={item.product.name}
+                              className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                          </Link>
+                          
+                          {/* Remove from Wishlist */}
+                          <div className="absolute top-4 right-4">
+                            <button
+                              onClick={() => handleRemoveFromWishlist(item.product.id)}
+                              disabled={isRemoving === item.product.id}
+                              className="w-10 h-10 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 disabled:opacity-50"
+                              title="Remove from wishlist"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+
+                          {/* Product Status */}
+                          {!item.product.isActive && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                              <span className="px-4 py-2 bg-red-600 text-white font-medium rounded">
+                                UNAVAILABLE
+                              </span>
+                            </div>
+                          )}
+
+                          {item.product.stock === 0 && item.product.isActive && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                              <span className="px-4 py-2 bg-yellow-600 text-white font-medium rounded">
+                                OUT OF STOCK
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="p-4">
+                          <div className="mb-4">
+                            <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-accent-400 transition-colors duration-300">
+                              <Link href={`/product/${item.product.id}`}>
+                                {item.product.name}
+                              </Link>
+                            </h3>
+                            
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="text-2xl font-bold text-accent-400">
+                                ${item.product.price}
+                              </div>
+                              {item.product.discount && item.product.discount > 0 && (
+                                <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
+                                  -{item.product.discount}% off
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm text-gray-400">
+                                Added {new Date(item.createdAt).toLocaleDateString()}
+                              </div>
+                              <div className="text-sm text-gray-400">
+                                {item.product.stock} in stock
+                              </div>
+                            </div>
+                          </div>
+
+                          <button 
+                            className="w-full btn-primary text-sm py-3 flex items-center justify-center space-x-2"
+                            disabled={!item.product.isActive || item.product.stock === 0}
+                            onClick={() => handleAddToCart(item.product)}
+                          >
+                            <ShoppingBag className="w-4 h-4" />
+                            <span>
+                              {!item.product.isActive ? 'Unavailable' : 
+                               item.product.stock === 0 ? 'Out of Stock' : 
+                               'Add to Cart'}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
