@@ -9,7 +9,10 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('admin-token')?.value
+    // Check for both admin and user tokens
+    const adminToken = request.cookies.get('admin-token')?.value
+    const userToken = request.cookies.get('user-token')?.value
+    const token = adminToken || userToken
     
     if (!token) {
       return NextResponse.json(
@@ -19,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const decoded = verifyToken(token)
-    if (!decoded || decoded.role !== 'ADMIN') {
+    if (!decoded || (decoded.role !== 'ADMIN' && decoded.role !== 'CUSTOMER')) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -28,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const folder = formData.get('folder') as string || 'admin'
+    const folder = formData.get('folder') as string || (decoded.role === 'ADMIN' ? 'admin' : 'users')
 
     if (!file) {
       return NextResponse.json(

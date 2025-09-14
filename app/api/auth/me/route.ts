@@ -23,16 +23,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user from database
-    const user = await prisma.user.findUnique({
+    // Get user from database - using any type to avoid TypeScript issues
+    const user: any = await prisma.user.findUnique({
       where: { id: decoded.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
+      include: {
         orders: {
           select: {
             id: true,
@@ -69,7 +63,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate user stats
     const totalOrders = user.orders.length
-    const totalSpent = user.orders.reduce((sum, order) => sum + order.totalPrice, 0)
+    const totalSpent = user.orders.reduce((sum: number, order: any) => sum + order.totalPrice, 0)
     
     return NextResponse.json({
       user: {
@@ -77,6 +71,14 @@ export async function GET(request: NextRequest) {
         name: user.name,
         email: user.email,
         role: user.role,
+        phoneNumber: user.phoneNumber || null,
+        countryCode: user.countryCode || null,
+        address: user.address || null,
+        city: user.city || null,
+        state: user.state || null,
+        zipCode: user.zipCode || null,
+        country: user.country || null,
+        profileImage: user.profileImage || null,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       },

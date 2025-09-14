@@ -17,11 +17,13 @@ model User {
   password    String
   role        Role       @default(CUSTOMER)
   phoneNumber String?
+  countryCode String?
   address     String?
   city        String?
   state       String?
   zipCode     String?
   country     String?
+  profileImage String?
   isActive    Boolean    @default(true)
   lastLoginAt DateTime?
   createdAt   DateTime   @default(now())
