@@ -15,6 +15,7 @@ interface Product {
   stock: number
   category: string
   imageUrls: string[]
+  sizes?: string[]
   isFeatured?: boolean
   discount?: number
   isActive?: boolean
@@ -35,6 +36,10 @@ const categories = [
   'ACCESSORIES'
 ]
 
+const availableSizes = [
+  'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'
+]
+
 export default function EditProductModal({ isOpen, onClose, onEdit, product }: EditProductModalProps) {
   const [formData, setFormData] = useState({
     name: '',
@@ -44,6 +49,7 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
     stock: '',
     category: 'TSHIRTS',
     imageUrls: [''],
+    sizes: [] as string[],
     isFeatured: false,
     discount: '',
     isActive: true
@@ -58,13 +64,14 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
   useEffect(() => {
     if (product) {
       setFormData({
-        name: product.name,
-        description: product.description,
-        price: product.price.toString(),
+        name: product.name || '',
+        description: product.description || '',
+        price: product.price?.toString() || '',
         originalPrice: product.originalPrice?.toString() || '',
-        stock: product.stock.toString(),
-        category: product.category,
+        stock: product.stock?.toString() || '',
+        category: product.category || 'TSHIRTS',
         imageUrls: product.imageUrls || [''],
+        sizes: product.sizes || [],
         isFeatured: product.isFeatured || false,
         discount: product.discount?.toString() || '',
         isActive: product.isActive !== undefined ? product.isActive : true
@@ -120,10 +127,6 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
 
       onEdit(updatedProduct)
       
-      // Reset form
-      setUploadedFiles([])
-      setPreviewUrls([])
-      
       toast.success('Product updated successfully!')
     } catch (error) {
       console.error('Error updating product:', error)
@@ -151,6 +154,15 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
     setFormData(prev => ({
       ...prev,
       imageUrls: prev.imageUrls.map((url, i) => i === index ? value : url)
+    }))
+  }
+
+  const handleSizeChange = (size: string) => {
+    setFormData(prev => ({
+      ...prev,
+      sizes: prev.sizes.includes(size)
+        ? prev.sizes.filter(s => s !== size)
+        : [...prev.sizes, size]
     }))
   }
 
@@ -219,7 +231,7 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-primary-800">
-              <h2 className="text-xl font-semibold text-white">Update Product</h2>
+              <h2 className="text-xl font-semibold text-white">Edit Product</h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-white transition-colors duration-200"
@@ -359,6 +371,40 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Available Sizes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-3">
+                  Available Sizes
+                </label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                  {availableSizes.map((size) => (
+                    <label
+                      key={size}
+                      className="flex items-center justify-center p-3 border border-primary-700 rounded-lg cursor-pointer transition-colors duration-200 hover:border-accent-500 hover:bg-accent-500/10"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.sizes.includes(size)}
+                        onChange={() => handleSizeChange(size)}
+                        className="sr-only"
+                      />
+                      <span className={`text-sm font-medium transition-colors duration-200 ${
+                        formData.sizes.includes(size)
+                          ? 'text-accent-400'
+                          : 'text-gray-300'
+                      }`}>
+                        {size}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {formData.sizes.length > 0 && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    Selected sizes: {formData.sizes.join(', ')}
+                  </p>
+                )}
               </div>
 
               {/* Featured and Active */}
@@ -535,7 +581,7 @@ export default function EditProductModal({ isOpen, onClose, onEdit, product }: E
                   disabled={uploading}
                   className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {uploading ? 'Uploading...' : 'Update Product'}
+                  {uploading ? 'Updating...' : 'Update Product'}
                 </button>
               </div>
             </form>

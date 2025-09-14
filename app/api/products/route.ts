@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, price, originalPrice, stock, category, imageUrls, isFeatured, discount, isActive, displayOrder } = body
+    const { name, description, price, originalPrice, stock, category, imageUrls, sizes, isFeatured, discount, isActive, displayOrder } = body
 
     // Fix validation - check for required fields but allow empty imageUrls
     if (!name || !description || !price || !stock || !category) {
@@ -92,6 +92,9 @@ export async function POST(request: NextRequest) {
       ? imageUrls.filter(url => url && url.trim() !== '')
       : []
 
+    // Ensure sizes is an array
+    const validSizes = Array.isArray(sizes) ? sizes : []
+
     const product = await prisma.product.create({
       data: {
         name,
@@ -101,6 +104,7 @@ export async function POST(request: NextRequest) {
         stock: parseInt(stock),
         category,
         imageUrls: validImageUrls,
+        sizes: validSizes,
         isFeatured: isFeatured || false,
         discount: discount ? parseFloat(discount) : 0,
         isActive: isActive !== undefined ? isActive : true,

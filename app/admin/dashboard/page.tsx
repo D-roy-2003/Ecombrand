@@ -66,6 +66,7 @@ interface Product {
   stock: number
   category: string
   imageUrls: string[]
+  sizes: string[]
   isFeatured: boolean
   discount: number
   isActive: boolean

@@ -20,6 +20,10 @@ const categories = [
   'ACCESSORIES'
 ]
 
+const availableSizes = [
+  'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'
+]
+
 export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductModalProps) {
   const [formData, setFormData] = useState({
     name: '',
@@ -29,6 +33,7 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
     stock: '',
     category: 'TSHIRTS',
     imageUrls: [''],
+    sizes: [] as string[],
     isFeatured: false,
     discount: '',
     isActive: true
@@ -96,6 +101,7 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
         stock: '',
         category: 'TSHIRTS',
         imageUrls: [''],
+        sizes: [],
         isFeatured: false,
         discount: '',
         isActive: true
@@ -130,6 +136,15 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
     setFormData(prev => ({
       ...prev,
       imageUrls: prev.imageUrls.map((url, i) => i === index ? value : url)
+    }))
+  }
+
+  const handleSizeChange = (size: string) => {
+    setFormData(prev => ({
+      ...prev,
+      sizes: prev.sizes.includes(size)
+        ? prev.sizes.filter(s => s !== size)
+        : [...prev.sizes, size]
     }))
   }
 
@@ -338,6 +353,40 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Available Sizes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-3">
+                  Available Sizes
+                </label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                  {availableSizes.map((size) => (
+                    <label
+                      key={size}
+                      className="flex items-center justify-center p-3 border border-primary-700 rounded-lg cursor-pointer transition-colors duration-200 hover:border-accent-500 hover:bg-accent-500/10"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.sizes.includes(size)}
+                        onChange={() => handleSizeChange(size)}
+                        className="sr-only"
+                      />
+                      <span className={`text-sm font-medium transition-colors duration-200 ${
+                        formData.sizes.includes(size)
+                          ? 'text-accent-400'
+                          : 'text-gray-300'
+                      }`}>
+                        {size}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {formData.sizes.length > 0 && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    Selected sizes: {formData.sizes.join(', ')}
+                  </p>
+                )}
               </div>
 
               {/* Featured and Active */}

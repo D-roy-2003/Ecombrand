@@ -34,6 +34,7 @@ export async function PATCH(
       stock, 
       category, 
       imageUrls, 
+      sizes,
       isFeatured, 
       discount, 
       isActive,
@@ -49,6 +50,7 @@ export async function PATCH(
     if (stock !== undefined) updateData.stock = parseInt(stock)
     if (category !== undefined) updateData.category = category
     if (imageUrls !== undefined) updateData.imageUrls = imageUrls
+    if (sizes !== undefined) updateData.sizes = Array.isArray(sizes) ? sizes : []
     if (isFeatured !== undefined) updateData.isFeatured = isFeatured
     if (discount !== undefined) updateData.discount = parseFloat(discount)
     if (isActive !== undefined) updateData.isActive = isActive

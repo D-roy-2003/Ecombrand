@@ -31,6 +31,7 @@ interface Product {
   originalPrice?: number
   category: string
   imageUrls: string[]
+  sizes: string[]
   stock: number
   isFeatured: boolean
   discount: number
@@ -46,6 +47,7 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
+  const [selectedSize, setSelectedSize] = useState<string>('')
   const [addingToCart, setAddingToCart] = useState(false)
   
   // Use the proper wishlist hook
@@ -77,6 +79,12 @@ export default function ProductPage() {
 
   const handleAddToCart = async () => {
     if (!product) return
+
+    // Check if size is required and selected
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      toast.error('Please select a size')
+      return
+    }
 
     setAddingToCart(true)
     try {
@@ -248,6 +256,33 @@ export default function ProductPage() {
                   {product.description}
                 </p>
               </div>
+
+              {/* Size Selection */}
+              {product.sizes && product.sizes.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-white">Select Size</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {product.sizes.map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors duration-200 ${
+                          selectedSize === size
+                            ? 'border-accent-500 bg-accent-500/10 text-accent-400'
+                            : 'border-primary-700 text-gray-300 hover:border-accent-500 hover:text-white'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedSize && (
+                    <p className="text-sm text-gray-400">
+                      Selected size: <span className="text-accent-400 font-medium">{selectedSize}</span>
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Quantity Selector */}
               <div className="space-y-2">
