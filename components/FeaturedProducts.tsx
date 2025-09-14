@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react'
-import { addToCart, isUserAuthenticated } from '@/lib/cart'
+import { ChevronLeft, ChevronRight, Heart } from 'lucide-react'
+import { useWishlist } from '@/lib/useWishlist'
 import toast from 'react-hot-toast'
 
 interface FeaturedProduct {
@@ -20,6 +20,7 @@ export default function FeaturedProducts() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
   const [loading, setLoading] = useState(true)
+  const { addToWishlist, isInWishlist, isLoading: wishlistLoading } = useWishlist()
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -56,6 +57,18 @@ export default function FeaturedProducts() {
     setCurrentIndex((prev) => (prev - 1 + featuredProducts.length) % featuredProducts.length)
   }
 
+  const handleAddToWishlist = async (product: FeaturedProduct) => {
+    if (isInWishlist(product.id)) {
+      // Product already in wishlist, do nothing
+      return
+    }
+
+    const success = await addToWishlist(product.id)
+    if (success) {
+      toast.success('Added to wishlist!')
+    }
+  }
+
   if (loading) {
     return (
       <section className="section-padding bg-primary-900">
@@ -63,7 +76,7 @@ export default function FeaturedProducts() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 1 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
@@ -87,7 +100,7 @@ export default function FeaturedProducts() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 1 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
@@ -110,7 +123,7 @@ export default function FeaturedProducts() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 1 }}
           viewport={{ once: true }}
           className="text-center mb-16"
         >
@@ -169,33 +182,30 @@ export default function FeaturedProducts() {
                         </span>
                       )}
                     </div>
-                    <div className="flex gap-4 justify-center">
+                    <div className="flex gap-2 sm:gap-4 justify-center">
                       <Link 
                         href={`/product/${featuredProducts[currentIndex].id}`}
-                        className="btn-primary"
+                        className="btn-primary flex items-center justify-center min-w-[120px] sm:min-w-[140px] h-10 sm:h-12 text-xs sm:text-sm px-2 sm:px-4"
                       >
                         VIEW DETAILS
                       </Link>
                       <button
-                        className="btn-secondary"
-                        onClick={async () => {
-                          const result = await addToCart({
-                            id: featuredProducts[currentIndex].id,
-                            name: featuredProducts[currentIndex].name,
-                            price: featuredProducts[currentIndex].price,
-                            imageUrl: featuredProducts[currentIndex].imageUrls[0] || '/placeholder.jpg'
-                          })
-                          
-                          if (result.success) {
-                            toast.success('Item added to cart!')
-                          } else if (result.requiresLogin) {
-                            toast.error('Please login to add products to the cart')
-                          } else {
-                            toast.error(result.message || 'Failed to add item to cart')
-                          }
-                        }}
+                        className={`btn-secondary flex items-center justify-center gap-1 sm:gap-2 min-w-[120px] sm:min-w-[140px] h-10 sm:h-12 text-xs sm:text-sm px-2 sm:px-4 ${
+                          isInWishlist(featuredProducts[currentIndex].id) 
+                            ? 'bg-red-500/20 text-red-400 border-red-500/30' 
+                            : ''
+                        }`}
+                        onClick={() => handleAddToWishlist(featuredProducts[currentIndex])}
+                        disabled={wishlistLoading || isInWishlist(featuredProducts[currentIndex].id)}
                       >
-                        ADD TO CART
+                        <Heart 
+                          className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${
+                            isInWishlist(featuredProducts[currentIndex].id) ? 'fill-current' : ''
+                          }`} 
+                        />
+                        <span className="truncate">
+                          {isInWishlist(featuredProducts[currentIndex].id) ? 'IN WISHLIST' : 'ADD TO WISHLIST'}
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -239,7 +249,7 @@ export default function FeaturedProducts() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 1, delay: 0.2 }}
           viewport={{ once: true }}
           className="text-center mt-12"
         >

@@ -92,11 +92,11 @@ export default function WishlistPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="group"
+                className="group h-full"
               >
-                <div className="bg-primary-900 border border-primary-800 rounded-lg overflow-hidden hover:border-accent-500 transition-all duration-300">
+                <div className="bg-primary-900 border border-primary-800 rounded-lg overflow-hidden hover:border-accent-500 transition-all duration-300 h-full flex flex-col">
                   {/* Product Image */}
-                  <div className="relative overflow-hidden">
+                  <div className="relative overflow-hidden flex-shrink-0">
                     <Link href={`/product/${item.product.id}`}>
                       <img
                         src={item.product.imageUrls[0] || '/placeholder.jpg'}
@@ -136,9 +136,9 @@ export default function WishlistPage() {
                   </div>
 
                   {/* Product Info */}
-                  <div className="p-6">
-                    <div className="mb-4">
-                      <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-accent-400 transition-colors duration-300">
+                  <div className="p-6 flex flex-col flex-grow">
+                    <div className="mb-4 flex-grow">
+                      <h3 className="text-base font-semibold text-white mb-2 group-hover:text-accent-400 transition-colors duration-300 line-clamp-2 leading-tight">
                         <Link href={`/product/${item.product.id}`}>
                           {item.product.name}
                         </Link>
@@ -166,12 +166,12 @@ export default function WishlistPage() {
                     </div>
 
                     <button 
-                      className="w-full btn-primary text-sm py-3 flex items-center justify-center space-x-2"
+                      className="w-full btn-primary text-xs sm:text-sm py-2 sm:py-3 flex items-center justify-center space-x-1 sm:space-x-2 min-h-[40px] sm:min-h-[48px] mt-auto"
                       disabled={!item.product.isActive || item.product.stock === 0}
                       onClick={() => handleAddToCart(item.product)}
                     >
-                      <ShoppingBag className="w-4 h-4" />
-                      <span>
+                      <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="truncate">
                         {!item.product.isActive ? 'Unavailable' : 
                          item.product.stock === 0 ? 'Out of Stock' : 
                          'Add to Cart'}
