@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Heart } from 'lucide-react'
 import { useWishlist } from '@/lib/useWishlist'
+import { useFlyingHeart } from '@/lib/FlyingHeartContext'
 
 interface WishlistButtonProps {
   productId: string
@@ -18,18 +19,36 @@ export default function WishlistButton({
   showText = false 
 }: WishlistButtonProps) {
   const { isInWishlist, toggleWishlist, isLoading } = useWishlist()
+  const { triggerFlyingHeart } = useFlyingHeart()
   const [isAnimating, setIsAnimating] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const handleClick = async () => {
     if (isLoading) return
     
-    setIsAnimating(true)
+    const wasInWishlist = isInWishlist(productId)
     const success = await toggleWishlist(productId)
     
+    if (success && !wasInWishlist) {
+      // Only trigger flying heart when adding to wishlist
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect()
+        console.log('🚀 Triggering flying heart from:', rect.left, rect.top)
+        
+        // Add a small delay to ensure the button animation completes first
+        setTimeout(() => {
+          triggerFlyingHeart({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+          })
+          console.log('💖 Flying heart animation started!')
+        }, 100)
+      }
+    }
+    
     if (success) {
+      setIsAnimating(true)
       setTimeout(() => setIsAnimating(false), 300)
-    } else {
-      setIsAnimating(false)
     }
   }
 
@@ -49,6 +68,7 @@ export default function WishlistButton({
 
   return (
     <button
+      ref={buttonRef}
       onClick={handleClick}
       disabled={isLoading}
       className={`

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Heart } from 'lucide-react'
 import { useWishlist } from '@/lib/useWishlist'
+import { useFlyingHeart } from '@/lib/FlyingHeartContext'
 import toast from 'react-hot-toast'
 
 interface FeaturedProduct {
@@ -21,6 +22,8 @@ export default function FeaturedProducts() {
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
   const [loading, setLoading] = useState(true)
   const { addToWishlist, isInWishlist, isLoading: wishlistLoading } = useWishlist()
+  const { triggerFlyingHeart } = useFlyingHeart()
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -66,6 +69,20 @@ export default function FeaturedProducts() {
     const success = await addToWishlist(product.id)
     if (success) {
       toast.success('Added to wishlist!')
+      
+      // Trigger flying heart animation with delay
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect()
+        console.log('🚀 Featured Products - Triggering flying heart from:', rect.left, rect.top)
+        
+        setTimeout(() => {
+          triggerFlyingHeart({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+          })
+          console.log('💖 Featured Products - Flying heart animation started!')
+        }, 200) // Slightly longer delay for featured products
+      }
     }
   }
 
@@ -190,6 +207,7 @@ export default function FeaturedProducts() {
                         VIEW DETAILS
                       </Link>
                       <button
+                        ref={buttonRef}
                         className={`btn-secondary flex items-center justify-center gap-1 sm:gap-2 min-w-[120px] sm:min-w-[140px] h-10 sm:h-12 text-xs sm:text-sm px-2 sm:px-4 ${
                           isInWishlist(featuredProducts[currentIndex].id) 
                             ? 'bg-red-500/20 text-red-400 border-red-500/30' 

@@ -13,6 +13,7 @@ import {
 import Link from 'next/link'
 import { getCartCount, isUserAuthenticated, clearAllCartData } from '@/lib/cart'
 import toast from 'react-hot-toast'
+import { FlyingHeartProvider } from '@/lib/FlyingHeartContext'
 
 interface User {
   id: string
@@ -28,6 +29,7 @@ export default function Navigation() {
   const [user, setUser] = useState<User | null>(null)
   const [cartCount, setCartCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [isWishlistGlowing, setIsWishlistGlowing] = useState(false)
 
   useEffect(() => {
     fetchUserData()
@@ -107,6 +109,17 @@ export default function Navigation() {
     setIsMenuOpen(!isMenuOpen)
   }
 
+  // Listen for flying heart completion
+  useEffect(() => {
+    const handleFlyingHeartComplete = () => {
+      setIsWishlistGlowing(true)
+      setTimeout(() => setIsWishlistGlowing(false), 1000)
+    }
+
+    window.addEventListener('flyingHeartComplete', handleFlyingHeartComplete)
+    return () => window.removeEventListener('flyingHeartComplete', handleFlyingHeartComplete)
+  }, [])
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-40 bg-primary-900/95 backdrop-blur-sm border-b border-primary-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -153,9 +166,16 @@ export default function Navigation() {
             {/* Wishlist */}
             <Link
               href="/wishlist"
-              className="p-2 text-gray-300 hover:text-white transition-colors duration-200"
+              className={`p-2 text-gray-300 hover:text-white transition-colors duration-200 ${
+                isWishlistGlowing ? 'text-red-500' : ''
+              }`}
             >
-              <Heart className="w-6 h-6" />
+              <motion.div
+                animate={isWishlistGlowing ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Heart className={`w-6 h-6 ${isWishlistGlowing ? 'fill-red-500' : ''}`} />
+              </motion.div>
             </Link>
 
             {/* User Profile */}
