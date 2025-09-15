@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('Request body:', body)
     
-    const { productId, quantity } = body
+    const { productId, quantity, sizes } = body
 
     if (!productId || !quantity || quantity < 1) {
       console.log('Invalid request data:', { productId, quantity })
@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
         },
         data: {
           quantity: newQuantity,
+          sizes: sizes,
           addedAt: new Date()
         }
       })
@@ -118,7 +119,8 @@ export async function POST(request: NextRequest) {
         data: {
           userId: decoded.id,
           productId: productId,
-          quantity: quantity
+          quantity: quantity,
+          sizes: sizes
         }
       })
 
@@ -206,7 +208,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { productId, quantity } = await request.json()
+    const { productId, quantity, sizes } = await request.json()
 
     if (!productId || quantity === undefined) {
       return NextResponse.json(
@@ -280,6 +282,7 @@ export async function PATCH(request: NextRequest) {
         },
         data: {
           quantity: quantity,
+          sizes: sizes,
           addedAt: new Date()
         }
       })

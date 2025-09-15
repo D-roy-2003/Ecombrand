@@ -33,6 +33,7 @@ export interface OrderItem {
   productId: string
   quantity: number
   price: number
+  sizes?: string
   product: Product
 }
 

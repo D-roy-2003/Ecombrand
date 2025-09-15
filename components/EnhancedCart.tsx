@@ -200,9 +200,9 @@ export default function EnhancedCart({ isOpen, onClose }: EnhancedCartProps) {
                           <p className="text-accent-400 font-semibold">
                             ${item.price}
                           </p>
-                          {item.sizes && item.sizes.length > 0 && (
+                          {item.selectedSize && (
                             <p className="text-xs text-gray-400 mt-1">
-                              Sizes: {item.sizes.join(', ')}
+                              Size: {item.selectedSize}
                             </p>
                           )}
                         </div>

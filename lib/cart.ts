@@ -45,7 +45,7 @@ export function setCurrentUserId(userId: string | null) {
 }
 
 // Add item to cart (database-based)
-export async function addToCart(item: Omit<CartItem, 'quantity' | 'addedAt' | 'productId'>, quantity: number = 1): Promise<{ success: boolean; message?: string; availableStock?: number; requiresLogin?: boolean }> {
+export async function addToCart(item: Omit<CartItem, 'quantity' | 'addedAt' | 'productId'>, quantity: number = 1, selectedSize?: string): Promise<{ success: boolean; message?: string; availableStock?: number; requiresLogin?: boolean }> {
   try {
     // Check if user is authenticated
     if (!isUserAuthenticated()) {
@@ -64,7 +64,8 @@ export async function addToCart(item: Omit<CartItem, 'quantity' | 'addedAt' | 'p
       credentials: 'include',
       body: JSON.stringify({
         productId: item.id,
-        quantity: quantity
+        quantity: quantity,
+        sizes: selectedSize
       })
     })
 
@@ -108,7 +109,8 @@ export async function getCartItems(): Promise<CartItem[]> {
         imageUrl: item.product.imageUrls[0] || '/placeholder.jpg',
         quantity: item.quantity,
         addedAt: new Date(item.addedAt).getTime(),
-        sizes: item.product.sizes || []
+        sizes: item.product.sizes || [],
+        selectedSize: item.sizes
       }))
     } else {
       console.error('Failed to fetch cart items')
@@ -121,7 +123,7 @@ export async function getCartItems(): Promise<CartItem[]> {
 }
 
 // Update cart item quantity (database-based)
-export async function updateQuantity(productId: string, quantity: number): Promise<{ success: boolean; message?: string }> {
+export async function updateQuantity(productId: string, quantity: number, selectedSize?: string): Promise<{ success: boolean; message?: string }> {
   try {
     if (!isUserAuthenticated()) {
       return { 
@@ -138,7 +140,8 @@ export async function updateQuantity(productId: string, quantity: number): Promi
       credentials: 'include',
       body: JSON.stringify({
         productId: productId,
-        quantity: quantity
+        quantity: quantity,
+        sizes: selectedSize
       })
     })
 

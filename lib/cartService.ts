@@ -6,6 +6,7 @@ export interface DatabaseCartItem {
   userId: string
   productId: string
   quantity: number
+  sizes?: string
   addedAt: Date
   product: {
     id: string
@@ -61,14 +62,14 @@ export class CartService {
   }
 
   // Add item to database cart (for authenticated users)
-  public async addToDbCart(productId: string, quantity: number = 1): Promise<boolean> {
+  public async addToDbCart(productId: string, quantity: number = 1, sizes?: string): Promise<boolean> {
     try {
       const response = await fetch('/api/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ productId, quantity }),
+        body: JSON.stringify({ productId, quantity, sizes }),
       })
 
       if (response.ok) {
@@ -152,10 +153,12 @@ export class CartService {
   public dbCartToLocalCart(dbItems: DatabaseCartItem[]): CartItem[] {
     return dbItems.map(item => ({
       id: item.productId,
+      productId: item.productId,
       name: item.product.name,
       price: item.product.price,
       imageUrl: item.product.imageUrls[0] || '/placeholder.jpg',
       quantity: item.quantity,
+      selectedSize: item.sizes,
       addedAt: new Date(item.addedAt).getTime()
     }))
   }

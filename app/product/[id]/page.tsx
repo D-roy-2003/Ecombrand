@@ -93,7 +93,7 @@ export default function ProductPage() {
         name: product.name,
         price: product.price,
         imageUrl: product.imageUrls[0]
-      }, quantity)
+      }, quantity, selectedSize)
       
       if (result.success) {
         toast.success('Added to cart!')
