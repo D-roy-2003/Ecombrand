@@ -118,12 +118,47 @@ export default function CartPage() {
     }
   }
 
-  const handleSizeChange = (productId: string, newSize: string) => {
+  const handleSizeChange = async (productId: string, newSize: string) => {
+    // Update local state immediately for UI responsiveness
     setSelectedSizes(prev => ({
       ...prev,
       [productId]: newSize
     }))
-    toast.success('Size updated')
+    
+    setUpdating(productId)
+    try {
+      // Find the current item to get its quantity
+      const currentItem = cartItems.find(item => item.productId === productId)
+      if (!currentItem) return
+      
+      // Update the size in the database by calling updateQuantity with the new size
+      const result = await updateQuantity(productId, currentItem.quantity, newSize)
+      if (result.success) {
+        toast.success('Size updated')
+        // Reload cart items to get the updated data
+        await loadCartItems()
+      } else {
+        // Revert local state if API call failed
+        setSelectedSizes(prev => ({
+          ...prev,
+          [productId]: currentItem.selectedSize || currentItem.sizes?.[0] || ''
+        }))
+        toast.error(result.message || 'Failed to update size')
+      }
+    } catch (error) {
+      console.error('Error updating size:', error)
+      // Revert local state if API call failed
+      const currentItem = cartItems.find(item => item.productId === productId)
+      if (currentItem) {
+        setSelectedSizes(prev => ({
+          ...prev,
+          [productId]: currentItem.selectedSize || currentItem.sizes?.[0] || ''
+        }))
+      }
+      toast.error('Failed to update size')
+    } finally {
+      setUpdating(null)
+    }
   }
 
   const handleCheckout = () => {
@@ -225,9 +260,10 @@ export default function CartPage() {
                               <label className="text-sm text-gray-400 block mb-1">Size:</label>
                               <div className="relative">
                                 <select
-                                  value={selectedSizes[item.productId] || item.sizes[0]}
+                                  value={selectedSizes[item.productId] || item.selectedSize || item.sizes[0]}
                                   onChange={(e) => handleSizeChange(item.productId, e.target.value)}
-                                  className="bg-primary-700 border border-primary-600 text-white text-sm rounded-lg px-3 py-2 pr-8 appearance-none cursor-pointer hover:border-accent-500 focus:border-accent-500 focus:outline-none transition-colors"
+                                  disabled={updating === item.productId}
+                                  className="bg-primary-700 border border-primary-600 text-white text-sm rounded-lg px-3 py-2 pr-8 appearance-none cursor-pointer hover:border-accent-500 focus:border-accent-500 focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   {item.sizes.map((size) => (
                                     <option key={size} value={size} className="bg-primary-700">
