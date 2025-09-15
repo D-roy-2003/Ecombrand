@@ -7,6 +7,7 @@ export interface CartItem {
   addedAt: number // timestamp
   productId: string
   sizes?: string[]
+  selectedSize?: string
 }
 
 // Check if user is authenticated
@@ -210,7 +211,11 @@ export async function clearCart(): Promise<{ success: boolean; message?: string 
 
     const response = await fetch('/api/cart', {
       method: 'DELETE',
-      credentials: 'include'
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({})
     })
 
     if (response.ok) {

@@ -4,9 +4,13 @@ import { verifyToken } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('POST /api/cart - Starting request')
+    
     const token = request.cookies.get('user-token')?.value
+    console.log('Token found:', !!token)
     
     if (!token) {
+      console.log('No token provided')
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -14,16 +18,23 @@ export async function POST(request: NextRequest) {
     }
 
     const decoded = verifyToken(token)
+    console.log('Token decoded:', !!decoded)
+    
     if (!decoded) {
+      console.log('Invalid token')
       return NextResponse.json(
         { error: 'Invalid token' },
         { status: 401 }
       )
     }
 
-    const { productId, quantity } = await request.json()
+    const body = await request.json()
+    console.log('Request body:', body)
+    
+    const { productId, quantity } = body
 
     if (!productId || !quantity || quantity < 1) {
+      console.log('Invalid request data:', { productId, quantity })
       return NextResponse.json(
         { error: 'Product ID and valid quantity are required' },
         { status: 400 }
@@ -31,18 +42,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if product exists and calculate available stock
+    console.log('Looking for product with ID:', productId)
     const product = await prisma.product.findUnique({
       where: { id: productId }
     })
 
     if (!product) {
+      console.log('Product not found:', productId)
       return NextResponse.json(
         { error: 'Product not found' },
         { status: 404 }
       )
     }
 
+    console.log('Product found:', product.name)
+
     // Calculate reserved stock (items in carts)
+    console.log('Calculating reserved stock for product:', productId)
     const reservedStock = await prisma.cart.aggregate({
       where: { productId: productId },
       _sum: { quantity: true }
@@ -50,6 +66,7 @@ export async function POST(request: NextRequest) {
 
     const totalReserved = reservedStock._sum.quantity || 0
     const availableStock = product.stock - totalReserved
+    console.log('Stock info:', { total: product.stock, reserved: totalReserved, available: availableStock })
 
     if (availableStock < quantity) {
       return NextResponse.json(
@@ -59,6 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if item already exists in cart
+    console.log('Checking existing cart item for user:', decoded.id, 'product:', productId)
     const existingCartItem = await prisma.cart.findUnique({
       where: {
         userId_productId: {
@@ -67,6 +85,7 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+    console.log('Existing cart item:', existingCartItem ? 'found' : 'not found')
 
     if (existingCartItem) {
       // Update quantity and timestamp
@@ -107,8 +126,13 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Cart operation error:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    })
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
@@ -290,18 +314,34 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const { productId } = await request.json()
+    let productId = null
+    
+    try {
+      const body = await request.json()
+      productId = body.productId
+    } catch (error) {
+      // No body or invalid JSON, treat as clear cart request
+      productId = null
+    }
 
     if (productId) {
       // Remove specific item
-      await prisma.cart.delete({
-        where: {
-          userId_productId: {
-            userId: decoded.id,
-            productId: productId
+      try {
+        await prisma.cart.delete({
+          where: {
+            userId_productId: {
+              userId: decoded.id,
+              productId: productId
+            }
           }
-        }
-      })
+        })
+      } catch (deleteError) {
+        console.error('Error deleting cart item:', deleteError)
+        return NextResponse.json(
+          { error: 'Item not found in cart' },
+          { status: 404 }
+        )
+      }
     } else {
       // Clear entire cart
       await prisma.cart.deleteMany({

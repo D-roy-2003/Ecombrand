@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ShoppingBag } from 'lucide-react'
-import { addToCart, isUserAuthenticated } from '@/lib/cart'
+import { Eye } from 'lucide-react'
 import WishlistButton from './WishlistButton'
-import toast from 'react-hot-toast'
 
 interface Product {
   id: string
@@ -144,29 +142,13 @@ export default function ProductGrid({ products, isLoading }: ProductGridProps) {
                     </span>
                   )}
                 </div>
-                <button 
-                  className="btn-primary text-sm py-2 px-4 flex-shrink-0"
-                  disabled={product.stock === 0}
-                  onClick={async () => {
-                    const result = await addToCart({
-                      id: product.id,
-                      name: product.name,
-                      price: product.price,
-                      imageUrl: product.imageUrls[0]  // Use first image from array
-                    })
-                    
-                    if (result.success) {
-                      toast.success('Item added to cart!')
-                    } else if (result.requiresLogin) {
-                      toast.error('Please login to add products to the cart')
-                    } else {
-                      toast.error(result.message || 'Failed to add item to cart')
-                    }
-                  }}
+                <Link 
+                  href={`/product/${product.id}`}
+                  className="btn-secondary flex items-center justify-center gap-2 text-sm py-2 px-4 flex-shrink-0 min-w-[120px]"
                 >
-                  <ShoppingBag className="w-4 h-4 mr-2" />
-                  ADD TO CART
-                </button>
+                  <Eye className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">VIEW DETAILS</span>
+                </Link>
               </div>
             </div>
           </div>

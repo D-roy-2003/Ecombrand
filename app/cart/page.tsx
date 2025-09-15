@@ -9,7 +9,8 @@ import {
   Trash2, 
   ShoppingBag, 
   ArrowLeft,
-  X
+  X,
+  ChevronDown
 } from 'lucide-react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -23,6 +24,7 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
   const [updating, setUpdating] = useState<string | null>(null)
+  const [selectedSizes, setSelectedSizes] = useState<{[key: string]: string}>({})
 
   const loadCartItems = async () => {
     if (!isUserAuthenticated()) {
@@ -38,6 +40,15 @@ export default function CartPage() {
       const cartTotal = await getCartTotal()
       setCartItems(items)
       setTotal(cartTotal)
+      
+      // Initialize selected sizes for items that have sizes
+      const initialSizes: {[key: string]: string} = {}
+      items.forEach(item => {
+        if (item.sizes && item.sizes.length > 0) {
+          initialSizes[item.productId] = item.selectedSize || item.sizes[0]
+        }
+      })
+      setSelectedSizes(initialSizes)
     } catch (error) {
       console.error('Error loading cart items:', error)
       toast.error('Failed to load cart items')
@@ -105,6 +116,14 @@ export default function CartPage() {
     } finally {
       setUpdating(null)
     }
+  }
+
+  const handleSizeChange = (productId: string, newSize: string) => {
+    setSelectedSizes(prev => ({
+      ...prev,
+      [productId]: newSize
+    }))
+    toast.success('Size updated')
   }
 
   const handleCheckout = () => {
@@ -202,9 +221,23 @@ export default function CartPage() {
                             ${item.price}
                           </p>
                           {item.sizes && item.sizes.length > 0 && (
-                            <p className="text-sm text-gray-400 mt-1">
-                              Sizes: {item.sizes.join(', ')}
-                            </p>
+                            <div className="mt-3">
+                              <label className="text-sm text-gray-400 block mb-1">Size:</label>
+                              <div className="relative">
+                                <select
+                                  value={selectedSizes[item.productId] || item.sizes[0]}
+                                  onChange={(e) => handleSizeChange(item.productId, e.target.value)}
+                                  className="bg-primary-700 border border-primary-600 text-white text-sm rounded-lg px-3 py-2 pr-8 appearance-none cursor-pointer hover:border-accent-500 focus:border-accent-500 focus:outline-none transition-colors"
+                                >
+                                  {item.sizes.map((size) => (
+                                    <option key={size} value={size} className="bg-primary-700">
+                                      {size}
+                                    </option>
+                                  ))}
+                                </select>
+                                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                              </div>
+                            </div>
                           )}
                         </div>
 
