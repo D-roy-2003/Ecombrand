@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
     console.log('Request body:', body)
     
     const { productId, quantity, sizes } = body
+    const sizeValue: string = sizes || ''
 
     if (!productId || !quantity || quantity < 1) {
       console.log('Invalid request data:', { productId, quantity })
@@ -75,13 +76,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if item already exists in cart
-    console.log('Checking existing cart item for user:', decoded.id, 'product:', productId)
+    // Check if item already exists in cart with same size
+    console.log('Checking existing cart item for user:', decoded.id, 'product:', productId, 'size:', sizes)
     const existingCartItem = await prisma.cart.findUnique({
       where: {
-        userId_productId: {
+        userId_productId_sizes: {
           userId: decoded.id,
-          productId: productId
+          productId: productId,
+          sizes: sizeValue
         }
       }
     })
@@ -100,14 +102,15 @@ export async function POST(request: NextRequest) {
 
       const updatedCartItem = await prisma.cart.update({
         where: {
-          userId_productId: {
+          userId_productId_sizes: {
             userId: decoded.id,
-            productId: productId
+            productId: productId,
+            sizes: sizeValue
           }
         },
         data: {
           quantity: newQuantity,
-          sizes: sizes,
+          sizes: sizeValue,
           addedAt: new Date()
         }
       })
@@ -120,7 +123,7 @@ export async function POST(request: NextRequest) {
           userId: decoded.id,
           productId: productId,
           quantity: quantity,
-          sizes: sizes
+          sizes: sizeValue
         }
       })
 
@@ -209,6 +212,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const { productId, quantity, sizes } = await request.json()
+    const sizeValue: string = sizes || ''
 
     if (!productId || quantity === undefined) {
       return NextResponse.json(
@@ -236,30 +240,55 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Check if item exists in cart
-    const existingCartItem = await prisma.cart.findUnique({
+    // Prefer the specific size variant if provided
+    let existingCartItem = sizes !== undefined ? await prisma.cart.findUnique({
       where: {
-        userId_productId: {
+        userId_productId_sizes: {
           userId: decoded.id,
-          productId: productId
+          productId: productId,
+          sizes: sizeValue
         }
+      }
+    }) : await prisma.cart.findFirst({
+      where: {
+        userId: decoded.id,
+        productId: productId
       }
     })
 
     if (!existingCartItem) {
-      return NextResponse.json(
-        { error: 'Item not found in cart' },
-        { status: 404 }
-      )
+      // If updating size to a new variant (sizes provided) and current variant not found,
+      // try to find any existing record for this product to reassign its size.
+      if (sizes !== undefined) {
+        const anyItem = await prisma.cart.findFirst({
+          where: {
+            userId: decoded.id,
+            productId: productId
+          }
+        })
+        if (!anyItem) {
+          return NextResponse.json(
+            { error: 'Item not found in cart' },
+            { status: 404 }
+          )
+        }
+        existingCartItem = anyItem
+      } else {
+        return NextResponse.json(
+          { error: 'Item not found in cart' },
+          { status: 404 }
+        )
+      }
     }
 
     if (quantity === 0) {
       // Remove item from cart
       await prisma.cart.delete({
         where: {
-          userId_productId: {
+          userId_productId_sizes: {
             userId: decoded.id,
-            productId: productId
+            productId: productId,
+            sizes: sizeValue
           }
         }
       })
@@ -272,20 +301,52 @@ export async function PATCH(request: NextRequest) {
         )
       }
 
-      // Update quantity
-      await prisma.cart.update({
-        where: {
-          userId_productId: {
-            userId: decoded.id,
-            productId: productId
+      // Update quantity and possibly size
+      if (sizes === undefined || existingCartItem.sizes === sizeValue) {
+        // Simple quantity update on the same variant
+        await prisma.cart.update({
+          where: { id: existingCartItem.id },
+          data: {
+            quantity: quantity,
+            addedAt: new Date()
           }
-        },
-        data: {
-          quantity: quantity,
-          sizes: sizes,
-          addedAt: new Date()
+        })
+      } else {
+        // Changing size: if a target variant exists, update that one; else reassign current record's size
+        const targetVariant = await prisma.cart.findUnique({
+          where: {
+            userId_productId_sizes: {
+              userId: decoded.id,
+              productId: productId,
+              sizes: sizeValue
+            }
+          }
+        })
+
+        if (targetVariant) {
+          // Update target variant's quantity and delete the old one
+          await prisma.cart.update({
+            where: { id: targetVariant.id },
+            data: {
+              quantity: quantity,
+              addedAt: new Date()
+            }
+          })
+          await prisma.cart.delete({
+            where: { id: existingCartItem.id }
+          })
+        } else {
+          // Reassign the current record's size
+          await prisma.cart.update({
+            where: { id: existingCartItem.id },
+            data: {
+              sizes: sizeValue,
+              quantity: quantity,
+              addedAt: new Date()
+            }
+          })
         }
-      })
+      }
     }
 
     return NextResponse.json({ success: true })
@@ -318,26 +379,40 @@ export async function DELETE(request: NextRequest) {
     }
 
     let productId = null
+    let sizes: string | null = null
     
     try {
       const body = await request.json()
       productId = body.productId
+      sizes = body.sizes ?? null
     } catch (error) {
       // No body or invalid JSON, treat as clear cart request
       productId = null
     }
 
     if (productId) {
-      // Remove specific item
+      const sizeValue: string = sizes || ''
       try {
-        await prisma.cart.delete({
-          where: {
-            userId_productId: {
+        if (sizes !== null) {
+          // Remove specific size variant
+          await prisma.cart.delete({
+            where: {
+              userId_productId_sizes: {
+                userId: decoded.id,
+                productId: productId,
+                sizes: sizeValue
+              }
+            }
+          })
+        } else {
+          // Remove all sizes for this product
+          await prisma.cart.deleteMany({
+            where: {
               userId: decoded.id,
               productId: productId
             }
-          }
-        })
+          })
+        }
       } catch (deleteError) {
         console.error('Error deleting cart item:', deleteError)
         return NextResponse.json(

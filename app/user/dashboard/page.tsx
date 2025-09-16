@@ -335,23 +335,24 @@ export default function UserDashboard() {
   }
 
   const handleRemoveFromWishlist = async (productId: string) => {
-    const success = await removeFromWishlist(productId)
-    if (success) {
-      fetchWishlist() // Refresh wishlist
+    try {
+      const success = await removeFromWishlist(productId)
+      if (success) {
+        toast.success('Removed from wishlist')
+        await fetchWishlist()
+      } else {
+        toast.error('Failed to remove from wishlist')
+      }
+    } catch (error) {
+      console.error('Error removing from wishlist:', error)
+      toast.error('Failed to remove from wishlist')
     }
   }
 
   const handleQuantityChange = async (productId: string, newQuantity: number) => {
-    if (newQuantity < 0) return
-
     try {
-      const result = await updateQuantity(productId, newQuantity)
-      if (result.success) {
-        await loadCartItems() // Reload cart items
-        toast.success('Cart updated')
-      } else {
-        toast.error(result.message || 'Failed to update quantity')
-      }
+      await updateQuantity(productId, newQuantity)
+      await loadCartItems()
     } catch (error) {
       console.error('Error updating quantity:', error)
       toast.error('Failed to update quantity')
@@ -360,15 +361,11 @@ export default function UserDashboard() {
 
   const handleRemoveFromCart = async (productId: string) => {
     try {
-      const result = await removeFromCart(productId)
-      if (result.success) {
-        await loadCartItems() // Reload cart items
-        toast.success('Item removed from cart')
-      } else {
-        toast.error(result.message || 'Failed to remove item')
-      }
+      await removeFromCart(productId)
+      toast.success('Removed item from cart')
+      await loadCartItems()
     } catch (error) {
-      console.error('Error removing item:', error)
+      console.error('Error removing item from cart:', error)
       toast.error('Failed to remove item')
     }
   }

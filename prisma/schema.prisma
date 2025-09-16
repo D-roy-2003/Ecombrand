@@ -105,7 +105,7 @@ model OrderItem {
   productId String
   quantity  Int
   price     Float
-  sizes     String?
+  sizes     String   @default("")
   order     Order   @relation(fields: [orderId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
 
@@ -150,12 +150,12 @@ model Cart {
   userId    String
   productId String
   quantity  Int
-  sizes     String?
+  sizes     String   @default("")
   addedAt   DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, productId])
+  @@unique([userId, productId, sizes])
   @@map("carts")
 }
 

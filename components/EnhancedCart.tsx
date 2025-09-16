@@ -49,7 +49,8 @@ export default function EnhancedCart({ isOpen, onClose }: EnhancedCartProps) {
 
     setLoading(true)
     try {
-      const result = await updateQuantity(productId, newQuantity)
+      const currentItem = cartItems.find(ci => ci.productId === productId)
+      const result = await updateQuantity(productId, newQuantity, currentItem?.selectedSize)
       if (result.success) {
         await loadCartItems() // Reload cart items
         toast.success('Cart updated')
@@ -67,7 +68,8 @@ export default function EnhancedCart({ isOpen, onClose }: EnhancedCartProps) {
   const handleRemoveItem = async (productId: string) => {
     setLoading(true)
     try {
-      const result = await removeFromCart(productId)
+      const currentItem = cartItems.find(ci => ci.productId === productId)
+      const result = await removeFromCart(productId, currentItem?.selectedSize)
       if (result.success) {
         await loadCartItems() // Reload cart items
         toast.success('Item removed from cart')

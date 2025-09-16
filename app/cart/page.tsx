@@ -45,7 +45,7 @@ export default function CartPage() {
       const initialSizes: {[key: string]: string} = {}
       items.forEach(item => {
         if (item.sizes && item.sizes.length > 0) {
-          initialSizes[item.productId] = item.selectedSize || item.sizes[0]
+          initialSizes[item.id] = item.selectedSize || item.sizes[0]
         }
       })
       setSelectedSizes(initialSizes)
@@ -66,7 +66,9 @@ export default function CartPage() {
 
     setUpdating(productId)
     try {
-      const result = await updateQuantity(productId, newQuantity)
+      const currentItem = cartItems.find(ci => ci.productId === productId)
+      const size = currentItem ? (selectedSizes[currentItem.id] || currentItem.selectedSize) : undefined
+      const result = await updateQuantity(productId, newQuantity, size)
       if (result.success) {
         await loadCartItems() // Reload cart items
         toast.success('Cart updated')
@@ -84,7 +86,9 @@ export default function CartPage() {
   const handleRemoveItem = async (productId: string) => {
     setUpdating(productId)
     try {
-      const result = await removeFromCart(productId)
+      const currentItem = cartItems.find(ci => ci.productId === productId)
+      const size = currentItem ? (selectedSizes[currentItem.id] || currentItem.selectedSize) : undefined
+      const result = await removeFromCart(productId, size)
       if (result.success) {
         await loadCartItems() // Reload cart items
         toast.success('Item removed from cart')
@@ -118,11 +122,11 @@ export default function CartPage() {
     }
   }
 
-  const handleSizeChange = async (productId: string, newSize: string) => {
+  const handleSizeChange = async (itemId: string, productId: string, newSize: string) => {
     // Update local state immediately for UI responsiveness
     setSelectedSizes(prev => ({
       ...prev,
-      [productId]: newSize
+      [itemId]: newSize
     }))
     
     setUpdating(productId)
@@ -141,7 +145,7 @@ export default function CartPage() {
         // Revert local state if API call failed
         setSelectedSizes(prev => ({
           ...prev,
-          [productId]: currentItem.selectedSize || currentItem.sizes?.[0] || ''
+          [itemId]: currentItem.selectedSize || currentItem.sizes?.[0] || ''
         }))
         toast.error(result.message || 'Failed to update size')
       }
@@ -152,7 +156,7 @@ export default function CartPage() {
       if (currentItem) {
         setSelectedSizes(prev => ({
           ...prev,
-          [productId]: currentItem.selectedSize || currentItem.sizes?.[0] || ''
+          [itemId]: currentItem.selectedSize || currentItem.sizes?.[0] || ''
         }))
       }
       toast.error('Failed to update size')
@@ -260,8 +264,8 @@ export default function CartPage() {
                               <label className="text-sm text-gray-400 block mb-1">Size:</label>
                               <div className="relative">
                                 <select
-                                  value={selectedSizes[item.productId] || item.selectedSize || item.sizes[0]}
-                                  onChange={(e) => handleSizeChange(item.productId, e.target.value)}
+                                  value={selectedSizes[item.id] || item.selectedSize || item.sizes[0]}
+                                  onChange={(e) => handleSizeChange(item.id, item.productId, e.target.value)}
                                   disabled={updating === item.productId}
                                   className="bg-primary-700 border border-primary-600 text-white text-sm rounded-lg px-3 py-2 pr-8 appearance-none cursor-pointer hover:border-accent-500 focus:border-accent-500 focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >

@@ -106,7 +106,7 @@ export async function getCartItems(): Promise<CartItem[]> {
     if (response.ok) {
       const data = await response.json()
       return data.cartItems.map((item: any) => ({
-        id: item.product.id,
+        id: `${item.product.id}:${item.sizes ?? ''}`,
         productId: item.product.id,
         name: item.product.name,
         price: item.product.price,
@@ -168,7 +168,7 @@ export async function updateQuantity(productId: string, quantity: number, select
 }
 
 // Remove item from cart (database-based)
-export async function removeFromCart(productId: string): Promise<{ success: boolean; message?: string }> {
+export async function removeFromCart(productId: string, selectedSize?: string): Promise<{ success: boolean; message?: string }> {
   try {
     if (!isUserAuthenticated()) {
       return { 
@@ -184,7 +184,8 @@ export async function removeFromCart(productId: string): Promise<{ success: bool
       },
       credentials: 'include',
       body: JSON.stringify({
-        productId: productId
+        productId: productId,
+        sizes: selectedSize
       })
     })
 
