@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Eye, EyeOff, Lock, Mail, User, ShoppingCart, Heart } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { setCurrentUserId } from '@/lib/cart'
 
@@ -14,7 +14,21 @@ export default function UserLoginPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [alertMessage, setAlertMessage] = useState<{ type: 'cart' | 'wishlist' | null; show: boolean }>({ type: null, show: false })
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Check for alert message on component mount
+  useEffect(() => {
+    const message = searchParams.get('message')
+    if (message === 'cart' || message === 'wishlist') {
+      setAlertMessage({ type: message as 'cart' | 'wishlist', show: true })
+      // Auto-hide alert after 5 seconds
+      setTimeout(() => {
+        setAlertMessage(prev => ({ ...prev, show: false }))
+      }, 5000)
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,6 +90,10 @@ export default function UserLoginPage() {
     }
   }
 
+  const dismissAlert = () => {
+    setAlertMessage(prev => ({ ...prev, show: false }))
+  }
+
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
       <motion.div
@@ -84,6 +102,53 @@ export default function UserLoginPage() {
         transition={{ duration: 0.6 }}
         className="w-full max-w-md"
       >
+        {/* Alert Message */}
+        {alertMessage.show && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-6 p-4 rounded-lg border-l-4 shadow-lg"
+            style={{
+              backgroundColor: '#1f2937',
+              borderLeftColor: '#f59e0b',
+              border: '1px solid #374151'
+            }}
+          >
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                {alertMessage.type === 'cart' ? (
+                  <ShoppingCart className="w-6 h-6 text-amber-400" />
+                ) : (
+                  <Heart className="w-6 h-6 text-amber-400" />
+                )}
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-sm font-medium text-white">
+                  {alertMessage.type === 'cart' ? 'Login Required for Cart' : 'Login Required for Wishlist'}
+                </h3>
+                <p className="mt-1 text-sm text-gray-300">
+                  {alertMessage.type === 'cart' 
+                    ? 'Please log in to add products to your cart and continue shopping.' 
+                    : 'Please log in to add products to your wishlist and save your favorites.'
+                  }
+                </p>
+              </div>
+              <div className="ml-4 flex-shrink-0">
+                <button
+                  onClick={dismissAlert}
+                  className="text-gray-400 hover:text-white transition-colors duration-200"
+                >
+                  <span className="sr-only">Dismiss</span>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Logo */}
         <div className="text-center mb-8">
           <span className="text-4xl font-display font-bold text-gradient">

@@ -18,7 +18,7 @@ interface WishlistItem {
 }
 
 export const useWishlist = () => {
-  const [wishlist, setWishlist] = useState<WishlistItem[]>([])
+  const [wishlist, setWishlist] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   const fetchWishlist = async () => {
@@ -56,7 +56,10 @@ export const useWishlist = () => {
   const addToWishlist = async (productId: string) => {
     // Check if user is authenticated before making API call
     if (!isUserAuthenticated()) {
-      toast.error('Please login to add products to your wishlist')
+      // Redirect to login page with wishlist message
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login?message=wishlist'
+      }
       return false
     }
 
@@ -74,10 +77,12 @@ export const useWishlist = () => {
       if (response.ok) {
         const newItem = await response.json()
         setWishlist(prev => [newItem, ...prev])
-        toast.success('Added to wishlist!')
         return true
       } else if (response.status === 401) {
-        toast.error('Please login to add products to your wishlist')
+        // Redirect to login page with wishlist message
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login?message=wishlist'
+        }
         return false
       } else {
         const error = await response.json()
@@ -96,7 +101,10 @@ export const useWishlist = () => {
   const removeFromWishlist = async (productId: string) => {
     // Check if user is authenticated before making API call
     if (!isUserAuthenticated()) {
-      toast.error('Please login to manage your wishlist')
+      // Redirect to login page with wishlist message
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login?message=wishlist'
+      }
       return false
     }
 
@@ -109,10 +117,12 @@ export const useWishlist = () => {
 
       if (response.ok) {
         setWishlist(prev => prev.filter(item => item.product.id !== productId))
-        toast.success('Removed from wishlist!')
         return true
       } else if (response.status === 401) {
-        toast.error('Please login to manage your wishlist')
+        // Redirect to login page with wishlist message
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login?message=wishlist'
+        }
         return false
       } else {
         toast.error('Failed to remove from wishlist')

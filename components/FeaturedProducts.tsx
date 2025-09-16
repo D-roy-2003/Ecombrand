@@ -68,7 +68,6 @@ export default function FeaturedProducts() {
 
     const success = await addToWishlist(product.id)
     if (success) {
-      toast.success('Added to wishlist!')
       
       // Trigger flying heart animation with delay
       if (buttonRef.current) {

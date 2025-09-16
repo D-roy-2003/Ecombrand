@@ -49,6 +49,10 @@ export async function addToCart(item: Omit<CartItem, 'quantity' | 'addedAt' | 'p
   try {
     // Check if user is authenticated
     if (!isUserAuthenticated()) {
+      // Redirect to login page with cart message
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login?message=cart'
+      }
       return { 
         success: false, 
         requiresLogin: true,

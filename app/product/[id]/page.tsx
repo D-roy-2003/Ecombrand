@@ -98,7 +98,8 @@ export default function ProductPage() {
       if (result.success) {
         toast.success('Added to cart!')
       } else if (result.requiresLogin) {
-        toast.error('Please login to add products to the cart')
+        // No toast message needed - user will be redirected to login page
+        return
       } else {
         toast.error(result.message || 'Failed to add to cart')
       }
