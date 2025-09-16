@@ -21,8 +21,20 @@ const categories = [
 ]
 
 const availableSizes = [
-  'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'
+  'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'
 ]
+
+// Size order for sorting
+const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL']
+
+// Function to sort sizes in proper order
+const sortSizes = (sizes: string[]): string[] => {
+  return sizes.sort((a, b) => {
+    const indexA = sizeOrder.indexOf(a)
+    const indexB = sizeOrder.indexOf(b)
+    return indexA - indexB
+  })
+}
 
 export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductModalProps) {
   const [formData, setFormData] = useState({
@@ -87,7 +99,8 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
         originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
         stock: parseInt(formData.stock),
         discount: formData.discount ? parseFloat(formData.discount) : 0,
-        imageUrls: finalImageUrls
+        imageUrls: finalImageUrls,
+        sizes: sortSizes(formData.sizes)
       }
 
       onAdd(product)
@@ -140,12 +153,16 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
   }
 
   const handleSizeChange = (size: string) => {
-    setFormData(prev => ({
-      ...prev,
-      sizes: prev.sizes.includes(size)
+    setFormData(prev => {
+      const newSizes = prev.sizes.includes(size)
         ? prev.sizes.filter(s => s !== size)
         : [...prev.sizes, size]
-    }))
+      
+      return {
+        ...prev,
+        sizes: sortSizes(newSizes)
+      }
+    })
   }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
