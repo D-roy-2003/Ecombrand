@@ -28,6 +28,12 @@ export async function GET(request: NextRequest) {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
+    // Calculate date ranges for comparisons
+    const now = new Date()
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
+
     // Get analytics data
     const [
       totalUsers,
@@ -35,7 +41,19 @@ export async function GET(request: NextRequest) {
       totalRevenue,
       recentOrders,
       topProducts,
-      monthlyGrowth,
+      // Weekly comparisons
+      ordersThisWeek,
+      ordersLastWeek,
+      revenueThisWeek,
+      revenueLastWeek,
+      // Monthly comparisons
+      ordersThisMonth,
+      ordersLastMonth,
+      revenueThisMonth,
+      revenueLastMonth,
+      // Product growth
+      productsThisMonth,
+      productsLastMonth,
       dailyStats
     ] = await Promise.all([
       // Total users
@@ -91,14 +109,103 @@ export async function GET(request: NextRequest) {
         take: 5
       }),
       
-      // Monthly growth calculation
+      // Orders this week
+      prisma.order.count({
+        where: {
+          createdAt: {
+            gte: oneWeekAgo
+          }
+        }
+      }),
+      
+      // Orders last week
+      prisma.order.count({
+        where: {
+          createdAt: {
+            gte: new Date(oneWeekAgo.getTime() - 7 * 24 * 60 * 60 * 1000),
+            lt: oneWeekAgo
+          }
+        }
+      }),
+      
+      // Revenue this week
       prisma.order.aggregate({
         where: {
           createdAt: {
-            gte: new Date(new Date().setMonth(new Date().getMonth() - 1))
+            gte: oneWeekAgo
           }
         },
         _sum: { totalPrice: true }
+      }),
+      
+      // Revenue last week
+      prisma.order.aggregate({
+        where: {
+          createdAt: {
+            gte: new Date(oneWeekAgo.getTime() - 7 * 24 * 60 * 60 * 1000),
+            lt: oneWeekAgo
+          }
+        },
+        _sum: { totalPrice: true }
+      }),
+      
+      // Orders this month
+      prisma.order.count({
+        where: {
+          createdAt: {
+            gte: oneMonthAgo
+          }
+        }
+      }),
+      
+      // Orders last month
+      prisma.order.count({
+        where: {
+          createdAt: {
+            gte: twoMonthsAgo,
+            lt: oneMonthAgo
+          }
+        }
+      }),
+      
+      // Revenue this month
+      prisma.order.aggregate({
+        where: {
+          createdAt: {
+            gte: oneMonthAgo
+          }
+        },
+        _sum: { totalPrice: true }
+      }),
+      
+      // Revenue last month
+      prisma.order.aggregate({
+        where: {
+          createdAt: {
+            gte: twoMonthsAgo,
+            lt: oneMonthAgo
+          }
+        },
+        _sum: { totalPrice: true }
+      }),
+      
+      // Products added this month
+      prisma.product.count({
+        where: {
+          createdAt: {
+            gte: oneMonthAgo
+          }
+        }
+      }),
+      
+      // Products added last month
+      prisma.product.count({
+        where: {
+          createdAt: {
+            gte: twoMonthsAgo,
+            lt: oneMonthAgo
+          }
+        }
       }),
       
       // Daily stats for the period
@@ -136,19 +243,37 @@ export async function GET(request: NextRequest) {
       })
     )
 
-    // Calculate growth percentage
-    const currentMonthRevenue = totalRevenue._sum.totalPrice || 0
-    const previousMonthRevenue = monthlyGrowth._sum.totalPrice || 0
-    const growthPercentage = previousMonthRevenue > 0 
-      ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100 
-      : 0
+    // Calculate growth percentages
+    const weeklyOrderGrowth = ordersLastWeek > 0 
+      ? ((ordersThisWeek - ordersLastWeek) / ordersLastWeek) * 100 
+      : ordersThisWeek > 0 ? 100 : 0
+
+    const weeklyRevenueGrowth = (revenueLastWeek._sum.totalPrice || 0) > 0 
+      ? (((revenueThisWeek._sum.totalPrice || 0) - (revenueLastWeek._sum.totalPrice || 0)) / (revenueLastWeek._sum.totalPrice || 0)) * 100 
+      : (revenueThisWeek._sum.totalPrice || 0) > 0 ? 100 : 0
+
+    const monthlyOrderGrowth = ordersLastMonth > 0 
+      ? ((ordersThisMonth - ordersLastMonth) / ordersLastMonth) * 100 
+      : ordersThisMonth > 0 ? 100 : 0
+
+    const monthlyRevenueGrowth = (revenueLastMonth._sum.totalPrice || 0) > 0 
+      ? (((revenueThisMonth._sum.totalPrice || 0) - (revenueLastMonth._sum.totalPrice || 0)) / (revenueLastMonth._sum.totalPrice || 0)) * 100 
+      : (revenueThisMonth._sum.totalPrice || 0) > 0 ? 100 : 0
+
+    const monthlyProductGrowth = productsLastMonth > 0 
+      ? ((productsThisMonth - productsLastMonth) / productsLastMonth) * 100 
+      : productsThisMonth > 0 ? 100 : 0
 
     return NextResponse.json({
       overview: {
         totalUsers,
         totalOrders,
         totalRevenue: totalRevenue._sum.totalPrice || 0,
-        monthlyGrowth: Math.round(growthPercentage * 100) / 100
+        monthlyGrowth: Math.round(monthlyRevenueGrowth * 100) / 100,
+        weeklyOrderGrowth: Math.round(weeklyOrderGrowth * 100) / 100,
+        monthlyOrderGrowth: Math.round(monthlyOrderGrowth * 100) / 100,
+        monthlyRevenueGrowth: Math.round(monthlyRevenueGrowth * 100) / 100,
+        monthlyProductGrowth: Math.round(monthlyProductGrowth * 100) / 100
       },
       recentOrders,
       topProducts: topProductsWithDetails,

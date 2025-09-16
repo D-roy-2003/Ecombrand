@@ -123,6 +123,9 @@ interface Analytics {
     totalOrders: number
     totalRevenue: number
     monthlyGrowth: number
+    weeklyOrderGrowth: number
+    monthlyRevenueGrowth: number
+    monthlyProductGrowth: number
   }
   recentOrders: Order[]
   topProducts: any[]
@@ -722,7 +725,9 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-sm font-medium text-gray-400 mb-1">Total Products</p>
                     <p className="text-3xl font-bold text-white">{products.length}</p>
-                    <p className="text-xs text-green-400 mt-1">+12% this month</p>
+                    <p className={`text-xs mt-1 ${(analytics?.overview?.monthlyProductGrowth ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {(analytics?.overview?.monthlyProductGrowth ?? 0) > 0 ? '+' : ''}{(analytics?.overview?.monthlyProductGrowth ?? 0).toFixed(1)}% this month
+                    </p>
                   </div>
                   <div className="p-4 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-xl">
                     <Package className="w-8 h-8 text-blue-400" />
@@ -735,7 +740,9 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-sm font-medium text-gray-400 mb-1">Total Orders</p>
                     <p className="text-3xl font-bold text-white">{analytics?.overview.totalOrders || 0}</p>
-                    <p className="text-xs text-green-400 mt-1">+8% this week</p>
+                    <p className={`text-xs mt-1 ${(analytics?.overview?.weeklyOrderGrowth ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {(analytics?.overview?.weeklyOrderGrowth ?? 0) > 0 ? '+' : ''}{(analytics?.overview?.weeklyOrderGrowth ?? 0).toFixed(1)}% this week
+                    </p>
                   </div>
                   <div className="p-4 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-xl">
                     <ShoppingCart className="w-8 h-8 text-green-400" />
@@ -748,7 +755,9 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-sm font-medium text-gray-400 mb-1">Total Revenue</p>
                     <p className="text-3xl font-bold text-white">${(analytics?.overview.totalRevenue || 0).toLocaleString()}</p>
-                    <p className="text-xs text-green-400 mt-1">+15% this month</p>
+                    <p className={`text-xs mt-1 ${(analytics?.overview?.monthlyRevenueGrowth ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {(analytics?.overview?.monthlyRevenueGrowth ?? 0) > 0 ? '+' : ''}{(analytics?.overview?.monthlyRevenueGrowth ?? 0).toFixed(1)}% this month
+                    </p>
                   </div>
                   <div className="p-4 bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-xl">
                     <DollarSign className="w-8 h-8 text-yellow-400" />
@@ -760,15 +769,15 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-400 mb-1">Monthly Growth</p>
-                    <p className={`text-3xl font-bold ${analytics?.overview.monthlyGrowth && analytics.overview.monthlyGrowth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {analytics?.overview.monthlyGrowth ? `${analytics.overview.monthlyGrowth}%` : '0%'}
+                    <p className={`text-3xl font-bold ${(analytics?.overview?.monthlyGrowth ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {(analytics?.overview?.monthlyGrowth ?? 0) > 0 ? '+' : ''}{(analytics?.overview?.monthlyGrowth ?? 0).toFixed(1)}%
                     </p>
-                    <p className={`text-xs mt-1 ${analytics?.overview.monthlyGrowth && analytics.overview.monthlyGrowth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {analytics?.overview.monthlyGrowth && analytics.overview.monthlyGrowth >= 0 ? '↗ Growing' : '↘ Declining'}
+                    <p className={`text-xs mt-1 ${(analytics?.overview?.monthlyGrowth ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {(analytics?.overview?.monthlyGrowth ?? 0) >= 0 ? '↗ Growing' : '↘ Declining'}
                     </p>
                   </div>
                   <div className="p-4 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-xl">
-                    {analytics?.overview.monthlyGrowth && analytics.overview.monthlyGrowth >= 0 ? (
+                    {(analytics?.overview?.monthlyGrowth ?? 0) >= 0 ? (
                       <TrendingUp className="w-8 h-8 text-green-400" />
                     ) : (
                       <TrendingDown className="w-8 h-8 text-red-400" />
@@ -788,14 +797,6 @@ export default function AdminDashboard() {
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Add New Product
-                </button>
-                <button className="btn-secondary">
-                  <Package className="w-5 h-5 mr-2" />
-                  View All Products
-                </button>
-                <button className="btn-secondary">
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  View Orders
                 </button>
               </div>
             </div>
