@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { 
   Plus, 
@@ -243,19 +244,27 @@ export default function CartPage() {
                     >
                       <div className="flex items-center gap-6">
                         {/* Product Image */}
-                        <div className="w-20 h-20 bg-primary-700 rounded-lg overflow-hidden flex-shrink-0">
+                        <Link 
+                          href={`/product/${item.productId}`}
+                          className="w-20 h-20 bg-primary-700 rounded-lg overflow-hidden flex-shrink-0 hover:ring-2 hover:ring-accent-500 transition-all duration-200"
+                        >
                           <img
                             src={item.imageUrl}
                             alt={item.name}
                             className="w-full h-full object-cover"
                           />
-                        </div>
+                        </Link>
 
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
-                            {item.name}
-                          </h3>
+                          <Link 
+                            href={`/product/${item.productId}`}
+                            className="block"
+                          >
+                            <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2 hover:text-accent-400 transition-colors duration-200">
+                              {item.name}
+                            </h3>
+                          </Link>
                           <p className="text-accent-400 font-bold text-xl">
                             ${item.price}
                           </p>
