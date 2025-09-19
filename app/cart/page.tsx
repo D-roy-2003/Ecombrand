@@ -266,7 +266,7 @@ export default function CartPage() {
                             </h3>
                           </Link>
                           <p className="text-accent-400 font-bold text-xl">
-                            ${item.price}
+                            ₹{item.price}
                           </p>
                           {item.sizes && item.sizes.length > 0 && (
                             <div className="mt-3">
@@ -314,7 +314,7 @@ export default function CartPage() {
                         {/* Item Total */}
                         <div className="text-right">
                           <p className="text-white font-bold text-lg">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            ₹{(item.price * item.quantity).toFixed(2)}
                           </p>
                         </div>
 
@@ -341,7 +341,7 @@ export default function CartPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-300">Subtotal</span>
                       <span className="text-white font-semibold">
-                        ${total.toFixed(2)}
+                        ₹{total.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -354,7 +354,7 @@ export default function CartPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold text-white">Total</span>
                       <span className="text-xl font-bold text-accent-400">
-                        ${total.toFixed(2)}
+                        ₹{total.toFixed(2)}
                       </span>
                     </div>
                   </div>

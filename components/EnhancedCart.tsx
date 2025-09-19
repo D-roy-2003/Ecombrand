@@ -200,7 +200,7 @@ export default function EnhancedCart({ isOpen, onClose }: EnhancedCartProps) {
                             {item.name}
                           </h3>
                           <p className="text-accent-400 font-semibold">
-                            ${item.price}
+                            ₹{item.price}
                           </p>
                           {item.selectedSize && (
                             <p className="text-xs text-gray-400 mt-1">
@@ -248,7 +248,7 @@ export default function EnhancedCart({ isOpen, onClose }: EnhancedCartProps) {
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-white">Total:</span>
                       <span className="text-xl font-bold text-accent-400">
-                        ${total.toFixed(2)}
+                        ₹{total.toFixed(2)}
                       </span>
                     </div>
 

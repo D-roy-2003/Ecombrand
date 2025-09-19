@@ -127,18 +127,18 @@ export default function ProductGrid({ products, isLoading }: ProductGridProps) {
                   {product.originalPrice && product.originalPrice > product.price ? (
                     <>
                       <span className="text-lg text-gray-400 line-through">
-                        ${product.originalPrice}
+                        ₹{product.originalPrice}
                       </span>
                       <span className="text-2xl font-bold text-accent-400">
-                        ${product.price}
+                        ₹{product.price}
                       </span>
                       <span className="text-sm text-green-400">
-                        Save ${(product.originalPrice - product.price).toFixed(2)}
+                        Save ₹{(product.originalPrice - product.price).toFixed(2)}
                       </span>
                     </>
                   ) : (
                     <span className="text-2xl font-bold text-accent-400">
-                      ${product.price}
+                      ₹{product.price}
                     </span>
                   )}
                 </div>

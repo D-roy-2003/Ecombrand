@@ -278,7 +278,7 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      $
+                      ₹
                     </span>
                     <input
                       type="number"
@@ -299,7 +299,7 @@ export default function AddProductModal({ isOpen, onClose, onAdd }: AddProductMo
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      $
+                      ₹
                     </span>
                     <input
                       type="number"

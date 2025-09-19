@@ -42,7 +42,7 @@ export default function ProductFilters({ filters, onFilterChange }: ProductFilte
   const clearFilters = () => {
     onFilterChange({
       category: 'ALL',
-      priceRange: [0, 500],
+      priceRange: [0, 2000],
       search: ''
     })
   }
@@ -125,14 +125,14 @@ export default function ProductFilters({ filters, onFilterChange }: ProductFilte
                   <input
                     type="range"
                     min="0"
-                    max="500"
+                    max="2000"
                     value={filters.priceRange[1]}
                     onChange={(e) => handlePriceChange(filters.priceRange[0], parseInt(e.target.value))}
                     className="w-full h-2 bg-primary-700 rounded-lg appearance-none cursor-pointer slider"
                   />
                   <div className="flex justify-between text-sm text-gray-400">
-                    <span>$0</span>
-                    <span>$500</span>
+                    <span>₹0</span>
+                    <span>₹2000</span>
                   </div>
                 </div>
               </div>
@@ -199,14 +199,14 @@ export default function ProductFilters({ filters, onFilterChange }: ProductFilte
                 <input
                   type="range"
                   min="0"
-                  max="500"
+                  max="2000"
                   value={filters.priceRange[1]}
                   onChange={(e) => handlePriceChange(filters.priceRange[0], parseInt(e.target.value))}
                   className="w-full h-2 bg-primary-700 rounded-lg appearance-none cursor-pointer slider"
                 />
                 <div className="flex justify-between text-sm text-gray-400">
-                  <span>$0</span>
-                  <span>$500</span>
+                  <span>₹0</span>
+                  <span>₹2000</span>
                 </div>
               </div>
             </div>

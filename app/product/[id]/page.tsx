@@ -236,12 +236,12 @@ export default function ProductPage() {
               {/* Price */}
               <div className="flex items-center gap-4">
                 <span className="text-3xl font-bold text-accent-400">
-                  ${product.price}
+                  ₹{product.price}
                 </span>
                 {product.originalPrice && (
                   <>
                     <span className="text-xl text-gray-400 line-through">
-                      ${product.originalPrice}
+                      ₹{product.originalPrice}
                     </span>
                     <span className="px-2 py-1 bg-red-600 text-white text-sm font-medium rounded">
                       -{discountPercentage}%
@@ -362,7 +362,7 @@ export default function ProductPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex items-center gap-3">
                     <Truck className="w-5 h-5 text-accent-400" />
-                    <span className="text-gray-300">Free shipping on orders over $50</span>
+                    <span className="text-gray-300">Free shipping on orders over ₹50</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <RotateCcw className="w-5 h-5 text-accent-400" />

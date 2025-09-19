@@ -186,10 +186,10 @@ export default function FeaturedProducts() {
                       {featuredProducts[currentIndex].originalPrice && featuredProducts[currentIndex].originalPrice! > featuredProducts[currentIndex].price ? (
                         <>
                           <span className="text-lg text-gray-400 line-through block">
-                            ${featuredProducts[currentIndex].originalPrice}
+                            ₹{featuredProducts[currentIndex].originalPrice}
                           </span>
                           <span className="text-2xl font-bold text-accent-400">
-                            ${featuredProducts[currentIndex].price}
+                            ₹{featuredProducts[currentIndex].price}
                           </span>
                         </>
                       ) : (

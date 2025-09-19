@@ -48,7 +48,7 @@ export default function HelpPage() {
       id: 2,
       category: 'orders',
       question: 'What are your shipping options and delivery times?',
-      answer: 'We offer several shipping options: Standard (5-7 business days), Express (2-3 business days), and Overnight (1 business day). Free shipping is available on orders over $50. Delivery times may vary based on your location and product availability.'
+      answer: 'We offer several shipping options: Standard (5-7 business days), Express (2-3 business days), and Overnight (1 business day). Free shipping is available on orders over ₹50. Delivery times may vary based on your location and product availability.'
     },
     {
       id: 3,

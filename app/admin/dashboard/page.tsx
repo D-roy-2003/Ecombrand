@@ -754,7 +754,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-400 mb-1">Total Revenue</p>
-                    <p className="text-3xl font-bold text-white">${(analytics?.overview.totalRevenue || 0).toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-white">₹{(analytics?.overview.totalRevenue || 0).toLocaleString()}</p>
                     <p className={`text-xs mt-1 ${(analytics?.overview?.monthlyRevenueGrowth ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {(analytics?.overview?.monthlyRevenueGrowth ?? 0) > 0 ? '+' : ''}{(analytics?.overview?.monthlyRevenueGrowth ?? 0).toFixed(1)}% this month
                     </p>
@@ -859,7 +859,7 @@ export default function AdminDashboard() {
                           />
                           <div>
                             <div className="text-sm font-medium text-white truncate">{product.name}</div>
-                            <div className="text-xs text-gray-400">${product.price}</div>
+                            <div className="text-xs text-gray-400">₹{product.price}</div>
                           </div>
                         </div>
                       </div>
@@ -949,10 +949,10 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap">
                           <div className="text-sm text-white">
-                            <div className="font-bold text-lg">${product.price}</div>
+                            <div className="font-bold text-lg">₹{product.price}</div>
                             {product.originalPrice && product.originalPrice > product.price && (
                               <div className="text-xs text-gray-400 line-through">
-                                ${product.originalPrice}
+                                ₹{product.originalPrice}
                               </div>
                             )}
                           </div>
@@ -1109,7 +1109,7 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-medium">
-                          ${order.totalPrice.toFixed(2)}
+                          ₹{order.totalPrice.toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <select
@@ -1327,10 +1327,10 @@ export default function AdminDashboard() {
                           </td>
                           <td className="px-6 py-5 whitespace-nowrap">
                             <div className="text-sm text-white">
-                              <div className="font-bold text-lg">${item.product.price}</div>
+                              <div className="font-bold text-lg">₹{item.product.price}</div>
                               {item.product.originalPrice && item.product.originalPrice > item.product.price && (
                                 <div className="text-xs text-gray-400 line-through">
-                                  ${item.product.originalPrice}
+                                  ₹{item.product.originalPrice}
                                 </div>
                               )}
                               {item.product.discount > 0 && (
@@ -1408,7 +1408,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex items-center space-x-4">
                           <div className="text-sm text-white font-medium">
-                            ${order.totalPrice.toFixed(2)}
+                            ₹{order.totalPrice.toFixed(2)}
                           </div>
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             order.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
@@ -1445,7 +1445,7 @@ export default function AdminDashboard() {
                               {item.product?.name}
                             </div>
                             <div className="text-sm text-gray-400">
-                              ${item.product?.price}
+                              ₹{item.product?.price}
                             </div>
                           </div>
                         </div>

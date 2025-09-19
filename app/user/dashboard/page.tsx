@@ -498,7 +498,7 @@ export default function UserDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-400">Total Spent</p>
-                    <p className="text-2xl font-bold text-white">${stats.totalSpent.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-white">₹{stats.totalSpent.toFixed(2)}</p>
                   </div>
                   <div className="w-12 h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
                     <CreditCard className="w-6 h-6 text-accent-400" />
@@ -597,7 +597,7 @@ export default function UserDashboard() {
                           {item.name}
                         </h3>
                         <p className="text-accent-400 font-semibold">
-                          ${item.price}
+                          ₹{item.price}
                         </p>
                         {item.selectedSize && (
                           <p className="text-xs text-gray-400 mt-1">
@@ -629,7 +629,7 @@ export default function UserDashboard() {
                       {/* Item Total */}
                       <div className="text-right">
                         <p className="text-white font-bold">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ₹{(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
 
@@ -663,7 +663,7 @@ export default function UserDashboard() {
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-lg font-semibold text-white">Total</span>
                     <span className="text-xl font-bold text-accent-400">
-                      ${cartTotal.toFixed(2)}
+                      ₹{cartTotal.toFixed(2)}
                     </span>
                   </div>
                   <Link
@@ -710,11 +710,11 @@ export default function UserDashboard() {
                     </h3>
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-accent-400 font-bold text-lg">
-                        ${item.product.price}
+                        ₹{item.product.price}
                       </span>
                       {item.product.discount && item.product.discount > 0 && (
                         <span className="text-sm text-gray-400 line-through">
-                          ${item.product.originalPrice}
+                          ₹{item.product.originalPrice}
                         </span>
                       )}
                     </div>

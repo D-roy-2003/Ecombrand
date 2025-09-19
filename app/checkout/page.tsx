@@ -533,7 +533,7 @@ export default function CheckoutPage() {
                     <div className="h-2 w-2/3 rounded bg-red-600" />
                   </div>
                   <p className="text-gray-300 text-sm">
-                    Step 2 of 3: Delivery & Payment
+                    Step 2 of 3: Delivery & Review
                   </p>
                 </div>
                 <div className="hidden sm:flex items-center gap-4">
@@ -543,7 +543,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-                    <span className="text-gray-400 text-xs">Free shipping $50+</span>
+                    <span className="text-gray-400 text-xs">Free shipping on orders above ₹1000+</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
@@ -623,7 +623,7 @@ export default function CheckoutPage() {
                   </div>
 
                   <button
-                    onClick={openAddressModal}
+                    onClick={() => openAddressModal()}
                     className="text-red-500 hover:text-red-400 transition-colors duration-200"
                   >
                     Add new address
@@ -634,7 +634,7 @@ export default function CheckoutPage() {
                   <MapPin className="w-12 h-12 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-400 mb-4">No delivery address added yet</p>
                   <button
-                    onClick={openAddressModal}
+                    onClick={() => openAddressModal()}
                     className="text-red-500 hover:text-red-400 transition-colors duration-200"
                   >
                     Add a new delivery address
@@ -656,7 +656,7 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-400" />
                     <span className="text-green-300 text-sm font-medium">
-                      You are saving ${cartItems.reduce((totalSavings, item) => {
+                      You are saving ₹{cartItems.reduce((totalSavings, item) => {
                         const productDetail = productDetails[item.productId]
                         if (productDetail) {
                           const originalPrice = productDetail.originalPrice
@@ -754,7 +754,7 @@ export default function CheckoutPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="text-white text-sm font-semibold">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              ₹{(item.price * item.quantity).toFixed(2)}
                             </span>
                           </div>
                         </div>
@@ -770,7 +770,7 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-blue-400" />
                     <span className="text-blue-300 text-sm">
-                      Buy 2 for $99 offer applied!
+                      Buy 2 for ₹999 offer applied!
                     </span>
                   </div>
                 </div>
@@ -886,7 +886,7 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     <p className="text-white font-semibold text-sm">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ₹{(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 ))}
@@ -896,23 +896,23 @@ export default function CheckoutPage() {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300 text-sm">Subtotal</span>
-                  <span className="text-white text-sm">${total.toFixed(2)}</span>
+                  <span className="text-white text-sm">₹{total.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300 text-sm">Shipping</span>
                   <span className="text-white text-sm">
-                    {shippingCost === 0 ? '$0.00' : `$${shippingCost.toFixed(2)}`}
+                    {shippingCost === 0 ? '₹0.00' : `₹${shippingCost.toFixed(2)}`}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300 text-sm">Tax</span>
-                  <span className="text-white text-sm">${tax.toFixed(2)}</span>
+                  <span className="text-white text-sm">₹{tax.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-gray-600 pt-3">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold text-white">Total</span>
                     <span className="text-xl font-bold text-white">
-                      ${finalTotal.toFixed(2)}
+                      ₹{finalTotal.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -930,7 +930,7 @@ export default function CheckoutPage() {
                     Processing...
                   </div>
                 ) : (
-                  `Place Order - $${finalTotal.toFixed(2)}`
+                  `Place Order - ₹${finalTotal.toFixed(2)}`
                 )}
               </button>
 
@@ -942,7 +942,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span className="text-gray-300 text-xs">Free shipping on orders over $50</span>
+                  <span className="text-gray-300 text-xs">Free shipping on orders over ₹1000</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />

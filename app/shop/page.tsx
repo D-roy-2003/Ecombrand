@@ -17,6 +17,7 @@ interface Product {
   category: string
   imageUrls: string[]
   stock: number
+  isActive: boolean
 }
 
 // Define the Filters type
@@ -32,7 +33,7 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<Filters>({
     category: 'ALL',
-    priceRange: [0, 500],
+    priceRange: [0, 2000],
     search: ''
   })
 

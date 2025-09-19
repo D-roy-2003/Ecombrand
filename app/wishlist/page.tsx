@@ -146,7 +146,7 @@ export default function WishlistPage() {
                       
                       <div className="flex items-center justify-between mb-3">
                         <div className="text-2xl font-bold text-accent-400">
-                          ${item.product.price}
+                          ₹{item.product.price}
                         </div>
                         {item.product.discount && item.product.discount > 0 && (
                           <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
