@@ -23,6 +23,8 @@ model User {
   state       String?
   zipCode     String?
   country     String?
+  landmark    String?
+  areaOrStreet String?
   profileImage String?
   isActive    Boolean    @default(true)
   lastLoginAt DateTime?

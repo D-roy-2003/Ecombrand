@@ -78,6 +78,8 @@ export async function GET(request: NextRequest) {
         state: user.state || null,
         zipCode: user.zipCode || null,
         country: user.country || null,
+        landmark: user.landmark || null,
+        areaOrStreet: user.areaOrStreet || null,
         profileImage: user.profileImage || null,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt

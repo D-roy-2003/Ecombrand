@@ -39,6 +39,8 @@ export async function PATCH(request: NextRequest) {
     if (body.state !== undefined) updateData.state = body.state
     if (body.zipCode !== undefined) updateData.zipCode = body.zipCode
     if (body.country !== undefined) updateData.country = body.country
+    if (body.landmark !== undefined) updateData.landmark = body.landmark
+    if (body.areaOrStreet !== undefined) updateData.areaOrStreet = body.areaOrStreet
 
     console.log('Update data:', updateData)
 
