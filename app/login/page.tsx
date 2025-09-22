@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Lock, Mail, User, ShoppingCart, Heart } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { setCurrentUserId } from '@/lib/cart'
 
-export default function UserLoginPage() {
+function LoginContent() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -260,10 +260,18 @@ export default function UserLoginPage() {
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-gray-500 text-sm">
-            © 2024 Edgy Fashion. All rights reserved.
+            2024 Edgy Fashion. All rights reserved.
           </p>
         </div>
       </motion.div>
     </div>
   )
-} 
+}
+
+export default function UserLoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><div className="text-white">Loading...</div></div>}>
+      <LoginContent />
+    </Suspense>
+  )
+}

@@ -82,9 +82,20 @@ export default function Navigation() {
       })
 
       if (response.ok) {
+        // Clear user state
         setUser(null)
         setCartCount(0)
+        
+        // Clear all cart data and localStorage
         clearAllCartData()
+        
+        // Clear any remaining localStorage tokens
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token')
+          localStorage.removeItem('admin-token')
+          localStorage.removeItem('current_user_id')
+        }
+        
         toast.success('Logged out successfully')
         router.push('/')
       } else {

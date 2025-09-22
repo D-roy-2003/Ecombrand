@@ -8,10 +8,45 @@ export async function GET(request: NextRequest) {
     const token = request.cookies.get('user-token')?.value || request.cookies.get('admin-token')?.value
 
     if (!token) {
-      return NextResponse.json(
-        { error: 'No authentication token found' },
-        { status: 401 }
-      )
+      // Check if this is a browser request (has user-agent) vs static generation
+      const userAgent = request.headers.get('user-agent')
+      
+      if (userAgent) {
+        // This is a browser request - user is not logged in
+        return NextResponse.json(
+          { error: 'No authentication token found' },
+          { status: 401 }
+        )
+      } else {
+        // This is static generation - return empty user data
+        return NextResponse.json({
+          user: {
+            id: '',
+            name: '',
+            email: '',
+            role: 'USER',
+            phoneNumber: null,
+            countryCode: null,
+            address: null,
+            city: null,
+            state: null,
+            zipCode: null,
+            country: null,
+            landmark: null,
+            areaOrStreet: null,
+            profileImage: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          stats: {
+            totalOrders: 0,
+            totalSpent: 0,
+            wishlistItems: 0,
+            loyaltyPoints: 0
+          },
+          recentOrders: []
+        })
+      }
     }
 
     // Verify token

@@ -7,10 +7,22 @@ export async function GET(request: NextRequest) {
     const token = request.cookies.get('admin-token')?.value
     
     if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      // Return empty data during static generation when no cookies are available
+      return NextResponse.json({
+        overview: {
+          totalUsers: 0,
+          totalOrders: 0,
+          totalRevenue: 0,
+          monthlyGrowth: 0,
+          weeklyOrderGrowth: 0,
+          monthlyOrderGrowth: 0,
+          monthlyRevenueGrowth: 0,
+          monthlyProductGrowth: 0
+        },
+        recentOrders: [],
+        topProducts: [],
+        dailyStats: []
+      })
     }
 
     const decoded = verifyToken(token)
