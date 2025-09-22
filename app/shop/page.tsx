@@ -33,7 +33,7 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<Filters>({
     category: 'ALL',
-    priceRange: [0, 2000],
+    priceRange: [0, 10000],
     search: ''
   })
 
