@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import Script from 'next/script'
 import { 
   ArrowLeft,
   CreditCard,
@@ -53,6 +54,8 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const [orderComplete, setOrderComplete] = useState(false)
+  const [paymentStep, setPaymentStep] = useState(false)
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false)
   const [productDetails, setProductDetails] = useState<{[key: string]: {originalPrice: number, price: number}}>({})
   
   const [activeAddressTab, setActiveAddressTab] = useState('home')
@@ -388,33 +391,158 @@ export default function CheckoutPage() {
     return user?.address || user?.city || user?.state || user?.zipCode
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Basic validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.address) {
-      toast.error('Please fill in all required fields')
+  const handlePlaceOrder = async () => {
+    // Validate delivery address
+    if (!hasAddress()) {
+      toast.error('Please add a delivery address before placing order')
       return
     }
 
+    if (!user?.areaOrStreet || !user?.landmark) {
+      toast.error('Please complete your delivery address with Area/Street and Landmark')
+      return
+    }
+
+    // Proceed to payment step
+    setPaymentStep(true)
+    
+    // Load Razorpay script if not already loaded
+    if (!razorpayLoaded) {
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => setRazorpayLoaded(true)
+      document.body.appendChild(script)
+    } else {
+      initiatePayment()
+    }
+  }
+
+  const initiatePayment = async () => {
     setProcessing(true)
     
     try {
-      // Simulate order processing
-      await new Promise(resolve => setTimeout(resolve, 3000))
-      
-      // Clear cart after successful order
-      await clearCart()
-      
-      setOrderComplete(true)
-      toast.success('Order placed successfully!')
+      // Create Razorpay order
+      const orderResponse = await fetch('/api/payment/razorpay/order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          amount: finalTotal,
+          currency: 'INR',
+          receipt: `order_${Date.now()}`,
+          notes: {
+            userId: user?.id,
+            items: cartItems.length
+          }
+        })
+      })
+
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json()
+        throw new Error(errorData.error || 'Failed to create payment order')
+      }
+
+      const { orderId, amount, currency, keyId } = await orderResponse.json()
+
+      // Prepare order data for verification
+      const orderData = {
+        items: cartItems.map(item => ({
+          id: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          selectedSize: item.selectedSize
+        })),
+        totalPrice: finalTotal
+      }
+
+      // Open Razorpay Checkout
+      const options = {
+        key: keyId,
+        amount: amount,
+        currency: currency,
+        name: 'Edgy Fashion',
+        description: `Order for ${cartItems.length} item(s)`,
+        order_id: orderId,
+        prefill: {
+          name: user?.name || '',
+          email: user?.email || '',
+          contact: user?.phoneNumber || ''
+        },
+        notes: {
+          address: `${user?.address || ''}, ${user?.areaOrStreet || ''}, ${user?.city || ''}, ${user?.state || ''} - ${user?.zipCode || ''}`,
+          landmark: user?.landmark || ''
+        },
+        theme: {
+          color: '#dc2626'
+        },
+        handler: async function (response: any) {
+          await verifyPayment(response, orderData)
+        },
+        modal: {
+          ondismiss: function() {
+            setProcessing(false)
+            setPaymentStep(false)
+            toast.error('Payment cancelled')
+          }
+        }
+      }
+
+      const razorpay = new (window as any).Razorpay(options)
+      razorpay.open()
+
     } catch (error) {
-      console.error('Error processing order:', error)
-      toast.error('Failed to process order. Please try again.')
-    } finally {
+      console.error('Payment initiation error:', error)
+      toast.error('Failed to initiate payment. Please try again.')
       setProcessing(false)
+      setPaymentStep(false)
     }
   }
+
+  const verifyPayment = async (paymentResponse: any, orderData: any) => {
+    try {
+      const verifyResponse = await fetch('/api/payment/razorpay/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          razorpay_order_id: paymentResponse.razorpay_order_id,
+          razorpay_payment_id: paymentResponse.razorpay_payment_id,
+          razorpay_signature: paymentResponse.razorpay_signature,
+          orderData: orderData
+        })
+      })
+
+      if (!verifyResponse.ok) {
+        const errorData = await verifyResponse.json()
+        throw new Error(errorData.error || 'Payment verification failed')
+      }
+
+      const result = await verifyResponse.json()
+      
+      // Payment successful - show success page
+      setOrderComplete(true)
+      setPaymentStep(false)
+      toast.success('Payment successful! Order placed.')
+      
+    } catch (error) {
+      console.error('Payment verification error:', error)
+      toast.error('Payment verification failed. Please contact support if amount was debited.')
+      setProcessing(false)
+      setPaymentStep(false)
+    }
+  }
+
+  // Handle Razorpay script load
+  useEffect(() => {
+    if (razorpayLoaded && paymentStep) {
+      initiatePayment()
+    }
+  }, [razorpayLoaded, paymentStep])
 
   if (loading) {
     return (
@@ -533,7 +661,7 @@ export default function CheckoutPage() {
                     <div className="h-2 w-2/3 rounded bg-red-600" />
                   </div>
                   <p className="text-gray-300 text-sm">
-                    Step 2 of 3: Delivery & Review
+                    {paymentStep ? 'Step 3 of 3: Payment' : 'Step 2 of 3: Delivery & Review'}
                   </p>
                 </div>
                 <div className="hidden sm:flex items-center gap-4">
@@ -823,11 +951,15 @@ export default function CheckoutPage() {
             {/* Bottom Actions */}
             <div className="flex gap-4 pt-4">
               <button 
-                onClick={handleSubmit}
-                disabled={processing}
+                onClick={handlePlaceOrder}
+                disabled={processing || !hasAddress()}
                 className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded text-sm font-medium transition-colors disabled:opacity-50"
               >
-                {processing ? 'Processing...' : 'Proceed to review'}
+                {processing ? (
+                  paymentStep ? 'Processing Payment...' : 'Preparing Order...'
+                ) : (
+                  'Proceed to Payment'
+                )}
               </button>
             </div>
           </div>
@@ -920,14 +1052,14 @@ export default function CheckoutPage() {
 
               {/* Place Order Button */}
               <button
-                onClick={handleSubmit}
-                disabled={processing}
+                onClick={handlePlaceOrder}
+                disabled={processing || !hasAddress()}
                 className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4"
               >
                 {processing ? (
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Processing...
+                    {paymentStep ? 'Processing Payment...' : 'Preparing Order...'}
                   </div>
                 ) : (
                   `Place Order - ₹${finalTotal.toFixed(2)}`
