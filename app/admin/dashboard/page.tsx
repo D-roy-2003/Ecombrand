@@ -1147,6 +1147,7 @@ export default function AdminDashboard() {
                               order.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
                               order.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400' :
                               order.status === 'SHIPPED' ? 'bg-purple-600/20 text-purple-400' :
+                              order.status === 'OUT_FOR_DELIVERY' ? 'bg-orange-600/20 text-orange-400' :
                               order.status === 'DELIVERED' ? 'bg-green-600/20 text-green-400' :
                               'bg-red-600/20 text-red-400'
                             }`}
@@ -1154,6 +1155,7 @@ export default function AdminDashboard() {
                             <option value="PENDING">Pending</option>
                             <option value="PROCESSING">Processing</option>
                             <option value="SHIPPED">Shipped</option>
+                            <option value="OUT_FOR_DELIVERY">Out For Delivery</option>
                             <option value="DELIVERED">Delivered</option>
                             <option value="CANCELLED">Cancelled</option>
                           </select>
@@ -1992,6 +1994,7 @@ export default function AdminDashboard() {
                         orderDetails.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
                         orderDetails.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400' :
                         orderDetails.status === 'SHIPPED' ? 'bg-purple-600/20 text-purple-400' :
+                        orderDetails.status === 'OUT_FOR_DELIVERY' ? 'bg-orange-600/20 text-orange-400' :
                         orderDetails.status === 'DELIVERED' ? 'bg-green-600/20 text-green-400' :
                         'bg-red-600/20 text-red-400'
                       }`}>
@@ -2123,6 +2126,7 @@ export default function AdminDashboard() {
                       <option value="PENDING">Pending</option>
                       <option value="PROCESSING">Processing</option>
                       <option value="SHIPPED">Shipped</option>
+                      <option value="OUT_FOR_DELIVERY">Out For Delivery</option>
                       <option value="DELIVERED">Delivered</option>
                       <option value="CANCELLED">Cancelled</option>
                     </select>

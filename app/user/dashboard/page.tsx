@@ -216,6 +216,11 @@ export default function UserDashboard() {
         steps[1].completed = true
         steps[2].completed = true
         return steps
+      case 'OUT_FOR_DELIVERY':
+        steps[1].completed = true
+        steps[2].completed = true
+        steps[3].completed = true
+        return steps
       case 'DELIVERED':
         return steps.map(step => ({ ...step, completed: true }))
       default:
@@ -467,6 +472,7 @@ export default function UserDashboard() {
                           order.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
                           order.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400' :
                           order.status === 'SHIPPED' ? 'bg-purple-600/20 text-purple-400' :
+                          order.status === 'OUT_FOR_DELIVERY' ? 'bg-orange-600/20 text-orange-400' :
                           order.status === 'DELIVERED' ? 'bg-green-600/20 text-green-400' :
                           'bg-red-600/20 text-red-400'
                         }`}>
@@ -503,6 +509,7 @@ export default function UserDashboard() {
                     <div className="mt-4 pt-4 border-t border-primary-700 flex justify-between items-center">
                       <div className="text-sm text-gray-400">
                         {order.status === 'DELIVERED' ? 'Delivered' : 
+                         order.status === 'OUT_FOR_DELIVERY' ? 'Out for Delivery' :
                          order.status === 'SHIPPED' ? 'In Transit' :
                          order.status === 'PROCESSING' ? 'Being Prepared' :
                          'Order Placed'}
@@ -751,6 +758,7 @@ export default function UserDashboard() {
                     selectedOrderForTracking.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
                     selectedOrderForTracking.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400' :
                     selectedOrderForTracking.status === 'SHIPPED' ? 'bg-purple-600/20 text-purple-400' :
+                    selectedOrderForTracking.status === 'OUT_FOR_DELIVERY' ? 'bg-orange-600/20 text-orange-400' :
                     selectedOrderForTracking.status === 'DELIVERED' ? 'bg-green-600/20 text-green-400' :
                     'bg-red-600/20 text-red-400'
                   }`}>
