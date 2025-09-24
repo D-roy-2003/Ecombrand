@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { Prisma } from '@prisma/client'
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 import { verifyToken } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
