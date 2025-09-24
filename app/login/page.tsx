@@ -11,9 +11,15 @@ function LoginContent() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [otp, setOtp] = useState('')
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [otpVerified, setOtpVerified] = useState(false)
+  const [otpVerifying, setOtpVerifying] = useState(false)
+  const [resendTimer, setResendTimer] = useState(0)
   const [alertMessage, setAlertMessage] = useState<{ type: 'cart' | 'wishlist' | null; show: boolean }>({ type: null, show: false })
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -30,6 +36,101 @@ function LoginContent() {
     }
   }, [searchParams])
 
+  // Timer for OTP resend
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer(prev => prev - 1)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [resendTimer])
+
+  // Reset OTP state when switching between login/register
+  useEffect(() => {
+    setOtpSent(false)
+    setOtpVerified(false)
+    setOtp('')
+    setResendTimer(0)
+  }, [isLogin])
+
+  const handleSendOTP = async () => {
+    if (!email || !name) {
+      toast.error('Please enter your name and email first')
+      return
+    }
+
+    setOtpLoading(true)
+
+    try {
+      const response = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, name }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setOtpSent(true)
+        setResendTimer(60) // 1 minute timer
+        toast.success('OTP sent to your email address!')
+      } else {
+        if (response.status === 429) {
+          setResendTimer(data.waitTime || 60)
+        }
+        toast.error(data.error || 'Failed to send OTP')
+      }
+    } catch (error) {
+      toast.error('Failed to send OTP. Please try again.')
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
+  const handleVerifyOTP = async () => {
+    if (!otp || otp.length !== 6) {
+      toast.error('Please enter a valid 6-digit OTP')
+      return
+    }
+
+    setOtpVerifying(true)
+
+    try {
+      const response = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setOtpVerified(true)
+        toast.success('Email verified successfully!')
+      } else {
+        toast.error(data.error || 'Invalid OTP')
+      }
+    } catch (error) {
+      toast.error('Failed to verify OTP. Please try again.')
+    } finally {
+      setOtpVerifying(false)
+    }
+  }
+
+  const handleResendOTP = async () => {
+    if (resendTimer > 0) {
+      toast.error(`Please wait ${resendTimer} seconds before resending`)
+      return
+    }
+    await handleSendOTP()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -40,6 +141,12 @@ function LoginContent() {
 
     if (!isLogin && !name) {
       toast.error('Please enter your name')
+      return
+    }
+
+    // For registration, check if OTP is verified
+    if (!isLogin && !otpVerified) {
+      toast.error('Please verify your email with OTP first')
       return
     }
 
@@ -55,7 +162,7 @@ function LoginContent() {
         body: JSON.stringify({ 
           email, 
           password, 
-          ...(isLogin ? {} : { name }) 
+          ...(isLogin ? {} : { name, otp }) 
         }),
       })
 
@@ -208,7 +315,103 @@ function LoginContent() {
                   required
                 />
               </div>
+              
+              {/* Send OTP Button (only for registration) */}
+              {!isLogin && (
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSendOTP}
+                    disabled={otpLoading || !email || !name || otpSent}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                      otpSent 
+                        ? 'bg-green-600 text-white cursor-not-allowed' 
+                        : 'bg-accent-600 hover:bg-accent-700 text-white disabled:opacity-50 disabled:cursor-not-allowed'
+                    }`}
+                  >
+                    {otpLoading ? 'Sending OTP...' : otpSent ? '✓ OTP Sent' : 'Send OTP'}
+                  </button>
+                  
+                  {/* Verified checkmark */}
+                  {otpVerified && (
+                    <div className="flex items-center justify-center w-10 h-8 bg-green-600 rounded-lg">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {/* OTP Field (only for registration and after OTP is sent) */}
+            {!isLogin && otpSent && (
+              <div>
+                <label htmlFor="otp" className="block text-sm font-medium text-gray-300 mb-2">
+                  Verification Code
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      id="otp"
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full pl-10 pr-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300 text-center text-lg tracking-widest"
+                      placeholder="Enter 6-digit OTP"
+                      maxLength={6}
+                      required
+                      disabled={otpVerified}
+                    />
+                  </div>
+                  
+                  {/* Verify Button - only show when OTP is entered and not verified */}
+                  {otp.length === 6 && !otpVerified && (
+                    <button
+                      type="button"
+                      onClick={handleVerifyOTP}
+                      disabled={otpVerifying}
+                      className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {otpVerifying ? 'Verifying...' : 'Verify'}
+                    </button>
+                  )}
+                  
+                  {/* Verified checkmark */}
+                  {otpVerified && (
+                    <div className="flex items-center justify-center px-4 py-3 bg-green-600 rounded-lg">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Resend OTP */}
+                <div className="mt-3 flex items-center justify-between text-sm">
+                  <span className="text-gray-400">
+                    Didn't receive the code?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleResendOTP}
+                    disabled={resendTimer > 0}
+                    className="text-accent-500 hover:text-accent-400 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
+                  >
+                    {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
+                  </button>
+                </div>
+                
+                {/* OTP Info */}
+                <div className="mt-2 p-3 bg-blue-600/20 border border-blue-600/30 rounded-lg">
+                  <p className="text-blue-300 text-xs">
+                    📧 We've sent a 6-digit verification code to your email address. 
+                    Please check your inbox and enter the code above to verify your email.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Password Field */}
             <div>
