@@ -168,6 +168,11 @@ export default function AdminDashboard() {
     newPassword: '',
     confirmPassword: ''
   })
+  
+  // Order details modal state
+  const [showOrderModal, setShowOrderModal] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [orderDetails, setOrderDetails] = useState<any>(null)
 
   // Add this useEffect to populate profile data when admin loads
   useEffect(() => {
@@ -556,6 +561,29 @@ export default function AdminDashboard() {
     console.log('Admin profileImage:', admin?.profileImage)
     console.log('ProfileData profileImage:', profileData.profileImage)
   }, [admin?.profileImage, profileData.profileImage])
+
+  // Function to fetch detailed order information
+  const handleViewOrderDetails = async (order: Order) => {
+    try {
+      setSelectedOrder(order)
+      setShowOrderModal(true)
+      
+      // Fetch detailed order information
+      const response = await fetch(`/api/admin/orders/${order.id}`, {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const detailedOrder = await response.json()
+        setOrderDetails(detailedOrder)
+      } else {
+        toast.error('Failed to fetch order details')
+      }
+    } catch (error) {
+      console.error('Error fetching order details:', error)
+      toast.error('Failed to fetch order details')
+    }
+  }
 
   // Add this function to handle password change
   const handlePasswordChange = async () => {
@@ -1135,7 +1163,7 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
-                            onClick={() => {/* View order details */}}
+                            onClick={() => handleViewOrderDetails(order)}
                             className="text-blue-400 hover:text-blue-300 transition-colors duration-200"
                             title="View Details"
                           >
@@ -1923,6 +1951,197 @@ export default function AdminDashboard() {
           onEdit={handleEditProduct}
           product={selectedProduct}
         />
+      )}
+
+      {/* Order Details Modal */}
+      {showOrderModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-primary-900 border border-primary-700 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-primary-700">
+              <div>
+                <h3 className="text-xl font-semibold text-white">Order Details</h3>
+                <p className="text-gray-400 text-sm">Order ID: {selectedOrder.id}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowOrderModal(false)
+                  setSelectedOrder(null)
+                  setOrderDetails(null)
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {orderDetails ? (
+                <div className="space-y-6">
+                  {/* Order Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">Order Status</h4>
+                      <span className={`px-3 py-1 text-sm rounded-full ${
+                        orderDetails.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
+                        orderDetails.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400' :
+                        orderDetails.status === 'SHIPPED' ? 'bg-purple-600/20 text-purple-400' :
+                        orderDetails.status === 'DELIVERED' ? 'bg-green-600/20 text-green-400' :
+                        'bg-red-600/20 text-red-400'
+                      }`}>
+                        {orderDetails.status}
+                      </span>
+                    </div>
+                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">Total Amount</h4>
+                      <p className="text-2xl font-bold text-accent-400">₹{orderDetails.totalPrice.toFixed(2)}</p>
+                    </div>
+                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">Order Date</h4>
+                      <p className="text-white">{new Date(orderDetails.createdAt).toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-400">{new Date(orderDetails.createdAt).toLocaleTimeString()}</p>
+                    </div>
+                  </div>
+
+                  {/* Customer Information */}
+                  <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-6">
+                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                      <User className="w-5 h-5 text-accent-400" />
+                      Customer Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h5 className="text-sm font-medium text-gray-400 mb-2">Personal Details</h5>
+                        <div className="space-y-2">
+                          <p className="text-white"><span className="text-gray-400">Name:</span> {orderDetails.user.name}</p>
+                          <p className="text-white"><span className="text-gray-400">Email:</span> {orderDetails.user.email}</p>
+                          {orderDetails.user.phoneNumber && (
+                            <p className="text-white"><span className="text-gray-400">Phone:</span> {orderDetails.user.phoneNumber}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <h5 className="text-sm font-medium text-gray-400 mb-2">Shipping Address</h5>
+                        <div className="space-y-2">
+                          {orderDetails.user.address && (
+                            <p className="text-white">{orderDetails.user.address}</p>
+                          )}
+                          <div className="flex gap-2">
+                            {orderDetails.user.city && <span className="text-white">{orderDetails.user.city}</span>}
+                            {orderDetails.user.state && <span className="text-white">{orderDetails.user.state}</span>}
+                            {orderDetails.user.zipCode && <span className="text-white">{orderDetails.user.zipCode}</span>}
+                          </div>
+                          {orderDetails.user.country && (
+                            <p className="text-white">{orderDetails.user.country}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Order Items */}
+                  <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-6">
+                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                      <Package className="w-5 h-5 text-accent-400" />
+                      Order Items ({orderDetails.items.length})
+                    </h4>
+                    <div className="space-y-4">
+                      {orderDetails.items.map((item: any, index: number) => (
+                        <div key={index} className="flex items-center gap-4 p-4 bg-primary-900/50 rounded-lg">
+                          <img
+                            src={item.product.imageUrls[0] || '/placeholder.jpg'}
+                            alt={item.product.name}
+                            className="w-16 h-16 object-cover rounded-lg"
+                          />
+                          <div className="flex-1">
+                            <h5 className="text-white font-medium">{item.product.name}</h5>
+                            <div className="flex items-center gap-4 mt-1">
+                              <p className="text-sm text-gray-400">Quantity: {item.quantity}</p>
+                              <p className="text-sm text-gray-400">Price: ₹{item.price}</p>
+                              {item.sizes && (
+                                <p className="text-sm text-gray-400">Size: {item.sizes}</p>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-400">Category: {item.product.category}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-white font-semibold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Order Total */}
+                    <div className="mt-6 pt-4 border-t border-primary-700">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-semibold text-white">Total Amount:</span>
+                        <span className="text-2xl font-bold text-accent-400">₹{orderDetails.totalPrice.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Information */}
+                  {(orderDetails.paymentId || orderDetails.paymentOrderId) && (
+                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-6">
+                      <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <DollarSign className="w-5 h-5 text-accent-400" />
+                        Payment Information
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {orderDetails.paymentId && (
+                          <div>
+                            <p className="text-sm text-gray-400">Payment ID</p>
+                            <p className="text-white font-mono text-sm">{orderDetails.paymentId}</p>
+                          </div>
+                        )}
+                        {orderDetails.paymentOrderId && (
+                          <div>
+                            <p className="text-sm text-gray-400">Payment Order ID</p>
+                            <p className="text-white font-mono text-sm">{orderDetails.paymentOrderId}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 pt-4">
+                    <select
+                      value={orderDetails.status}
+                      onChange={(e) => {
+                        handleUpdateOrderStatus(orderDetails.id, e.target.value)
+                        setOrderDetails({...orderDetails, status: e.target.value})
+                      }}
+                      className="px-4 py-2 bg-primary-800 border border-primary-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
+                    >
+                      <option value="PENDING">Pending</option>
+                      <option value="PROCESSING">Processing</option>
+                      <option value="SHIPPED">Shipped</option>
+                      <option value="DELIVERED">Delivered</option>
+                      <option value="CANCELLED">Cancelled</option>
+                    </select>
+                    <button
+                      onClick={() => window.print()}
+                      className="px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors duration-200"
+                    >
+                      Print Order
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-white">Loading order details...</div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   )

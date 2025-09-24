@@ -105,6 +105,7 @@ export async function GET(
       include: {
         user: {
           select: {
+            id: true,
             name: true,
             email: true,
             phoneNumber: true,
@@ -112,16 +113,20 @@ export async function GET(
             city: true,
             state: true,
             zipCode: true,
-            country: true
+            country: true,
+            createdAt: true
           }
         },
         items: {
           include: {
             product: {
               select: {
+                id: true,
                 name: true,
                 imageUrls: true,
-                price: true
+                price: true,
+                category: true,
+                stock: true
               }
             }
           }
