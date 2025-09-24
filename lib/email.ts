@@ -361,7 +361,7 @@ export async function sendOrderConfirmationEmail(params: {
           <div style="max-width:640px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
             <div style="background:#111827; color:#fff; padding:24px; text-align:center;">
               <div style="display:inline-block; background:#10b981; width:40px; height:40px; border-radius:9999px; line-height:40px;">✔</div>
-              <h1 style="margin:12px 0 0; font-size:22px;">Order Confirmed!</h1>
+              <h1 style="margin:12px 0 0; font-size:22px; color:#ffffff;">Order Confirmed!</h1>
               <p style="margin:8px 0 0; color:#d1d5db;">Thanks ${params.name}, your order has been placed.</p>
             </div>
             <div style="padding:24px;">
