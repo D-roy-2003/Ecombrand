@@ -3,6 +3,11 @@ import { generateOTP, storeOTP, canResendOTP } from '@/lib/otp'
 import { sendOTPEmail } from '@/lib/email'
 import { prisma } from '@/lib/db'
 
+// Ensure this route runs in a Node.js serverless function (not Edge),
+// because it uses Prisma and Nodemailer which require Node APIs.
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const { email, name } = await request.json()
