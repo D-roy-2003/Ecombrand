@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { sendOrderConfirmationEmail } from '@/lib/email'
 import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
@@ -109,6 +110,28 @@ export async function POST(request: NextRequest) {
 
           return order
         })
+
+        // Fire-and-forget order confirmation email (no UI impact if email fails)
+        try {
+          const estimatedDelivery = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
+            .toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
+          await sendOrderConfirmationEmail({
+            email: decoded.email,
+            name: decoded.name || 'Customer',
+            orderId: result.id,
+            items: result.items.map((it: any) => ({
+              name: it.product.name,
+              imageUrl: Array.isArray(it.product.imageUrls) && it.product.imageUrls.length ? it.product.imageUrls[0] : '',
+              quantity: it.quantity,
+              price: it.price,
+              size: it.sizes || undefined,
+            })),
+            totalPrice: result.totalPrice,
+            estimatedDelivery,
+          })
+        } catch (mailErr) {
+          console.error('Order confirmation email failed:', mailErr)
+        }
 
         return NextResponse.json({
           success: true,
