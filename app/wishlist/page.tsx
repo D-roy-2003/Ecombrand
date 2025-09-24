@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ShoppingBag, Trash2, ArrowLeft } from 'lucide-react'
+import { ShoppingBag, Trash2, ArrowLeft, Eye } from 'lucide-react'
 import { useWishlist } from '@/lib/useWishlist'
 import { addToCart, isUserAuthenticated } from '@/lib/cart'
 import toast from 'react-hot-toast'
@@ -25,7 +25,7 @@ export default function WishlistPage() {
       price: product.price,
       imageUrl: product.imageUrls[0]
     })
-    
+
     if (result.success) {
       toast.success('Added to cart!')
     } else if (result.requiresLogin) {
@@ -49,7 +49,7 @@ export default function WishlistPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <Link 
+            <Link
               href="/shop"
               className="p-2 text-gray-400 hover:text-white transition-colors duration-200"
             >
@@ -76,7 +76,7 @@ export default function WishlistPage() {
             <div className="text-6xl mb-4">❤️</div>
             <h3 className="text-2xl font-semibold text-white mb-4">Your wishlist is empty</h3>
             <p className="text-gray-400 mb-8">Start adding products you love to your wishlist!</p>
-            <Link 
+            <Link
               href="/shop"
               className="btn-primary inline-flex items-center space-x-2"
             >
@@ -104,7 +104,7 @@ export default function WishlistPage() {
                         className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                     </Link>
-                    
+
                     {/* Remove from Wishlist */}
                     <div className="absolute top-4 right-4">
                       <button
@@ -115,6 +115,17 @@ export default function WishlistPage() {
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
+                    </div>
+
+                    {/* Quick View Button */}
+                    <div className="absolute bottom-4 right-4">
+                      <Link
+                        href={`/product/${item.product.id}`}
+                        className="w-10 h-10 bg-accent-500/20 hover:bg-accent-500/30 text-accent-400 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                        title="View Details"
+                      >
+                        <Eye className="w-5 h-5" />
+                      </Link>
                     </div>
 
                     {/* Product Status */}
@@ -143,7 +154,11 @@ export default function WishlistPage() {
                           {item.product.name}
                         </Link>
                       </h3>
-                      
+
+                      <p className="text-gray-400 text-sm mb-3">
+                        {item.product.category} • {item.product.stock} in stock
+                      </p>
+
                       <div className="flex items-center justify-between mb-3">
                         <div className="text-2xl font-bold text-accent-400">
                           ₹{item.product.price}
@@ -159,24 +174,32 @@ export default function WishlistPage() {
                         <div className="text-sm text-gray-400">
                           Added {new Date(item.createdAt).toLocaleDateString()}
                         </div>
-                        <div className="text-sm text-gray-400">
-                          {item.product.stock} in stock
-                        </div>
                       </div>
                     </div>
 
-                    <button 
-                      className="w-full btn-primary text-xs sm:text-sm py-2 sm:py-3 flex items-center justify-center space-x-1 sm:space-x-2 min-h-[40px] sm:min-h-[48px] mt-auto"
-                      disabled={!item.product.isActive || item.product.stock === 0}
-                      onClick={() => handleAddToCart(item.product)}
-                    >
-                      <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span className="truncate">
-                        {!item.product.isActive ? 'Unavailable' : 
-                         item.product.stock === 0 ? 'Out of Stock' : 
-                         'Add to Cart'}
-                      </span>
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 mt-auto">
+                      <button
+                        className="flex-1 btn-primary text-xs sm:text-sm py-2 sm:py-3 flex items-center justify-center space-x-1 sm:space-x-2 min-h-[40px] sm:min-h-[48px]"
+                        disabled={!item.product.isActive || item.product.stock === 0}
+                        onClick={() => handleAddToCart(item.product)}
+                      >
+                        <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span className="truncate">
+                          {!item.product.isActive ? 'Unavailable' :
+                           item.product.stock === 0 ? 'Out of Stock' :
+                           'Add to Cart'}
+                        </span>
+                      </button>
+
+                      <Link
+                        href={`/product/${item.product.id}`}
+                        className="btn-secondary text-xs sm:text-sm py-2 sm:py-3 px-3 sm:px-4 flex items-center justify-center min-h-[40px] sm:min-h-[48px] flex-shrink-0"
+                      >
+                        <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span className="hidden sm:inline ml-1">View</span>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </motion.div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
+import { prisma } from '@/lib/db'
 import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
@@ -59,40 +60,60 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Payment verified successfully - now create order in database
+    // Payment verified successfully - now create order in database directly
     if (orderData && orderData.items && orderData.totalPrice) {
       try {
-        // Call existing order creation API
-        const orderResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cookie': `user-token=${token}` // Forward auth token
-          },
-          body: JSON.stringify({
-            items: orderData.items,
-            totalPrice: orderData.totalPrice,
-            userId: decoded.id,
-            paymentId: razorpay_payment_id,
-            paymentOrderId: razorpay_order_id
+        // Create order directly in database instead of HTTP call
+        const result = await prisma.$transaction(async (tx) => {
+          // Create the order
+          const order = await tx.order.create({
+            data: {
+              userId: decoded.id,
+              totalPrice: parseFloat(orderData.totalPrice),
+              items: {
+                create: orderData.items.map((item: any) => ({
+                  productId: item.id,
+                  quantity: item.quantity,
+                  price: item.price,
+                  sizes: item.selectedSize || ''
+                }))
+              }
+            },
+            include: {
+              items: {
+                include: {
+                  product: true
+                }
+              }
+            }
           })
+
+          // Update product stock atomically
+          for (const item of orderData.items) {
+            await tx.product.update({
+              where: { id: item.id },
+              data: {
+                stock: {
+                  decrement: item.quantity
+                }
+              }
+            })
+          }
+
+          // Clear user's cart after successful order
+          await tx.cart.deleteMany({
+            where: {
+              userId: decoded.id
+            }
+          })
+
+          return order
         })
-
-        if (!orderResponse.ok) {
-          const errorData = await orderResponse.json()
-          console.error('Order creation failed after payment:', errorData)
-          return NextResponse.json(
-            { error: 'Payment successful but order creation failed. Please contact support.' },
-            { status: 500 }
-          )
-        }
-
-        const order = await orderResponse.json()
 
         return NextResponse.json({
           success: true,
           message: 'Payment verified and order created successfully',
-          orderId: order.id,
+          orderId: result.id,
           paymentId: razorpay_payment_id
         })
 
