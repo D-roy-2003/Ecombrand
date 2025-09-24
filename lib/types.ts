@@ -16,7 +16,7 @@ export interface CartItem {
   price: number
   quantity: number
   imageUrl: string
-  size?: string
+  sizes?: string
 }
 
 export interface Order {

@@ -25,7 +25,8 @@ import {
   Lock,
   EyeOff,
   Plus,
-  Minus
+  Minus,
+  X
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useWishlist } from '@/lib/useWishlist'
@@ -119,6 +120,13 @@ export default function UserDashboard() {
   // Image upload states
   const [imageUploading, setImageUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Wishlist states (for size selection modal)
+  const [showSizeModal, setShowSizeModal] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [selectedSize, setSelectedSize] = useState<string>('')
+  const [addingToCart, setAddingToCart] = useState(false)
+  const [isRemoving, setIsRemoving] = useState<string | null>(null)
 
   const { wishlist, addToWishlist, removeFromWishlist, fetchWishlist } = useWishlist()
 
@@ -394,6 +402,60 @@ export default function UserDashboard() {
 
   const handleCameraClick = () => {
     fileInputRef.current?.click()
+  }
+
+  // Wishlist handlers
+  const handleRemoveFromWishlist = async (productId: string) => {
+    setIsRemoving(productId)
+    await removeFromWishlist(productId)
+    setIsRemoving(null)
+  }
+
+  const handleAddToCartClick = (product: any) => {
+    // Check if product has sizes
+    if (product.sizes && product.sizes.length > 0) {
+      setSelectedProduct(product)
+      setSelectedSize('')
+      setShowSizeModal(true)
+    } else {
+      // No sizes, add directly to cart
+      handleAddToCartFromWishlist(product, '')
+    }
+  }
+
+  const handleAddToCartFromWishlist = async (product: any, size: string = '') => {
+    setAddingToCart(true)
+    try {
+      const result = await addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        imageUrl: product.imageUrls[0]
+      }, 1, size)
+
+      if (result.success) {
+        toast.success('Added to cart!')
+        setShowSizeModal(false)
+        setSelectedProduct(null)
+        setSelectedSize('')
+      } else if (result.requiresLogin) {
+        toast.error('Please login to add products to the cart')
+      } else {
+        toast.error(result.message || 'Failed to add to cart')
+      }
+    } catch (error) {
+      toast.error('Failed to add to cart')
+    } finally {
+      setAddingToCart(false)
+    }
+  }
+
+  const handleSizeSelection = () => {
+    if (!selectedSize) {
+      toast.error('Please select a size')
+      return
+    }
+    handleAddToCartFromWishlist(selectedProduct, selectedSize)
   }
 
   const getTrackingSteps = (status: string) => {
@@ -1039,58 +1101,161 @@ export default function UserDashboard() {
         {/* Wishlist Tab */}
         {activeTab === 'wishlist' && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white">Your Wishlist</h2>
-            
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
+                  <span>❤️</span>
+                  <span>My Wishlist</span>
+                </h2>
+                <p className="text-gray-400 mt-1">
+                  {wishlist.length} {wishlist.length === 1 ? 'item' : 'items'} saved
+                </p>
+              </div>
+              <Link
+                href="/wishlist"
+                className="text-accent-400 hover:text-accent-300 transition-colors duration-200"
+              >
+                View Full Wishlist →
+              </Link>
+            </div>
+
             {wishlist.length === 0 ? (
-              <div className="text-center py-12">
-                <Heart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-400 mb-6">Your wishlist is empty</p>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center py-16"
+              >
+                <div className="text-6xl mb-4">❤️</div>
+                <h3 className="text-2xl font-semibold text-white mb-4">Your wishlist is empty</h3>
+                <p className="text-gray-400 mb-8">Start adding products you love to your wishlist!</p>
                 <button
                   onClick={() => router.push('/shop')}
-                  className="btn-primary"
+                  className="btn-primary inline-flex items-center space-x-2"
                 >
-                  Start Shopping
+                  <ShoppingBag className="w-5 h-5" />
+                  <span>Start Shopping</span>
                 </button>
-              </div>
+              </motion.div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {wishlist.map((item) => (
-                  <div key={item.id} className="bg-primary-900 border border-primary-800 rounded-lg p-4">
-                    <div className="aspect-square bg-primary-700 rounded-lg overflow-hidden mb-4">
-                      <img
-                        src={item.product.imageUrls[0] || '/placeholder.jpg'}
-                        alt={item.product.name}
-                        className="w-full h-full object-cover"
-                      />
+                {wishlist.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    className="group h-full"
+                  >
+                    <div className="bg-primary-900 border border-primary-800 rounded-lg overflow-hidden hover:border-accent-500 transition-all duration-300 h-full flex flex-col">
+                      {/* Product Image */}
+                      <div className="relative overflow-hidden flex-shrink-0">
+                        <Link href={`/product/${item.product.id}`}>
+                          <img
+                            src={item.product.imageUrls[0] || '/placeholder.jpg'}
+                            alt={item.product.name}
+                            className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                        </Link>
+
+                        {/* Remove from Wishlist */}
+                        <div className="absolute top-4 right-4">
+                          <button
+                            onClick={() => handleRemoveFromWishlist(item.product.id)}
+                            disabled={isRemoving === item.product.id}
+                            className="w-10 h-10 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 disabled:opacity-50"
+                            title="Remove from wishlist"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        {/* Quick View Button */}
+                        <div className="absolute bottom-4 right-4">
+                          <Link
+                            href={`/product/${item.product.id}`}
+                            className="w-10 h-10 bg-accent-500/20 hover:bg-accent-500/30 text-accent-400 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                            title="View Details"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </Link>
+                        </div>
+
+                        {/* Product Status */}
+                        {!item.product.isActive && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                            <span className="px-4 py-2 bg-red-600 text-white font-medium rounded">
+                              UNAVAILABLE
+                            </span>
+                          </div>
+                        )}
+
+                        {item.product.stock === 0 && item.product.isActive && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                            <span className="px-4 py-2 bg-yellow-600 text-white font-medium rounded">
+                              OUT OF STOCK
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Product Info */}
+                      <div className="p-6 flex flex-col flex-grow">
+                        <div className="mb-4 flex-grow">
+                          <h3 className="text-base font-semibold text-white mb-2 group-hover:text-accent-400 transition-colors duration-300 line-clamp-2 leading-tight">
+                            <Link href={`/product/${item.product.id}`}>
+                              {item.product.name}
+                            </Link>
+                          </h3>
+
+                          <p className="text-gray-400 text-sm mb-3">
+                            {item.product.category} • {item.product.stock} in stock
+                          </p>
+
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="text-2xl font-bold text-accent-400">
+                              ₹{item.product.price}
+                            </div>
+                            {item.product.discount && item.product.discount > 0 && (
+                              <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
+                                -{item.product.discount}% off
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm text-gray-400">
+                              Added {new Date(item.createdAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 mt-auto">
+                          <button
+                            className="flex-1 btn-primary text-xs sm:text-sm py-2 sm:py-3 flex items-center justify-center space-x-1 sm:space-x-2 min-h-[40px] sm:min-h-[48px]"
+                            disabled={!item.product.isActive || item.product.stock === 0}
+                            onClick={() => handleAddToCartClick(item.product)}
+                          >
+                            <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <span className="truncate">
+                              {!item.product.isActive ? 'Unavailable' :
+                               item.product.stock === 0 ? 'Out of Stock' :
+                               'Add to Cart'}
+                            </span>
+                          </button>
+
+                          <Link
+                            href={`/product/${item.product.id}`}
+                            className="btn-secondary text-xs sm:text-sm py-2 sm:py-3 px-3 sm:px-4 flex items-center justify-center min-h-[40px] sm:min-h-[48px] flex-shrink-0"
+                          >
+                            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <span className="hidden sm:inline ml-1">View</span>
+                          </Link>
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-white font-medium mb-2 line-clamp-2">
-                      {item.product.name}
-                    </h3>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-accent-400 font-bold text-lg">
-                        ₹{item.product.price}
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => addToCart({
-                          id: item.product.id,
-                          name: item.product.name,
-                          price: item.product.price,
-                          imageUrl: item.product.imageUrls[0] || ''
-                        }, 1)}
-                        className="flex-1 btn-primary text-sm py-2"
-                      >
-                        ADD TO CART
-                      </button>
-                      <button
-                        onClick={() => removeFromWishlist(item.product.id)}
-                        className="px-3 py-2 border border-red-600 text-red-400 hover:bg-red-600 hover:text-white transition-colors duration-200 rounded-lg"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
@@ -1127,14 +1292,85 @@ export default function UserDashboard() {
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
-                <p className="text-gray-400 text-center">
-                  You have {cartItems.length} item{cartItems.length !== 1 ? 's' : ''} in your cart.
-                </p>
-                <div className="text-center">
+              <div className="space-y-6">
+                {/* Cart Items */}
+                <div className="space-y-4">
+                  {cartItems.map((item) => (
+                    <div key={`${item.id}-${item.sizes || item.selectedSize || 'no-size'}`} className="bg-primary-900 border border-primary-800 rounded-lg p-4">
+                      <div className="flex items-center gap-4">
+                        {/* Product Image */}
+                        <div className="w-16 h-16 bg-primary-700 rounded-lg overflow-hidden flex-shrink-0">
+                          <img
+                            src={item.imageUrl || '/placeholder.jpg'}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-white font-medium text-sm truncate">
+                            {item.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-accent-400 font-bold">₹{item.price}</span>
+                            {item.selectedSize && (
+                              <span className="text-xs text-gray-400">Size: {item.selectedSize}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Quantity Controls */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedSize)}
+                            className="w-8 h-8 rounded-full bg-primary-700 hover:bg-primary-600 text-gray-300 hover:text-white transition-colors duration-200 flex items-center justify-center"
+                            disabled={item.quantity <= 1}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          
+                          <span className="w-8 text-center text-white font-medium">
+                            {item.quantity}
+                          </span>
+                          
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1, item.selectedSize)}
+                            className="w-8 h-8 rounded-full bg-primary-700 hover:bg-primary-600 text-gray-300 hover:text-white transition-colors duration-200 flex items-center justify-center"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* Item Total */}
+                        <div className="text-right">
+                          <p className="text-white font-bold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                        </div>
+
+                        {/* Remove Button */}
+                        <button
+                          onClick={() => removeFromCart(item.id, item.selectedSize)}
+                          className="w-8 h-8 rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 transition-colors duration-200 flex items-center justify-center"
+                          title="Remove item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Cart Total */}
+                <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-lg font-semibold text-white">Total</span>
+                    <span className="text-2xl font-bold text-accent-400">₹{cartTotal.toFixed(2)}</span>
+                  </div>
+                  
+                  {/* Go to Cart Button */}
                   <Link
                     href="/cart"
-                    className="btn-primary"
+                    className="w-full btn-primary py-3 text-center block"
                   >
                     Go to Cart
                   </Link>
@@ -1819,6 +2055,111 @@ export default function UserDashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
                 Print Invoice
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Size Selection Modal for Wishlist */}
+      {showSizeModal && selectedProduct && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSizeModal(false)
+              setSelectedProduct(null)
+              setSelectedSize('')
+            }
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-primary-900 border border-primary-700 rounded-lg p-6 max-w-md w-full"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Select Your Size</h3>
+              <button
+                onClick={() => {
+                  setShowSizeModal(false)
+                  setSelectedProduct(null)
+                  setSelectedSize('')
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Product Info */}
+            <div className="flex items-center gap-4 mb-6">
+              <img
+                src={selectedProduct.imageUrls[0] || '/placeholder.jpg'}
+                alt={selectedProduct.name}
+                className="w-16 h-16 object-cover rounded-lg"
+              />
+              <div>
+                <h4 className="text-white font-medium">{selectedProduct.name}</h4>
+                <p className="text-accent-400 font-bold">₹{selectedProduct.price}</p>
+              </div>
+            </div>
+
+            {/* Size Options */}
+            <div className="mb-6">
+              <p className="text-gray-300 mb-3">Available Sizes:</p>
+              <div className="grid grid-cols-3 gap-2">
+                {selectedProduct.sizes.map((size: string) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`py-2 px-3 border rounded-lg text-sm font-medium transition-colors duration-200 ${
+                      selectedSize === size
+                        ? 'border-accent-500 bg-accent-500/10 text-accent-400'
+                        : 'border-primary-700 text-gray-300 hover:border-accent-500 hover:text-white'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+              {selectedSize && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Selected: <span className="text-accent-400 font-medium">{selectedSize}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowSizeModal(false)
+                  setSelectedProduct(null)
+                  setSelectedSize('')
+                }}
+                className="flex-1 py-2 px-4 border border-primary-700 text-gray-300 rounded-lg hover:border-primary-600 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSizeSelection}
+                disabled={!selectedSize || addingToCart}
+                className="flex-1 btn-primary py-2 px-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {addingToCart ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag className="w-4 h-4" />
+                    Add to Cart
+                  </>
+                )}
               </button>
             </div>
           </motion.div>
