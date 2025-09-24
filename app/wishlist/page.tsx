@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ShoppingBag, Trash2, ArrowLeft, Eye } from 'lucide-react'
+import { ShoppingBag, Trash2, ArrowLeft, Eye, X } from 'lucide-react'
 import { useWishlist } from '@/lib/useWishlist'
 import { addToCart, isUserAuthenticated } from '@/lib/cart'
 import toast from 'react-hot-toast'
@@ -11,6 +11,10 @@ import toast from 'react-hot-toast'
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist, isLoading } = useWishlist()
   const [isRemoving, setIsRemoving] = useState<string | null>(null)
+  const [showSizeModal, setShowSizeModal] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [selectedSize, setSelectedSize] = useState<string>('')
+  const [addingToCart, setAddingToCart] = useState(false)
 
   const handleRemoveFromWishlist = async (productId: string) => {
     setIsRemoving(productId)
@@ -18,21 +22,51 @@ export default function WishlistPage() {
     setIsRemoving(null)
   }
 
-  const handleAddToCart = async (product: any) => {
-    const result = await addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      imageUrl: product.imageUrls[0]
-    })
-
-    if (result.success) {
-      toast.success('Added to cart!')
-    } else if (result.requiresLogin) {
-      toast.error('Please login to add products to the cart')
+  const handleAddToCartClick = (product: any) => {
+    // Check if product has sizes
+    if (product.sizes && product.sizes.length > 0) {
+      setSelectedProduct(product)
+      setSelectedSize('')
+      setShowSizeModal(true)
     } else {
-      toast.error(result.message || 'Failed to add to cart')
+      // No sizes, add directly to cart
+      handleAddToCart(product, '')
     }
+  }
+
+  const handleAddToCart = async (product: any, size: string = '') => {
+    setAddingToCart(true)
+    try {
+      const result = await addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        imageUrl: product.imageUrls[0]
+      }, 1, size)
+
+      if (result.success) {
+        toast.success('Added to cart!')
+        setShowSizeModal(false)
+        setSelectedProduct(null)
+        setSelectedSize('')
+      } else if (result.requiresLogin) {
+        toast.error('Please login to add products to the cart')
+      } else {
+        toast.error(result.message || 'Failed to add to cart')
+      }
+    } catch (error) {
+      toast.error('Failed to add to cart')
+    } finally {
+      setAddingToCart(false)
+    }
+  }
+
+  const handleSizeSelection = () => {
+    if (!selectedSize) {
+      toast.error('Please select a size')
+      return
+    }
+    handleAddToCart(selectedProduct, selectedSize)
   }
 
   if (isLoading) {
@@ -182,7 +216,7 @@ export default function WishlistPage() {
                       <button
                         className="flex-1 btn-primary text-xs sm:text-sm py-2 sm:py-3 flex items-center justify-center space-x-1 sm:space-x-2 min-h-[40px] sm:min-h-[48px]"
                         disabled={!item.product.isActive || item.product.stock === 0}
-                        onClick={() => handleAddToCart(item.product)}
+                        onClick={() => handleAddToCartClick(item.product)}
                       >
                         <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
                         <span className="truncate">
@@ -207,6 +241,111 @@ export default function WishlistPage() {
           </div>
         )}
       </div>
+
+      {/* Size Selection Modal */}
+      {showSizeModal && selectedProduct && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSizeModal(false)
+              setSelectedProduct(null)
+              setSelectedSize('')
+            }
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-primary-900 border border-primary-700 rounded-lg p-6 max-w-md w-full"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Select Your Size</h3>
+              <button
+                onClick={() => {
+                  setShowSizeModal(false)
+                  setSelectedProduct(null)
+                  setSelectedSize('')
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Product Info */}
+            <div className="flex items-center gap-4 mb-6">
+              <img
+                src={selectedProduct.imageUrls[0] || '/placeholder.jpg'}
+                alt={selectedProduct.name}
+                className="w-16 h-16 object-cover rounded-lg"
+              />
+              <div>
+                <h4 className="text-white font-medium">{selectedProduct.name}</h4>
+                <p className="text-accent-400 font-bold">₹{selectedProduct.price}</p>
+              </div>
+            </div>
+
+            {/* Size Options */}
+            <div className="mb-6">
+              <p className="text-gray-300 mb-3">Available Sizes:</p>
+              <div className="grid grid-cols-3 gap-2">
+                {selectedProduct.sizes.map((size: string) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`py-2 px-3 border rounded-lg text-sm font-medium transition-colors duration-200 ${
+                      selectedSize === size
+                        ? 'border-accent-500 bg-accent-500/10 text-accent-400'
+                        : 'border-primary-700 text-gray-300 hover:border-accent-500 hover:text-white'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+              {selectedSize && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Selected: <span className="text-accent-400 font-medium">{selectedSize}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowSizeModal(false)
+                  setSelectedProduct(null)
+                  setSelectedSize('')
+                }}
+                className="flex-1 py-2 px-4 border border-primary-700 text-gray-300 rounded-lg hover:border-primary-600 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSizeSelection}
+                disabled={!selectedSize || addingToCart}
+                className="flex-1 btn-primary py-2 px-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {addingToCart ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag className="w-4 h-4" />
+                    Add to Cart
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }

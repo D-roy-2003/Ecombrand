@@ -32,6 +32,8 @@ export async function GET(request: NextRequest) {
             originalPrice: true,
             discount: true,
             imageUrls: true,
+            sizes: true,
+            category: true,
             isActive: true,
             stock: true
           }
@@ -122,6 +124,8 @@ export async function POST(request: NextRequest) {
             originalPrice: true,
             discount: true,
             imageUrls: true,
+            sizes: true,
+            category: true,
             isActive: true,
             stock: true
           }
