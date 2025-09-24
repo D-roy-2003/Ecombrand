@@ -88,6 +88,8 @@ export default function UserDashboard() {
   const [cartLoading, setCartLoading] = useState(false)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
   const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<Order | null>(null)
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<Order | null>(null)
 
   const { wishlist, addToWishlist, removeFromWishlist, fetchWishlist } = useWishlist()
 
@@ -197,6 +199,11 @@ export default function UserDashboard() {
     setShowTrackingModal(true)
   }
 
+  const handleViewInvoice = (order: Order) => {
+    setSelectedOrderForInvoice(order)
+    setShowInvoiceModal(true)
+  }
+
   const getTrackingSteps = (status: string) => {
     const steps = [
       { id: 'placed', label: 'Order Placed', completed: true },
@@ -263,6 +270,299 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-black">
+      {/* Print Styles */}
+      <style jsx global>{`
+        @media print {
+          .bg-black, .bg-primary-900, .bg-primary-800, .bg-primary-700 {
+            background-color: white !important;
+            color: black !important;
+          }
+          .text-white, .text-gray-400, .text-gray-300 {
+            color: black !important;
+          }
+          .border-primary-800, .border-primary-700 {
+            border-color: #e5e7eb !important;
+          }
+          .bg-accent-400, .bg-accent-600 {
+            background-color: #6366f1 !important;
+            color: white !important;
+          }
+          .bg-green-600 {
+            background-color: #10b981 !important;
+            color: white !important;
+          }
+          .bg-blue-600 {
+            background-color: #3b82f6 !important;
+            color: white !important;
+          }
+          .bg-purple-600 {
+            background-color: #8b5cf6 !important;
+            color: white !important;
+          }
+          .bg-pink-600 {
+            background-color: #ec4899 !important;
+            color: white !important;
+          }
+          .bg-orange-600 {
+            background-color: #f97316 !important;
+            color: white !important;
+          }
+          .bg-yellow-600 {
+            background-color: #eab308 !important;
+            color: black !important;
+          }
+          .bg-red-600 {
+            background-color: #ef4444 !important;
+            color: white !important;
+          }
+          .bg-gray-50 {
+            background-color: #f9fafb !important;
+          }
+          .bg-gray-100 {
+            background-color: #f3f4f6 !important;
+          }
+          .bg-gray-200 {
+            background-color: #e5e7eb !important;
+          }
+          .bg-gray-300 {
+            background-color: #d1d5db !important;
+          }
+          .text-gray-500 {
+            color: #6b7280 !important;
+          }
+          .text-gray-600 {
+            color: #4b5563 !important;
+          }
+          .text-gray-700 {
+            color: #374151 !important;
+          }
+          .text-gray-800 {
+            color: #1f2937 !important;
+          }
+          .text-gray-900 {
+            color: #111827 !important;
+          }
+          .text-accent-400 {
+            color: #6366f1 !important;
+          }
+          .text-blue-400 {
+            color: #3b82f6 !important;
+          }
+          .text-purple-400 {
+            color: #8b5cf6 !important;
+          }
+          .text-green-400 {
+            color: #10b981 !important;
+          }
+          .text-orange-400 {
+            color: #f97316 !important;
+          }
+          .text-yellow-400 {
+            color: #eab308 !important;
+          }
+          .text-red-400 {
+            color: #ef4444 !important;
+          }
+          .text-purple-100 {
+            color: #e9d5ff !important;
+          }
+          .text-yellow-100 {
+            background-color: #fef3c7 !important;
+            color: #92400e !important;
+          }
+          .text-blue-100 {
+            background-color: #dbeafe !important;
+            color: #1e40af !important;
+          }
+          .text-purple-100 {
+            background-color: #e9d5ff !important;
+            color: #6b21a8 !important;
+          }
+          .text-green-100 {
+            background-color: #d1fae5 !important;
+            color: #047857 !important;
+          }
+          .text-orange-100 {
+            background-color: #fed7aa !important;
+            color: #9a3412 !important;
+          }
+          .text-red-100 {
+            background-color: #fecaca !important;
+            color: #991b1b !important;
+          }
+          .border-gray-200 {
+            border-color: #e5e7eb !important;
+          }
+          .border-gray-300 {
+            border-color: #d1d5db !important;
+          }
+          .divide-y > :not([hidden]) ~ :not([hidden]) {
+            border-color: #e5e7eb !important;
+          }
+          .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+            border-color: #e5e7eb !important;
+          }
+          .bg-gradient-to-r {
+            background: linear-gradient(to right, #8b5cf6, #ec4899) !important;
+          }
+          .from-purple-600 {
+            --tw-gradient-from: #9333ea !important;
+          }
+          .to-pink-600 {
+            --tw-gradient-to: #db2777 !important;
+          }
+          .bg-primary-800\/50 {
+            background-color: rgba(30, 41, 59, 0.5) !important;
+          }
+          .bg-primary-900\/50 {
+            background-color: rgba(15, 23, 42, 0.5) !important;
+          }
+          .bg-yellow-600\/20 {
+            background-color: rgba(234, 179, 8, 0.2) !important;
+          }
+          .bg-blue-600\/20 {
+            background-color: rgba(59, 130, 246, 0.2) !important;
+          }
+          .bg-purple-600\/20 {
+            background-color: rgba(139, 92, 246, 0.2) !important;
+          }
+          .bg-orange-600\/20 {
+            background-color: rgba(249, 115, 22, 0.2) !important;
+          }
+          .bg-green-600\/20 {
+            background-color: rgba(16, 185, 129, 0.2) !important;
+          }
+          .bg-red-600\/20 {
+            background-color: rgba(239, 68, 68, 0.2) !important;
+          }
+          .bg-accent-600\/20 {
+            background-color: rgba(99, 102, 241, 0.2) !important;
+          }
+          .bg-accent-400 {
+            background-color: #6366f1 !important;
+          }
+          .bg-accent-600 {
+            background-color: #4f46e5 !important;
+          }
+          .bg-green-600 {
+            background-color: #059669 !important;
+          }
+          .bg-blue-600 {
+            background-color: #2563eb !important;
+          }
+          .bg-purple-600 {
+            background-color: #7c3aed !important;
+          }
+          .bg-pink-600 {
+            background-color: #db2777 !important;
+          }
+          .bg-orange-600 {
+            background-color: #ea580c !important;
+          }
+          .bg-yellow-600 {
+            background-color: #d97706 !important;
+          }
+          .bg-red-600 {
+            background-color: #dc2626 !important;
+          }
+          .text-accent-400 {
+            color: #6366f1 !important;
+          }
+          .text-blue-400 {
+            color: #3b82f6 !important;
+          }
+          .text-purple-400 {
+            color: #8b5cf6 !important;
+          }
+          .text-green-400 {
+            color: #10b981 !important;
+          }
+          .text-orange-400 {
+            color: #f97316 !important;
+          }
+          .text-yellow-400 {
+            color: #eab308 !important;
+          }
+          .text-red-400 {
+            color: #ef4444 !important;
+          }
+          .text-purple-100 {
+            color: #e9d5ff !important;
+          }
+          .text-yellow-100 {
+            background-color: #fef3c7 !important;
+            color: #92400e !important;
+          }
+          .text-blue-100 {
+            background-color: #dbeafe !important;
+            color: #1e40af !important;
+          }
+          .text-purple-100 {
+            background-color: #e9d5ff !important;
+            color: #6b21a8 !important;
+          }
+          .text-green-100 {
+            background-color: #d1fae5 !important;
+            color: #047857 !important;
+          }
+          .text-orange-100 {
+            background-color: #fed7aa !important;
+            color: #9a3412 !important;
+          }
+          .text-red-100 {
+            background-color: #fecaca !important;
+            color: #991b1b !important;
+          }
+          .border-gray-200 {
+            border-color: #e5e7eb !important;
+          }
+          .border-gray-300 {
+            border-color: #d1d5db !important;
+          }
+          .divide-y > :not([hidden]) ~ :not([hidden]) {
+            border-color: #e5e7eb !important;
+          }
+          .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+            border-color: #e5e7eb !important;
+          }
+          .bg-gradient-to-r {
+            background: linear-gradient(to right, #8b5cf6, #ec4899) !important;
+          }
+          .from-purple-600 {
+            --tw-gradient-from: #9333ea !important;
+          }
+          .to-pink-600 {
+            --tw-gradient-to: #db2777 !important;
+          }
+          .bg-primary-800\/50 {
+            background-color: rgba(30, 41, 59, 0.5) !important;
+          }
+          .bg-primary-900\/50 {
+            background-color: rgba(15, 23, 42, 0.5) !important;
+          }
+          .bg-yellow-600\/20 {
+            background-color: rgba(234, 179, 8, 0.2) !important;
+          }
+          .bg-blue-600\/20 {
+            background-color: rgba(59, 130, 246, 0.2) !important;
+          }
+          .bg-purple-600\/20 {
+            background-color: rgba(139, 92, 246, 0.2) !important;
+          }
+          .bg-orange-600\/20 {
+            background-color: rgba(249, 115, 22, 0.2) !important;
+          }
+          .bg-green-600\/20 {
+            background-color: rgba(16, 185, 129, 0.2) !important;
+          }
+          .bg-red-600\/20 {
+            background-color: rgba(239, 68, 68, 0.2) !important;
+          }
+          .bg-accent-600\/20 {
+            background-color: rgba(99, 102, 241, 0.2) !important;
+          }
+        }
+      `}</style>
       {/* Header */}
       <header className="bg-primary-900 border-b border-primary-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -525,6 +825,15 @@ export default function UserDashboard() {
                           className="px-4 py-2 border border-primary-600 text-gray-300 hover:text-white hover:border-primary-500 text-sm rounded-lg transition-colors duration-200"
                         >
                           Track Order
+                        </button>
+                        <button 
+                          onClick={() => handleViewInvoice(order)}
+                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors duration-200 flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Invoice
                         </button>
                       </div>
                     </div>
@@ -852,6 +1161,214 @@ export default function UserDashboard() {
                   </div>
                 </div>
               </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Invoice Modal */}
+      {showInvoiceModal && selectedOrderForInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            {/* Invoice Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-3xl font-bold">INVOICE</h2>
+                  <p className="text-purple-100 mt-1">#{selectedOrderForInvoice.id.slice(-8)}</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold">ROT KIT</div>
+                  <p className="text-purple-100 text-sm">Fashion & Lifestyle</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Invoice Content */}
+            <div className="p-8">
+              {/* Company & Customer Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                {/* Company Info */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">From</h3>
+                  <div className="text-gray-600">
+                    <p className="font-semibold text-gray-800">ROT KIT</p>
+                    <p>123 Fashion Street</p>
+                    <p>Mumbai, Maharashtra 400001</p>
+                    <p>India</p>
+                    <p className="mt-2">Email: support@rotkit.com</p>
+                    <p>Phone: +91 98765 43210</p>
+                  </div>
+                </div>
+
+                {/* Customer Info */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Bill To</h3>
+                  <div className="text-gray-600">
+                    <p className="font-semibold text-gray-800">{user?.name}</p>
+                    <p>{user?.email}</p>
+                    {user?.phoneNumber && <p>Phone: {user.phoneNumber}</p>}
+                    {user?.address && <p>{user.address}</p>}
+                    {user?.city && <p>{user.city}</p>}
+                    {user?.state && <p>{user.state}</p>}
+                    {user?.zipCode && <p>{user.zipCode}</p>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Order Details</h3>
+                  <div className="space-y-2 text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Order Number:</span>
+                      <span className="font-semibold">#{selectedOrderForInvoice.id.slice(-8)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Order Date:</span>
+                      <span className="font-semibold">{new Date(selectedOrderForInvoice.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Order Status:</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        selectedOrderForInvoice.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                        selectedOrderForInvoice.status === 'PROCESSING' ? 'bg-blue-100 text-blue-800' :
+                        selectedOrderForInvoice.status === 'SHIPPED' ? 'bg-purple-100 text-purple-800' :
+                        selectedOrderForInvoice.status === 'OUT_FOR_DELIVERY' ? 'bg-orange-100 text-orange-800' :
+                        selectedOrderForInvoice.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedOrderForInvoice.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Payment Info</h3>
+                  <div className="space-y-2 text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Payment Method:</span>
+                      <span className="font-semibold">Online Payment</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Transaction ID:</span>
+                      <span className="font-semibold">RZP{selectedOrderForInvoice.id.slice(-8)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Order Items</h3>
+                <div className="overflow-hidden border border-gray-200 rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {selectedOrderForInvoice.items.map((item, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <img
+                                src={item.product.imageUrls[0] || '/placeholder.jpg'}
+                                alt={item.product.name}
+                                className="w-10 h-10 rounded-lg object-cover mr-3"
+                              />
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{item.product.name}</div>
+                                <div className="text-sm text-gray-500">{item.product.category}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {item.sizes || 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {item.quantity}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ₹{item.price.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            ₹{(item.price * item.quantity).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Order Summary */}
+              <div className="border-t border-gray-200 pt-6">
+                <div className="flex justify-end">
+                  <div className="w-64">
+                    <div className="flex justify-between text-gray-600 mb-2">
+                      <span>Subtotal:</span>
+                      <span>₹{selectedOrderForInvoice.totalPrice.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600 mb-2">
+                      <span>Shipping:</span>
+                      <span>₹0.00</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600 mb-2">
+                      <span>Tax:</span>
+                      <span>₹0.00</span>
+                    </div>
+                    <div className="border-t border-gray-200 pt-2">
+                      <div className="flex justify-between text-lg font-bold text-gray-900">
+                        <span>Total:</span>
+                        <span>₹{selectedOrderForInvoice.totalPrice.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="text-center text-gray-500 text-sm">
+                  <p>Thank you for shopping with ROT KIT!</p>
+                  <p className="mt-1">For any queries, please contact support@rotkit.com</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex justify-end gap-4 p-6 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={() => {
+                  setShowInvoiceModal(false)
+                  setSelectedOrderForInvoice(null)
+                }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print Invoice
+              </button>
             </div>
           </motion.div>
         </div>
