@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { verifyToken } from "@/lib/auth"
 
-export async function PATCH(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
     const token = request.cookies.get("user-token")?.value
     
@@ -53,14 +53,13 @@ export async function PATCH(request: NextRequest) {
         { status: 400 }
       )
     }
-
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData
     })
 
     console.log('Updated user:', updatedUser)
-    return NextResponse.json(updatedUser)
+    return NextResponse.json({ user: updatedUser })
   } catch (error) {
     console.error("Profile update error:", error)
     return NextResponse.json(

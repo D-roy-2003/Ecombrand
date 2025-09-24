@@ -90,12 +90,58 @@ export default function UserDashboard() {
   const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<Order | null>(null)
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
   const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<Order | null>(null)
+  
+  // Profile form states
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    email: '',
+    phoneNumber: '',
+    countryCode: '+91',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'India'
+  })
+  const [profileLoading, setProfileLoading] = useState(false)
+  
+  // Settings form states
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  
+  // Image upload states
+  const [imageUploading, setImageUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { wishlist, addToWishlist, removeFromWishlist, fetchWishlist } = useWishlist()
 
   useEffect(() => {
     fetchUserData()
   }, [])
+
+  // Populate profile form when user data is loaded
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        name: user.name || '',
+        email: user.email || '',
+        phoneNumber: user.phoneNumber || '',
+        countryCode: user.countryCode || '+91',
+        address: user.address || '',
+        city: user.city || '',
+        state: user.state || '',
+        zipCode: user.zipCode || '',
+        country: user.country || 'India'
+      })
+    }
+  }, [user])
 
   // Load orders when orders tab is active
   useEffect(() => {
@@ -202,6 +248,152 @@ export default function UserDashboard() {
   const handleViewInvoice = (order: Order) => {
     setSelectedOrderForInvoice(order)
     setShowInvoiceModal(true)
+  }
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setProfileLoading(true)
+
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(profileForm)
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data.user)
+        toast.success('Profile updated successfully!')
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || 'Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Profile update error:', error)
+      toast.error('Failed to update profile')
+    } finally {
+      setProfileLoading(false)
+    }
+  }
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('New passwords do not match')
+      return
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters long')
+      return
+    }
+
+    setPasswordLoading(true)
+
+    try {
+      const response = await fetch('/api/user/change-password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword
+        })
+      })
+
+      if (response.ok) {
+        setPasswordForm({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        })
+        toast.success('Password changed successfully!')
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || 'Failed to change password')
+      }
+    } catch (error) {
+      console.error('Password change error:', error)
+      toast.error('Failed to change password')
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB')
+      return
+    }
+
+    setImageUploading(true)
+
+    try {
+      // Convert image to base64
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        const base64Image = e.target?.result as string
+
+        try {
+          const response = await fetch('/api/user/profile', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              profileImage: base64Image
+            })
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            setUser(data.user)
+            toast.success('Profile image updated successfully!')
+          } else {
+            const errorData = await response.json()
+            toast.error(errorData.error || 'Failed to update profile image')
+          }
+        } catch (error) {
+          console.error('Image upload error:', error)
+          toast.error('Failed to update profile image')
+        } finally {
+          setImageUploading(false)
+        }
+      }
+
+      reader.onerror = () => {
+        toast.error('Failed to read image file')
+        setImageUploading(false)
+      }
+
+      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('Image upload error:', error)
+      toast.error('Failed to upload image')
+      setImageUploading(false)
+    }
+  }
+
+  const handleCameraClick = () => {
+    fileInputRef.current?.click()
   }
 
   const getTrackingSteps = (status: string) => {
@@ -956,32 +1148,199 @@ export default function UserDashboard() {
         {activeTab === 'profile' && (
           <div className="space-y-8">
             <h2 className="text-2xl font-bold text-white">Profile Information</h2>
+            
             <div className="bg-primary-900 border border-primary-800 rounded-lg p-8">
-              <div className="text-center">
-                <div className="w-24 h-24 rounded-full bg-accent-400 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
-                  {user.profileImage ? (
-                    <img
-                      src={user.profileImage}
-                      alt={user.name}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    getUserInitials(user.name)
-                  )}
+              {/* Profile Header */}
+              <div className="flex items-center gap-6 mb-8">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full bg-accent-400 flex items-center justify-center text-white font-bold text-xl">
+                    {user.profileImage ? (
+                      <img
+                        src={user.profileImage}
+                        alt={user.name}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      getUserInitials(user.name)
+                    )}
+                  </div>
+                  <button 
+                    onClick={handleCameraClick}
+                    disabled={imageUploading}
+                    className="absolute -bottom-1 -right-1 w-6 h-6 bg-accent-600 rounded-full flex items-center justify-center text-white hover:bg-accent-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Upload profile image"
+                  >
+                    {imageUploading ? (
+                      <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Camera className="w-3 h-3" />
+                    )}
+                  </button>
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">{user.name}</h3>
-                <p className="text-gray-400 mb-6">{user.email}</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                  <div>
-                    <p className="text-sm text-gray-400">Member Since</p>
-                    <p className="text-white">{new Date(user.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400">Total Orders</p>
-                    <p className="text-white">{stats.totalOrders}</p>
-                  </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white">{user.name}</h3>
+                  <p className="text-gray-400">{user.email}</p>
                 </div>
               </div>
+
+              {/* Profile Form */}
+              <form onSubmit={handleProfileUpdate} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Full Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.name}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                      placeholder="Enter your full name"
+                      required
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={profileForm.email}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, email: e.target.value }))}
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                      placeholder="Enter your email"
+                      required
+                    />
+                  </div>
+
+                  {/* Country Code */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Country Code
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={profileForm.countryCode}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, countryCode: e.target.value }))}
+                        className="w-full px-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300 appearance-none cursor-pointer"
+                      >
+                        <option value="+91">+91 (India)</option>
+                        <option value="+1">+1 (USA)</option>
+                        <option value="+44">+44 (UK)</option>
+                        <option value="+61">+61 (Australia)</option>
+                        <option value="+86">+86 (China)</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Phone Number */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={profileForm.phoneNumber}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+
+                  {/* Address */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.address}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, address: e.target.value }))}
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                      placeholder="Enter your address"
+                    />
+                  </div>
+
+                  {/* City */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.city}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, city: e.target.value }))}
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                      placeholder="Enter your city"
+                    />
+                  </div>
+
+                  {/* State */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      State
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.state}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, state: e.target.value }))}
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                      placeholder="Enter your state"
+                    />
+                  </div>
+
+                  {/* ZIP Code */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ZIP Code
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.zipCode}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, zipCode: e.target.value }))}
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                      placeholder="Enter your ZIP code"
+                    />
+                  </div>
+
+                  {/* Country */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Country
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.country}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, country: e.target.value }))}
+                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                      placeholder="Enter your country"
+                    />
+                  </div>
+                </div>
+
+                {/* Update Button */}
+                <div className="pt-6">
+                  <button
+                    type="submit"
+                    disabled={profileLoading}
+                    className="w-full md:w-auto px-8 py-3 bg-accent-600 hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200 font-medium"
+                  >
+                    {profileLoading ? 'Updating Profile...' : 'Update Profile'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
@@ -990,9 +1349,101 @@ export default function UserDashboard() {
         {activeTab === 'settings' && (
           <div className="space-y-8">
             <h2 className="text-2xl font-bold text-white">Account Settings</h2>
+            
             <div className="bg-primary-900 border border-primary-800 rounded-lg p-8">
-              <div className="space-y-6">
+              <div className="space-y-8">
+                {/* Change Password Section */}
                 <div>
+                  <h3 className="text-xl font-semibold text-white mb-6">Change Password</h3>
+                  
+                  <form onSubmit={handlePasswordChange} className="space-y-6">
+                    {/* Current Password */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Current Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          value={passwordForm.currentPassword}
+                          onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                          className="w-full px-4 py-3 pr-12 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                          placeholder="Enter your current password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                        >
+                          {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* New Password */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showNewPassword ? 'text' : 'password'}
+                          value={passwordForm.newPassword}
+                          onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                          className="w-full px-4 py-3 pr-12 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                          placeholder="Enter your new password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                        >
+                          {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Confirm New Password */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Confirm New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={passwordForm.confirmPassword}
+                          onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                          className="w-full px-4 py-3 pr-12 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                          placeholder="Confirm your new password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Change Password Button */}
+                    <div className="pt-4">
+                      <button
+                        type="submit"
+                        disabled={passwordLoading}
+                        className="px-8 py-3 bg-accent-600 hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200 font-medium"
+                      >
+                        {passwordLoading ? 'Changing Password...' : 'Change Password'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Account Actions */}
+                <div className="pt-8 border-t border-primary-700">
                   <h3 className="text-lg font-semibold text-white mb-4">Account Actions</h3>
                   <div className="space-y-4">
                     <button

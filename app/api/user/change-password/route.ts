@@ -1,9 +1,9 @@
-﻿import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { verifyToken } from "@/lib/auth"
 import bcrypt from "bcryptjs"
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
     const token = request.cookies.get("user-token")?.value
     
