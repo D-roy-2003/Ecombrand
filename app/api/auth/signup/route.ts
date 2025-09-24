@@ -1,21 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { hashPassword, generateToken } from '@/lib/auth'
+import { isOTPVerified, deleteOTP } from '@/lib/otp'
+import { sendWelcomeEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, role = 'CUSTOMER' } = await request.json()
+    const { name, email, password, otp, role = 'CUSTOMER' } = await request.json()
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !otp) {
       return NextResponse.json(
-        { error: 'Name, email and password are required' },
+        { error: 'Name, email, password and OTP are required' },
+        { status: 400 }
+      )
+    }
+
+    // Check if OTP is verified
+    const otpVerified = await isOTPVerified(email)
+    if (!otpVerified) {
+      return NextResponse.json(
+        { error: 'Please verify your email with OTP first' },
         { status: 400 }
       )
     }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email: email.toLowerCase() }
     })
 
     if (existingUser) {
@@ -32,10 +43,18 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
         role: role === 'ADMIN' ? 'ADMIN' : 'CUSTOMER'
       }
+    })
+
+    // Clean up OTP after successful registration
+    await deleteOTP(email)
+
+    // Send welcome email (don't wait for it to complete)
+    sendWelcomeEmail(user.email, user.name).catch(error => {
+      console.error('Failed to send welcome email:', error)
     })
 
     // Generate JWT token
@@ -50,7 +69,7 @@ export async function POST(request: NextRequest) {
     const { password: _, ...userWithoutPassword } = user
 
     const response = NextResponse.json({
-      message: 'User created successfully',
+      message: 'Account created successfully! Welcome to ROT KIT.',
       user: userWithoutPassword,
       token
     }, { status: 201 })
