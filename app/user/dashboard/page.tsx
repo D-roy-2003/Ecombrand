@@ -260,6 +260,13 @@ export default function UserDashboard() {
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate phone number
+    if (profileForm.phoneNumber && profileForm.phoneNumber.length !== 10) {
+      toast.error('Phone number must be exactly 10 digits')
+      return
+    }
+    
     setProfileLoading(true)
 
     try {
@@ -1489,10 +1496,25 @@ export default function UserDashboard() {
                     <input
                       type="tel"
                       value={profileForm.phoneNumber}
-                      onChange={(e) => setProfileForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                      className="w-full px-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
-                      placeholder="Enter your phone number"
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                        if (value.length <= 10) {
+                          setProfileForm(prev => ({ ...prev, phoneNumber: value }));
+                        }
+                      }}
+                      maxLength={10}
+                      className={`w-full px-4 py-3 bg-primary-800 border ${
+                        profileForm.phoneNumber && profileForm.phoneNumber.length !== 10 
+                          ? 'border-red-500' 
+                          : 'border-primary-700'
+                      } text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300`}
+                      placeholder="Enter 10-digit phone number"
                     />
+                    {profileForm.phoneNumber && profileForm.phoneNumber.length > 0 && profileForm.phoneNumber.length !== 10 && (
+                      <p className="text-red-400 text-sm mt-1">
+                        Phone number must be exactly 10 digits ({profileForm.phoneNumber.length}/10)
+                      </p>
+                    )}
                   </div>
 
                   {/* Address */}

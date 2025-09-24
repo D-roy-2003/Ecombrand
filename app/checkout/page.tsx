@@ -587,7 +587,7 @@ export default function CheckoutPage() {
                     Continue Shopping
                   </button>
                   <button
-                    onClick={() => router.push('/dashboard')}
+                    onClick={() => router.push('/user/dashboard')}
                     className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded transition-colors"
                   >
                     View Orders
