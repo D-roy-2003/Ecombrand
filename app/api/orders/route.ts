@@ -4,7 +4,10 @@ import { verifyToken } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('admin-token')?.value
+    // Check for both admin and user tokens
+    const adminToken = request.cookies.get('admin-token')?.value
+    const userToken = request.cookies.get('user-token')?.value
+    const token = adminToken || userToken
     
     if (!token) {
       return NextResponse.json(
@@ -14,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     const decoded = verifyToken(token)
-    if (!decoded || decoded.role !== 'ADMIN') {
+    if (!decoded) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -26,8 +29,16 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const skip = (page - 1) * limit
 
+    let whereClause = {}
+    
+    // If user token, only show their orders
+    if (decoded.role !== 'ADMIN') {
+      whereClause = { userId: decoded.id }
+    }
+
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
+        where: whereClause,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -45,14 +56,15 @@ export async function GET(request: NextRequest) {
                 select: {
                   id: true,
                   name: true,
-                  imageUrls: true
+                  imageUrls: true,
+                  category: true
                 }
               }
             }
           }
         }
       }),
-      prisma.order.count()
+      prisma.order.count(whereClause ? { where: whereClause } : {})
     ])
 
     return NextResponse.json({
