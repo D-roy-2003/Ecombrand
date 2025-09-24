@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { Prisma } from '@prisma/client'
 import { verifyToken } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const skip = (page - 1) * limit
 
-    let whereClause = {}
+    let whereClause: Prisma.OrderWhereInput = {}
     
     // If user token, only show their orders
     if (decoded.role !== 'ADMIN') {
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      prisma.order.count(whereClause ? { where: whereClause } : {})
+      prisma.order.count({ where: whereClause })
     ])
 
     return NextResponse.json({
