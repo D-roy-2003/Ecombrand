@@ -7,10 +7,10 @@ import { verifyToken } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    // Check for both admin and user tokens
-    const adminToken = request.cookies.get('admin-token')?.value
+    // Read both tokens. Prefer user token to prevent accidental admin overreach
     const userToken = request.cookies.get('user-token')?.value
-    const token = adminToken || userToken
+    const adminToken = request.cookies.get('admin-token')?.value
+    const token = userToken || adminToken
     
     if (!token) {
       return NextResponse.json(
