@@ -293,7 +293,7 @@ export default function AdminDashboard() {
   }
 
   const loadAnalytics = async () => {
-    const response = await fetch('/api/admin/analytics')
+    const response = await fetch('/api/admin/analytics', { cache: 'no-store' })
     if (response.ok) {
       const data = await response.json()
       setAnalytics(data)
