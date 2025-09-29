@@ -1173,7 +1173,13 @@ export default function CheckoutPage() {
                   <input
                     type="tel"
                     value={addressFormData.mobileNumber}
-                    onChange={(e) => setAddressFormData(prev => ({ ...prev, mobileNumber: e.target.value }))}
+                    inputMode="numeric"
+                    pattern="[0-9]{10}"
+                    maxLength={10}
+                    onChange={(e) => {
+                      const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10)
+                      setAddressFormData(prev => ({ ...prev, mobileNumber: digitsOnly }))
+                    }}
                     className="w-full input-field"
                   />
                   <p className="text-xs text-gray-400 mt-1">May be used to assist delivery</p>
