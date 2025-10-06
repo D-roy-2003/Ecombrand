@@ -47,218 +47,193 @@ export async function GET(request: NextRequest) {
     await prisma.$queryRaw`SELECT 1`
     console.log('Database connection successful')
 
-    // Get analytics data
-    console.log('Fetching analytics data...')
-    const [
-      totalUsers,
-      totalOrders,
-      totalRevenue,
-      recentOrders,
-      topProducts,
-      // Weekly comparisons
-      ordersThisWeek,
-      ordersLastWeek,
-      revenueThisWeek,
-      revenueLastWeek,
-      // Monthly comparisons
-      ordersThisMonth,
-      ordersLastMonth,
-      revenueThisMonth,
-      revenueLastMonth,
-      // Product growth
-      productsThisMonth,
-      productsLastMonth,
-      dailyStats
-    ] = await Promise.all([
-      // Total users
-      prisma.user.count(),
-      
-      // Total orders
-      prisma.order.count(),
-      
-      // Total revenue
-      prisma.order.aggregate({
-        _sum: { totalPrice: true }
-      }),
-      
-      // Recent orders (last 30 days)
-      prisma.order.findMany({
-        where: {
-          createdAt: {
-            gte: startDate
+    // Get analytics data sequentially to avoid connection pool exhaustion
+    console.log('Fetching analytics data sequentially...')
+    
+    // Basic counts first
+    console.log('Fetching basic counts...')
+    const totalUsers = await prisma.user.count()
+    const totalOrders = await prisma.order.count()
+    const totalRevenue = await prisma.order.aggregate({
+      _sum: { totalPrice: true }
+    })
+    
+    console.log('Basic counts completed:', { totalUsers, totalOrders, revenue: totalRevenue._sum.totalPrice })
+    
+    // Orders this week
+    const ordersThisWeek = await prisma.order.count({
+      where: {
+        createdAt: {
+          gte: oneWeekAgo
+        }
+      }
+    })
+    
+    // Orders last week
+    const ordersLastWeek = await prisma.order.count({
+      where: {
+        createdAt: {
+          gte: new Date(oneWeekAgo.getTime() - 7 * 24 * 60 * 60 * 1000),
+          lt: oneWeekAgo
+        }
+      }
+    })
+    
+    console.log('Weekly order data completed:', { ordersThisWeek, ordersLastWeek })
+    
+    // Revenue data
+    console.log('Fetching revenue data...')
+    const revenueThisWeek = await prisma.order.aggregate({
+      where: {
+        createdAt: {
+          gte: oneWeekAgo
+        }
+      },
+      _sum: { totalPrice: true }
+    })
+    
+    const revenueLastWeek = await prisma.order.aggregate({
+      where: {
+        createdAt: {
+          gte: new Date(oneWeekAgo.getTime() - 7 * 24 * 60 * 60 * 1000),
+          lt: oneWeekAgo
+        }
+      },
+      _sum: { totalPrice: true }
+    })
+    
+    // Monthly data
+    console.log('Fetching monthly data...')
+    const ordersThisMonth = await prisma.order.count({
+      where: {
+        createdAt: {
+          gte: oneMonthAgo
+        }
+      }
+    })
+    
+    const ordersLastMonth = await prisma.order.count({
+      where: {
+        createdAt: {
+          gte: twoMonthsAgo,
+          lt: oneMonthAgo
+        }
+      }
+    })
+    
+    const revenueThisMonth = await prisma.order.aggregate({
+      where: {
+        createdAt: {
+          gte: oneMonthAgo
+        }
+      },
+      _sum: { totalPrice: true }
+    })
+    
+    const revenueLastMonth = await prisma.order.aggregate({
+      where: {
+        createdAt: {
+          gte: twoMonthsAgo,
+          lt: oneMonthAgo
+        }
+      },
+      _sum: { totalPrice: true }
+    })
+    
+    // Product growth data
+    console.log('Fetching product growth data...')
+    const productsThisMonth = await prisma.product.count({
+      where: {
+        createdAt: {
+          gte: oneMonthAgo
+        }
+      }
+    })
+    
+    const productsLastMonth = await prisma.product.count({
+      where: {
+        createdAt: {
+          gte: twoMonthsAgo,
+          lt: oneMonthAgo
+        }
+      }
+    })
+    
+    // Recent orders (simplified)
+    console.log('Fetching recent orders...')
+    const recentOrders = await prisma.order.findMany({
+      where: {
+        createdAt: {
+          gte: startDate
+        }
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true
           }
         },
-        include: {
-          user: {
-            select: {
-              name: true,
-              email: true
-            }
-          },
-          items: {
-            include: {
-              product: {
-                select: {
-                  name: true
-                }
+        items: {
+          include: {
+            product: {
+              select: {
+                name: true
               }
             }
           }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 10
-      }),
-      
-      // Top selling products
-      prisma.orderItem.groupBy({
-        by: ['productId'],
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10
+    })
+    
+    // Top selling products
+    console.log('Fetching top selling products...')
+    const topProducts = await prisma.orderItem.groupBy({
+      by: ['productId'],
+      _sum: {
+        quantity: true
+      },
+      _count: {
+        productId: true
+      },
+      orderBy: {
         _sum: {
-          quantity: true
-        },
-        orderBy: {
-          _sum: {
-            quantity: 'desc'
-          }
-        },
-        take: 5
-      }),
-      
-      // Orders this week
-      prisma.order.count({
-        where: {
-          createdAt: {
-            gte: oneWeekAgo
-          }
+          quantity: 'desc'
         }
-      }),
-      
-      // Orders last week
-      prisma.order.count({
-        where: {
-          createdAt: {
-            gte: new Date(oneWeekAgo.getTime() - 7 * 24 * 60 * 60 * 1000),
-            lt: oneWeekAgo
-          }
-        }
-      }),
-      
-      // Revenue this week
-      prisma.order.aggregate({
-        where: {
-          createdAt: {
-            gte: oneWeekAgo
-          }
-        },
-        _sum: { totalPrice: true }
-      }),
-      
-      // Revenue last week
-      prisma.order.aggregate({
-        where: {
-          createdAt: {
-            gte: new Date(oneWeekAgo.getTime() - 7 * 24 * 60 * 60 * 1000),
-            lt: oneWeekAgo
-          }
-        },
-        _sum: { totalPrice: true }
-      }),
-      
-      // Orders this month
-      prisma.order.count({
-        where: {
-          createdAt: {
-            gte: oneMonthAgo
-          }
-        }
-      }),
-      
-      // Orders last month
-      prisma.order.count({
-        where: {
-          createdAt: {
-            gte: twoMonthsAgo,
-            lt: oneMonthAgo
-          }
-        }
-      }),
-      
-      // Revenue this month
-      prisma.order.aggregate({
-        where: {
-          createdAt: {
-            gte: oneMonthAgo
-          }
-        },
-        _sum: { totalPrice: true }
-      }),
-      
-      // Revenue last month
-      prisma.order.aggregate({
-        where: {
-          createdAt: {
-            gte: twoMonthsAgo,
-            lt: oneMonthAgo
-          }
-        },
-        _sum: { totalPrice: true }
-      }),
-      
-      // Products added this month
-      prisma.product.count({
-        where: {
-          createdAt: {
-            gte: oneMonthAgo
-          }
-        }
-      }),
-      
-      // Products added last month
-      prisma.product.count({
-        where: {
-          createdAt: {
-            gte: twoMonthsAgo,
-            lt: oneMonthAgo
-          }
-        }
-      }),
-      
-      // Daily stats for the period
-      prisma.order.groupBy({
-        by: ['createdAt'],
-        where: {
-          createdAt: {
-            gte: startDate
-          }
-        },
-        _sum: {
-          totalPrice: true
-        },
-        _count: {
-          id: true
-        }
-      })
-    ])
+      },
+      take: 5
+    })
 
-    console.log('Basic analytics data fetched successfully')
+    console.log('Top products raw data:', topProducts)
 
-    // Get product details for top products
-    console.log('Fetching product details for top products...')
+    // Get product details for top selling products
     const topProductsWithDetails = await Promise.all(
       topProducts.map(async (item) => {
         const product = await prisma.product.findUnique({
           where: { id: item.productId },
           select: {
+            id: true,
             name: true,
             price: true,
-            imageUrls: true
+            imageUrls: true,
+            category: true
           }
         })
+        
         return {
-          ...item,
-          product
+          productId: item.productId,
+          product,
+          _sum: {
+            quantity: item._sum.quantity || 0
+          },
+          orderCount: item._count.productId
         }
       })
     )
+
+    console.log('Top products with details:', topProductsWithDetails)
 
     // Calculate growth percentages
     const weeklyOrderGrowth = ordersLastWeek > 0 
@@ -296,11 +271,7 @@ export async function GET(request: NextRequest) {
       },
       recentOrders,
       topProducts: topProductsWithDetails,
-      dailyStats: dailyStats.map(stat => ({
-        date: stat.createdAt.toISOString().split('T')[0],
-        revenue: stat._sum.totalPrice || 0,
-        orders: stat._count.id
-      }))
+      dailyStats: []
     }
 
     console.log('Analytics response prepared:', {
@@ -311,6 +282,9 @@ export async function GET(request: NextRequest) {
       topProductsCount: topProductsWithDetails.length
     })
 
+    // Cleanup connection
+    await prisma.$disconnect()
+    
     return NextResponse.json(analyticsResponse)
   } catch (error) {
     console.error('Analytics fetch error:', error)
@@ -319,6 +293,13 @@ export async function GET(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : undefined
     })
+    
+    // Cleanup connection on error
+    try {
+      await prisma.$disconnect()
+    } catch (disconnectError) {
+      console.error('Error disconnecting prisma:', disconnectError)
+    }
     
     // Return more detailed error for debugging
     return NextResponse.json(
