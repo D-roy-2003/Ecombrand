@@ -144,6 +144,8 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
   const [admin, setAdmin] = useState<Admin | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [ordersLoading, setOrdersLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [websitePage, setWebsitePage] = useState('home')
@@ -277,10 +279,30 @@ export default function AdminDashboard() {
   }
 
   const loadOrders = async () => {
-    const response = await fetch('/api/orders')
-    if (response.ok) {
-      const data = await response.json()
-      setOrders(data.orders || [])
+    try {
+      setOrdersLoading(true)
+      console.log('Loading admin orders...')
+      const response = await fetch('/api/admin/orders', {
+        credentials: 'include'
+      })
+      
+      console.log('Admin orders response status:', response.status)
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Admin orders data received:', data)
+        setOrders(data.orders || [])
+      } else {
+        console.error('Admin orders API failed:', response.status, response.statusText)
+        const errorText = await response.text()
+        console.error('Admin orders error response:', errorText)
+        toast.error(`Failed to load orders: ${response.status} ${response.statusText}`)
+      }
+    } catch (error) {
+      console.error('Orders fetch error:', error)
+      toast.error('Failed to load orders')
+    } finally {
+      setOrdersLoading(false)
     }
   }
 
@@ -293,13 +315,63 @@ export default function AdminDashboard() {
   }
 
   const loadAnalytics = async () => {
-    const response = await fetch('/api/admin/analytics', {
-      cache: 'no-store',
-      credentials: 'include'
-    })
-    if (response.ok) {
-      const data = await response.json()
-      setAnalytics(data)
+    try {
+      setAnalyticsLoading(true)
+      console.log('Loading analytics...')
+      const response = await fetch('/api/admin/analytics', {
+        cache: 'no-store',
+        credentials: 'include'
+      })
+      
+      console.log('Analytics response status:', response.status)
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Analytics data received:', data)
+        setAnalytics(data)
+      } else {
+        console.error('Analytics API failed:', response.status, response.statusText)
+        const errorText = await response.text()
+        console.error('Analytics error response:', errorText)
+        toast.error(`Failed to load analytics: ${response.status} ${response.statusText}`)
+        
+        // Set default analytics to prevent UI from breaking
+        setAnalytics({
+          overview: {
+            totalUsers: 0,
+            totalOrders: 0,
+            totalRevenue: 0,
+            monthlyGrowth: 0,
+            weeklyOrderGrowth: 0,
+            monthlyRevenueGrowth: 0,
+            monthlyProductGrowth: 0
+          },
+          recentOrders: [],
+          topProducts: [],
+          dailyStats: []
+        })
+      }
+    } catch (error) {
+      console.error('Analytics fetch error:', error)
+      toast.error('Failed to load analytics data')
+      
+      // Set default analytics to prevent UI from breaking
+      setAnalytics({
+        overview: {
+          totalUsers: 0,
+          totalOrders: 0,
+          totalRevenue: 0,
+          monthlyGrowth: 0,
+          weeklyOrderGrowth: 0,
+          monthlyRevenueGrowth: 0,
+          monthlyProductGrowth: 0
+        },
+        recentOrders: [],
+        topProducts: [],
+        dailyStats: []
+      })
+    } finally {
+      setAnalyticsLoading(false)
     }
   }
 
@@ -749,6 +821,26 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
+            {/* Analytics Loading/Error State */}
+            {analyticsLoading && (
+              <div className="bg-primary-900 border border-primary-800 rounded-lg p-6 mb-6 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-500 mx-auto mb-4"></div>
+                <p className="text-gray-400">Loading analytics data...</p>
+              </div>
+            )}
+
+            {!analyticsLoading && !analytics && (
+              <div className="bg-primary-900 border border-primary-800 rounded-lg p-6 mb-6 text-center">
+                <p className="text-red-400 mb-4">Failed to load analytics data</p>
+                <button
+                  onClick={loadAnalytics}
+                  className="px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors"
+                >
+                  Retry Loading Analytics
+                </button>
+              </div>
+            )}
+
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <div className="bg-gradient-to-br from-primary-900 to-primary-800 border border-primary-700 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105">
@@ -828,6 +920,18 @@ export default function AdminDashboard() {
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Add New Product
+                </button>
+                <button
+                  onClick={loadAnalytics}
+                  disabled={analyticsLoading}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {analyticsLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <TrendingUp className="w-5 h-5" />
+                  )}
+                  <span>{analyticsLoading ? 'Loading...' : 'Refresh Analytics'}</span>
                 </button>
               </div>
             </div>
@@ -1067,41 +1171,67 @@ export default function AdminDashboard() {
                   <option value="PENDING">Pending</option>
                   <option value="PROCESSING">Processing</option>
                   <option value="SHIPPED">Shipped</option>
+                  <option value="OUT_FOR_DELIVERY">Out For Delivery</option>
                   <option value="DELIVERED">Delivered</option>
                   <option value="CANCELLED">Cancelled</option>
                 </select>
               </div>
             </div>
 
-            <div className="bg-primary-900 border border-primary-800 rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-primary-800">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Order ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Customer
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Items
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Total
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-primary-800">
+            {/* Orders Loading State */}
+            {ordersLoading && (
+              <div className="bg-primary-900 border border-primary-800 rounded-lg p-8 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500 mx-auto mb-4"></div>
+                <p className="text-gray-400 text-lg">Loading orders...</p>
+              </div>
+            )}
+
+            {/* Orders Empty State */}
+            {!ordersLoading && orders.length === 0 && (
+              <div className="bg-primary-900 border border-primary-800 rounded-lg p-8 text-center">
+                <ShoppingCart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400 text-lg mb-2">No orders found</p>
+                <p className="text-gray-500 text-sm">Orders will appear here once customers start placing them.</p>
+                <button
+                  onClick={loadOrders}
+                  className="mt-4 px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors"
+                >
+                  Refresh Orders
+                </button>
+              </div>
+            )}
+
+            {/* Orders Table */}
+            {!ordersLoading && orders.length > 0 && (
+              <div className="bg-primary-900 border border-primary-800 rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-primary-800">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Order ID
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Customer
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Items
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Total
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-primary-800">
                     {orders
                       .filter(order => 
                         (statusFilter === 'ALL' || order.status === statusFilter) &&
@@ -1177,10 +1307,11 @@ export default function AdminDashboard() {
                         </td>
                       </tr>
                     ))}
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
         )}
 

@@ -7,22 +7,27 @@ import { verifyToken } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('Analytics API called')
     const token = request.cookies.get('admin-token')?.value
     
     if (!token) {
+      console.log('No admin token found')
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - No token' },
         { status: 401 }
       )
     }
 
     const decoded = verifyToken(token)
     if (!decoded || decoded.role !== 'ADMIN') {
+      console.log('Invalid token or not admin role:', decoded)
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - Invalid token or role' },
         { status: 401 }
       )
     }
+
+    console.log('Admin authenticated, fetching analytics...')
 
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || '30' // days
@@ -37,7 +42,13 @@ export async function GET(request: NextRequest) {
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
     const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
 
+    // Test database connection first
+    console.log('Testing database connection...')
+    await prisma.$queryRaw`SELECT 1`
+    console.log('Database connection successful')
+
     // Get analytics data
+    console.log('Fetching analytics data...')
     const [
       totalUsers,
       totalOrders,
@@ -228,7 +239,10 @@ export async function GET(request: NextRequest) {
       })
     ])
 
+    console.log('Basic analytics data fetched successfully')
+
     // Get product details for top products
+    console.log('Fetching product details for top products...')
     const topProductsWithDetails = await Promise.all(
       topProducts.map(async (item) => {
         const product = await prisma.product.findUnique({
@@ -267,7 +281,9 @@ export async function GET(request: NextRequest) {
       ? ((productsThisMonth - productsLastMonth) / productsLastMonth) * 100 
       : productsThisMonth > 0 ? 100 : 0
 
-    return NextResponse.json({
+    console.log('Calculating growth metrics...')
+    
+    const analyticsResponse = {
       overview: {
         totalUsers,
         totalOrders,
@@ -285,11 +301,32 @@ export async function GET(request: NextRequest) {
         revenue: stat._sum.totalPrice || 0,
         orders: stat._count.id
       }))
+    }
+
+    console.log('Analytics response prepared:', {
+      totalUsers,
+      totalOrders,
+      totalRevenue: totalRevenue._sum.totalPrice || 0,
+      recentOrdersCount: recentOrders.length,
+      topProductsCount: topProductsWithDetails.length
     })
+
+    return NextResponse.json(analyticsResponse)
   } catch (error) {
     console.error('Analytics fetch error:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    })
+    
+    // Return more detailed error for debugging
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   }
