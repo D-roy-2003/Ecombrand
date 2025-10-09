@@ -19,7 +19,9 @@ import {
   Zap,
   Skull,
   Eye,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -171,11 +173,11 @@ export default function ProductPage() {
       <div className="relative min-h-screen pt-20">
         {/* Background Effects */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 via-black to-purple-900/20" />
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-fuchsia-900/20" />
           <div 
             className="absolute inset-0 opacity-5"
             style={{
-              backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,0,0,.1) 35px, rgba(255,0,0,.1) 70px)',
+              backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(168,85,247,.1) 35px, rgba(168,85,247,.1) 70px)',
             }}
           />
         </div>
@@ -186,7 +188,7 @@ export default function ProductPage() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-500 hover:text-red-500 transition-colors mb-8 group"
+            className="flex items-center gap-2 text-gray-500 hover:text-fuchsia-400 transition-colors mb-8 group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             <span className="uppercase tracking-wider text-sm font-bold">Back</span>
@@ -202,7 +204,7 @@ export default function ProductPage() {
             >
               {/* Main Image */}
               <div className="relative group">
-                <div className="aspect-square bg-gradient-to-br from-red-900/30 to-purple-900/30 rounded-xl overflow-hidden border border-white/10">
+                <div className="aspect-square bg-gradient-to-br from-purple-900/30 to-fuchsia-900/30 rounded-xl overflow-hidden border border-white/10">
                   <motion.img
                     layoutId={`product-image-${product.id}`}
                     src={product.imageUrls[selectedImage] || '/placeholder.jpg'}
@@ -212,6 +214,33 @@ export default function ProductPage() {
                     whileHover={{ scale: 1.05 }}
                     transition={{ duration: 0.3 }}
                   />
+                  
+                  {/* Navigation Buttons */}
+                  {product.imageUrls.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedImage((prev) => (prev === 0 ? product.imageUrls.length - 1 : prev - 1))
+                        }}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/70 backdrop-blur-sm rounded-full text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-black/90 hover:scale-110"
+                        aria-label="Previous image"
+                      >
+                        <ChevronLeft className="w-6 h-6" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedImage((prev) => (prev === product.imageUrls.length - 1 ? 0 : prev + 1))
+                        }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/70 backdrop-blur-sm rounded-full text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-black/90 hover:scale-110"
+                        aria-label="Next image"
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
+                    </>
+                  )}
+                  
                   <button
                     onClick={() => setImageZoom(true)}
                     className="absolute top-4 right-4 p-2 bg-black/50 backdrop-blur-sm rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
@@ -227,7 +256,7 @@ export default function ProductPage() {
                   </div>
                 )}
                 {product.stock === 0 && (
-                  <div className="absolute top-4 left-4 px-3 py-1 bg-red-600/90 backdrop-blur-sm text-white text-sm font-black uppercase rounded">
+                  <div className="absolute top-4 left-4 px-3 py-1 bg-purple-600/90 backdrop-blur-sm text-white text-sm font-black uppercase rounded">
                     SOLD OUT
                   </div>
                 )}
@@ -244,7 +273,7 @@ export default function ProductPage() {
                       onClick={() => setSelectedImage(index)}
                       className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
                         selectedImage === index 
-                          ? 'border-red-500 shadow-lg shadow-red-500/50' 
+                          ? 'border-fuchsia-500 shadow-lg shadow-fuchsia-500/50' 
                           : 'border-white/10 hover:border-white/30'
                       }`}
                     >
@@ -268,7 +297,7 @@ export default function ProductPage() {
             >
               {/* Category & Badges */}
               <div className="flex flex-wrap items-center gap-3">
-                <span className="px-4 py-2 bg-gradient-to-r from-red-600 to-purple-600 text-white text-xs font-black uppercase tracking-wider rounded-full">
+                <span className="px-4 py-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white text-xs font-black uppercase tracking-wider rounded-full">
                   {product.category}
                 </span>
                 {product.isFeatured && (
@@ -284,9 +313,9 @@ export default function ProductPage() {
                   <motion.span
                     animate={{
                       textShadow: [
-                        '0 0 0 rgba(255,0,0,0)',
-                        '2px 2px 0 rgba(255,0,0,0.5)',
-                        '0 0 0 rgba(255,0,0,0)',
+                        '0 0 0 rgba(168,85,247,0)',
+                        '2px 2px 0 rgba(168,85,247,0.5)',
+                        '0 0 0 rgba(168,85,247,0)',
                       ]
                     }}
                     transition={{ duration: 3, repeat: Infinity }}
@@ -298,7 +327,7 @@ export default function ProductPage() {
 
               {/* Price with Discount */}
               <div className="flex items-baseline gap-4 flex-wrap">
-                <span className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-purple-500">
+                <span className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-fuchsia-500">
                   ₹{product.price}
                 </span>
                 {product.originalPrice && (
@@ -309,7 +338,7 @@ export default function ProductPage() {
                     <motion.span
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
-                      className="px-3 py-1 bg-red-600 text-white text-sm font-black uppercase rounded"
+                      className="px-3 py-1 bg-fuchsia-600 text-white text-sm font-black uppercase rounded"
                     >
                       -{discountPercentage}% OFF
                     </motion.span>
@@ -338,7 +367,7 @@ export default function ProductPage() {
                         onClick={() => setSelectedSize(size)}
                         className={`py-3 border-2 rounded-lg text-sm font-black uppercase transition-all ${
                           selectedSize === size
-                            ? 'border-red-500 bg-red-500/20 text-red-500 shadow-lg shadow-red-500/30'
+                            ? 'border-fuchsia-500 bg-fuchsia-500/20 text-fuchsia-400 shadow-lg shadow-fuchsia-500/30'
                             : 'border-white/20 text-gray-400 hover:border-white/40 hover:text-white'
                         }`}
                       >
@@ -384,7 +413,7 @@ export default function ProductPage() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1 bg-gradient-to-r from-red-600 to-purple-600 text-white py-5 px-8 rounded-lg font-black uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed hover:from-red-500 hover:to-purple-500 transition-all flex items-center justify-center gap-3"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white py-5 px-8 rounded-lg font-black uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed hover:from-purple-500 hover:to-fuchsia-500 transition-all flex items-center justify-center gap-3"
                     disabled={addingToCart || product.stock === 0}
                     onClick={handleAddToCart}
                   >
@@ -408,7 +437,7 @@ export default function ProductPage() {
                     disabled={wishlistLoading}
                     className={`p-5 border-2 rounded-lg transition-all ${
                       isInWishlist(product.id)
-                        ? 'border-red-500 bg-red-500/20 text-red-500' 
+                        ? 'border-fuchsia-500 bg-fuchsia-500/20 text-fuchsia-400' 
                         : 'border-white/20 text-gray-400 hover:text-white hover:border-white/40'
                     } ${wishlistLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
@@ -441,7 +470,7 @@ export default function ProductPage() {
                     transition={{ delay: 0.5 + i * 0.1 }}
                     className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10"
                   >
-                    <div className="text-red-500">
+                    <div className="text-fuchsia-400">
                       {feature.icon}
                     </div>
                     <span className="text-sm text-gray-400">{feature.text}</span>

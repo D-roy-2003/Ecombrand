@@ -7,9 +7,9 @@ import { Instagram, Twitter, Facebook, Mail, MapPin, Phone } from 'lucide-react'
 export default function Footer() {
   return (
     <footer className="bg-[#160f22] border-t border-[#2a1f3b]">
-      <div className="container-custom">
-        <div className="py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="container-custom px-4 sm:px-6 lg:px-8">
+        <div className="py-8 sm:py-12 lg:py-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 lg:gap-8">
             {/* Brand Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -18,21 +18,21 @@ export default function Footer() {
               viewport={{ once: true }}
               className="lg:col-span-1"
             >
-              <div className="mb-6">
-                <span className="text-2xl font-display font-bold bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent">ROT</span>
-                <span className="text-xl font-display font-medium text-white ml-2">KIT</span>
+              <div className="mb-4 sm:mb-6">
+                <span className="text-xl sm:text-2xl font-display font-bold bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent">ROT</span>
+                <span className="text-lg sm:text-xl font-display font-medium text-white ml-2">KIT</span>
               </div>
-              <p className="text-gray-300 mb-6 leading-relaxed">
+              <p className="text-gray-300 text-sm sm:text-base mb-4 sm:mb-6 leading-relaxed">
                 Defy convention. Embrace the edge. Streetwear for the urban rebel who dares to be different.
               </p>
               <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 hover:text-fuchsia-400 transition-colors duration-300">
+                <a href="#" className="text-gray-400 hover:text-fuchsia-400 transition-colors duration-300" aria-label="Instagram">
                   <Instagram className="w-5 h-5" />
                 </a>
-                <a href="#" className="text-gray-400 hover:text-fuchsia-400 transition-colors duration-300">
+                <a href="#" className="text-gray-400 hover:text-fuchsia-400 transition-colors duration-300" aria-label="Twitter">
                   <Twitter className="w-5 h-5" />
                 </a>
-                <a href="#" className="text-gray-400 hover:text-fuchsia-400 transition-colors duration-300">
+                <a href="#" className="text-gray-400 hover:text-fuchsia-400 transition-colors duration-300" aria-label="Facebook">
                   <Facebook className="w-5 h-5" />
                 </a>
               </div>
