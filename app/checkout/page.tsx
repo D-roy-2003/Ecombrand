@@ -546,12 +546,12 @@ export default function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-[#120c18]">
         <Navigation />
         <div className="pt-20 flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <div className="w-8 h-8 border-2 border-red-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading checkout...</p>
+            <div className="w-12 h-12 border-3 border-fuchsia-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-400 text-lg">Loading checkout...</p>
           </div>
         </div>
         <Footer />
@@ -560,35 +560,63 @@ export default function CheckoutPage() {
   }
 
   if (orderComplete) {
+    // Close any open modals when order is complete
+    if (showAddressModal) {
+      setShowAddressModal(false)
+    }
+
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-[#120c18]">
         <Navigation />
         <div className="pt-20">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
               className="text-center"
             >
-              <div className="bg-gray-800 border border-gray-700 rounded-lg p-12">
-                <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
-                <h1 className="text-3xl font-bold text-white mb-4">Order Confirmed!</h1>
-                <p className="text-gray-300 mb-6">
+              <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-2xl p-12 shadow-2xl relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent"></div>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                >
+                  <CheckCircle className="w-24 h-24 text-green-500 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]" />
+                </motion.div>
+                <h1 className="text-4xl font-bold text-white mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Order Confirmed!</h1>
+                <p className="text-gray-300 mb-6 text-lg">
                   Thank you for your order. You will receive a confirmation email shortly.
                 </p>
-                <p className="text-sm text-gray-400 mb-8">
-                  Order #: ROT-{Date.now().toString().slice(-8)}
-                </p>
-                <div className="flex gap-4 justify-center">
+                <div className="inline-block bg-[#221733] border border-[#2a1f3b] rounded-lg px-6 py-3 mb-8">
+                  <p className="text-sm text-gray-400">Order Number</p>
+                  <p className="text-xl font-bold text-fuchsia-400 font-mono">
+                    ROT-{Date.now().toString().slice(-8)}
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
                   <button
-                    onClick={() => router.push('/shop')}
-                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Continue Shopping clicked');
+                      router.push('/shop');
+                    }}
+                    className="bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-700 hover:to-violet-700 text-white px-8 py-3 rounded-lg transition-all duration-300 font-semibold shadow-lg hover:shadow-fuchsia-500/50 hover:scale-105 cursor-pointer relative z-20"
+                    type="button"
                   >
                     Continue Shopping
                   </button>
                   <button
-                    onClick={() => router.push('/user/dashboard')}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('View Orders clicked');
+                      router.push('/user/dashboard?tab=orders');
+                    }}
+                    className="bg-[#221733] hover:bg-[#2a1f3b] border border-[#2a1f3b] hover:border-fuchsia-500 text-white px-8 py-3 rounded-lg transition-all duration-300 font-semibold hover:scale-105 cursor-pointer relative z-20"
+                    type="button"
                   >
                     View Orders
                   </button>
@@ -607,60 +635,71 @@ export default function CheckoutPage() {
   const finalTotal = total + shippingCost + tax
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-[#120c18]">
       {/* Top Navigation */}
-      <div className="bg-black border-b border-gray-800">
+      <div className="bg-[#160f22] border-b border-[#2a1f3b]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left side - Logo and main nav */}
             <div className="flex items-center space-x-8">
               <div className="flex items-center">
-                <div className="bg-red-600 text-white px-2 py-1 text-sm font-bold rounded">
-                  ROT
-                </div>
+                <span className="text-xl font-bold tracking-wide">
+                  <span className="text-fuchsia-400">ROT</span>
+                  <span className="text-white">KIT</span>
+                </span>
               </div>
               <nav className="hidden md:flex space-x-6">
-                <a href="/" className="text-gray-300 hover:text-white text-sm">Home</a>
-                <a href="/shop" className="text-gray-300 hover:text-white text-sm">Shop</a>
-                <a href="/contact" className="text-gray-300 hover:text-white text-sm">Contact</a>
+                <a href="/" className="text-gray-300 hover:text-white text-sm transition-colors duration-200">Home</a>
+                <a href="/shop" className="text-gray-300 hover:text-white text-sm transition-colors duration-200">Shop</a>
+                <a href="/contact" className="text-gray-300 hover:text-white text-sm transition-colors duration-200">Contact</a>
               </nav>
             </div>
             
             {/* Right side - Help, Orders, Account */}
             <div className="flex items-center space-x-6">
-              <a href="/help" className="text-gray-300 hover:text-white text-sm">Help</a>
-              <a href="/user/dashboard#orders" className="text-gray-300 hover:text-white text-sm">Orders</a>
-              <a href="/user/dashboard" className="text-gray-300 hover:text-white text-sm">Account</a>
+              <a href="/help" className="text-gray-300 hover:text-white text-sm transition-colors duration-200">Help</a>
+              <a href="/user/dashboard#orders" className="text-gray-300 hover:text-white text-sm transition-colors duration-200">Orders</a>
+              <a href="/user/dashboard" className="text-gray-300 hover:text-white text-sm transition-colors duration-200">Account</a>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back to cart */}
         <button 
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
+          className="flex items-center gap-2 text-gray-400 hover:text-fuchsia-400 transition-all duration-200 mb-8 group"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back to cart
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-medium">Back to cart</span>
         </button>
 
         {/* Secure checkout heading */}
-        <h1 className="text-white text-xl font-semibold mb-8">Secure checkout</h1>
+        <div className="mb-10">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white via-fuchsia-200 to-white bg-clip-text text-transparent">Secure Checkout</h1>
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <Shield className="w-4 h-4 text-green-500" />
+            <span>Your payment information is encrypted and secure</span>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Checkout Form */}
           <div className="lg:col-span-2 space-y-6">
             
             {/* Progress + Trust Bar */}
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+            <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-xl p-5 shadow-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-2 w-24 rounded bg-gray-700">
-                    <div className="h-2 w-2/3 rounded bg-red-600" />
+                  <div className="h-2.5 w-32 rounded-full bg-[#2a1f3b] overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: '66%' }}
+                      className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-500 shadow-lg shadow-fuchsia-500/50"
+                    />
                   </div>
-                  <p className="text-gray-300 text-sm">
+                  <p className="text-gray-300 text-sm font-medium">
                     {paymentStep ? 'Step 3 of 3: Payment' : 'Step 2 of 3: Delivery & Review'}
                   </p>
                 </div>
@@ -682,32 +721,34 @@ export default function CheckoutPage() {
             </div>
 
             {/* Delivery Address */}
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <MapPin className="w-5 h-5 text-red-500" />
-                <h2 className="text-white text-lg font-semibold">Delivery Address</h2>
+            <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-xl p-6 shadow-lg hover:border-fuchsia-500/50 transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-fuchsia-500/10 rounded-lg">
+                  <MapPin className="w-5 h-5 text-fuchsia-400" />
+                </div>
+                <h2 className="text-white text-xl font-bold">Delivery Address</h2>
               </div>
 
               {hasAddress() ? (
                 <div className="space-y-6">
                   {/* Address Tabs */}
                   <div className="flex gap-1">
-                    <button className="px-4 py-2 text-sm rounded bg-gray-700 text-white">
+                    <button className="px-4 py-2 text-sm rounded bg-[#2a1f3b] text-white">
                       Home
                     </button>
-                    <button className="px-4 py-2 text-sm rounded text-gray-400 hover:text-white">
+                    <button className="px-4 py-2 text-sm rounded text-gray-400 hover:text-white hover:bg-[#221733] transition-colors duration-200">
                       Work
                     </button>
                   </div>
 
                   {/* Address Card */}
-                  <div className="bg-gray-700 rounded-lg p-4">
+                  <div className="bg-gradient-to-br from-[#221733] to-[#1a1224] border border-[#2a1f3b] rounded-xl p-5 shadow-md hover:shadow-lg hover:border-fuchsia-500/50 transition-all duration-300">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="text-white font-semibold">Home</h3>
-                          <button className="px-3 py-1 text-xs bg-gray-600 text-white rounded">
-                            Default here
+                          <button className="px-3 py-1 text-xs bg-fuchsia-500/20 text-fuchsia-400 rounded">
+                            Default
                           </button>
                         </div>
                         <p className="text-white text-sm">
@@ -729,22 +770,10 @@ export default function CheckoutPage() {
                             console.log('Edit button clicked')
                             openAddressModal(true)
                           }}
-                          className="p-2 text-white hover:bg-gray-600 rounded transition-colors duration-200"
+                          className="p-2 text-fuchsia-400 hover:bg-[#2a1f3b] rounded transition-colors duration-200"
                           title="Edit address"
                         >
                           <Edit className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (confirm('Are you sure you want to delete this address?')) {
-                              // TODO: Implement delete functionality
-                              toast.error('Delete functionality not implemented yet')
-                            }
-                          }}
-                          className="p-2 text-white hover:bg-gray-600 rounded transition-colors duration-200"
-                          title="Delete address"
-                        >
-                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -752,7 +781,7 @@ export default function CheckoutPage() {
 
                   <button
                     onClick={() => openAddressModal()}
-                    className="text-red-500 hover:text-red-400 transition-colors duration-200"
+                    className="text-fuchsia-400 hover:text-fuchsia-300 transition-colors duration-200 text-sm"
                   >
                     Add new address
                   </button>
@@ -763,7 +792,7 @@ export default function CheckoutPage() {
                   <p className="text-gray-400 mb-4">No delivery address added yet</p>
                   <button
                     onClick={() => openAddressModal()}
-                    className="text-red-500 hover:text-red-400 transition-colors duration-200"
+                    className="text-fuchsia-400 hover:text-fuchsia-300 transition-colors duration-200"
                   >
                     Add a new delivery address
                   </button>
@@ -772,10 +801,12 @@ export default function CheckoutPage() {
             </div>
 
             {/* Product Preview Section */}
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <Package className="w-5 h-5 text-red-500" />
-                <h2 className="text-white text-lg font-semibold">Review Your Items</h2>
+            <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-xl p-6 shadow-lg hover:border-fuchsia-500/50 transition-all duration-300">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-fuchsia-500/10 rounded-lg">
+                  <Package className="w-5 h-5 text-fuchsia-400" />
+                </div>
+                <h2 className="text-white text-xl font-bold">Review Your Items</h2>
               </div>
 
               {/* Savings Banner */}
@@ -802,10 +833,10 @@ export default function CheckoutPage() {
               {/* Product Items */}
               <div className="space-y-4">
                 {cartItems.map((item) => (
-                  <div key={item.id} className="bg-gray-700 border border-gray-600 rounded-lg p-4">
+                  <div key={item.id} className="bg-gradient-to-br from-[#221733] to-[#1a1224] border border-[#2a1f3b] rounded-xl p-4 hover:border-fuchsia-500/50 transition-all duration-300 shadow-md">
                     <div className="flex items-start gap-4">
                       {/* Product Image */}
-                      <div className="w-20 h-20 bg-gray-600 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="w-20 h-20 bg-[#2a1f3b] rounded-lg overflow-hidden flex-shrink-0">
                         <img
                           src={item.imageUrl}
                           alt={item.name}
@@ -908,7 +939,7 @@ export default function CheckoutPage() {
             {/* Order Notes and Promo Code */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Order Notes */}
-              <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+              <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-xl p-6 shadow-lg hover:border-fuchsia-500/50 transition-all duration-300">
                 <h3 className="text-white text-sm font-medium mb-3">Order notes (optional)</h3>
                 <textarea
                   name="orderNotes"
@@ -916,12 +947,12 @@ export default function CheckoutPage() {
                   onChange={handleInputChange}
                   rows={3}
                   placeholder="Any instructions for the delivery person..."
-                  className="w-full bg-gray-700 border border-gray-600 text-white rounded px-3 py-2 text-sm focus:border-red-500 focus:outline-none resize-none"
+                  className="w-full bg-[#221733] border border-[#2e2146] text-white rounded px-3 py-2 text-sm focus:border-fuchsia-500 focus:outline-none resize-none"
                 />
               </div>
 
               {/* Promo Code */}
-              <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+              <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-xl p-6 shadow-lg hover:border-fuchsia-500/50 transition-all duration-300">
                 <h3 className="text-white text-sm font-medium mb-3">Have a promo code?</h3>
                 <div className="flex gap-2">
                   <input
@@ -929,9 +960,9 @@ export default function CheckoutPage() {
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
                     placeholder="Enter code"
-                    className="flex-1 bg-gray-700 border border-gray-600 text-white rounded px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
+                    className="flex-1 bg-[#221733] border border-[#2e2146] text-white rounded px-3 py-2 text-sm focus:border-fuchsia-500 focus:outline-none"
                   />
-                  <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition-colors">
+                  <button className="bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg text-sm transition-all duration-300 font-semibold shadow-lg hover:shadow-fuchsia-500/50 hover:scale-105">
                     Apply
                   </button>
                 </div>
@@ -953,7 +984,7 @@ export default function CheckoutPage() {
               <button 
                 onClick={handlePlaceOrder}
                 disabled={processing || !hasAddress()}
-                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded text-sm font-medium transition-colors disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-700 hover:to-violet-700 text-white py-3.5 rounded-xl text-sm font-bold transition-all duration-300 disabled:opacity-50 shadow-lg hover:shadow-fuchsia-500/50 hover:scale-[1.02]"
               >
                 {processing ? (
                   paymentStep ? 'Processing Payment...' : 'Preparing Order...'
@@ -966,7 +997,7 @@ export default function CheckoutPage() {
 
           {/* Right Column - Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 sticky top-6">
+            <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-xl p-6 sticky top-6 shadow-2xl">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-white text-lg font-semibold">Order Summary</h2>
                 <span className="text-gray-400 text-sm">{cartItems.length} items</span>
@@ -976,7 +1007,7 @@ export default function CheckoutPage() {
               <div className="space-y-4 mb-6">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center gap-3">
-                    <div className="w-16 h-16 bg-gray-700 rounded overflow-hidden flex-shrink-0">
+                    <div className="w-16 h-16 bg-[#221733] rounded overflow-hidden flex-shrink-0">
                       <img
                         src={item.imageUrl}
                         alt={item.name}
@@ -1054,7 +1085,7 @@ export default function CheckoutPage() {
               <button
                 onClick={handlePlaceOrder}
                 disabled={processing || !hasAddress()}
-                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+                className="w-full bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-700 hover:to-violet-700 text-white py-3.5 rounded-xl text-sm font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mb-4 shadow-lg hover:shadow-fuchsia-500/50 hover:scale-[1.02]"
               >
                 {processing ? (
                   <div className="flex items-center justify-center gap-2">
@@ -1089,8 +1120,8 @@ export default function CheckoutPage() {
       {/* Address Modal */}
       {showAddressModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+          <div className="bg-[#1a1224] border border-[#2a1f3b] rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-[#2a1f3b]">
               <h3 className="text-xl font-semibold text-white">
                 {isEditingAddress ? 'Edit address' : 'Add an address'}
               </h3>
@@ -1316,7 +1347,7 @@ export default function CheckoutPage() {
               <div className="mt-8">
                 <button
                   onClick={handleSaveAddress}
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+                  className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
                 >
                   {isEditingAddress ? 'Update address' : 'Save this address'}
                 </button>

@@ -56,6 +56,7 @@ export default function ProductGrid({ products, isLoading }: ProductGridProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: index * 0.1 }}
+          whileHover={{ scale: 1.05, y: -8 }}
           className="group h-full"
         >
           <div className="bg-primary-900 border border-primary-800 rounded-lg overflow-hidden hover:border-accent-500 transition-all duration-300 h-full flex flex-col">
@@ -144,10 +145,10 @@ export default function ProductGrid({ products, isLoading }: ProductGridProps) {
                 </div>
                 <Link 
                   href={`/product/${product.id}`}
-                  className="btn-secondary flex items-center justify-center gap-2 text-sm py-2 px-4 flex-shrink-0 min-w-[120px]"
+                  className="bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-700 hover:to-violet-700 text-white flex items-center justify-center gap-2 text-sm py-2 px-4 rounded-lg transition-all duration-300 font-semibold shadow-lg hover:shadow-fuchsia-500/50 hover:scale-105 flex-shrink-0"
                 >
                   <Eye className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">VIEW DETAILS</span>
+                  <span className="truncate">VIEW</span>
                 </Link>
               </div>
             </div>

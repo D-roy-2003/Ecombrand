@@ -127,7 +127,7 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen bg-[#120c18]">
       <Navigation />
-      <div className="pt-8">
+      <div className="pt-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -135,34 +135,76 @@ export default function ShopPage() {
           className="section-padding"
         >
           <div className="container-custom">
-            <div className="text-center mb-12">
-              <h1 className="text-5xl md:text-6xl font-display font-bold mb-4">
-                <span className="text-white">SHOP</span>{' '}
-                <span className="text-gradient">COLLECTION</span>
-              </h1>
-              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                Discover our latest streetwear collection designed for the urban rebel
-              </p>
+            {/* Header Section */}
+            <div className="text-center mb-16">
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="mb-6"
+              >
+                <h1 className="text-5xl sm:text-6xl md:text-7xl font-display font-bold mb-2">
+                  <span className="text-white">SHOP</span>{' '}
+                  <span className="bg-gradient-to-r from-fuchsia-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(217,70,239,0.3)]">COLLECTION</span>
+                </h1>
+              </motion.div>
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto px-4 leading-relaxed"
+              >
+                Discover our latest streetwear collection designed for the <span className="text-fuchsia-400 font-semibold">urban rebel</span>
+              </motion.p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
               {/* Filters Sidebar */}
-              <div className="lg:col-span-1">
-                <ProductFilters
-                  filters={filters}
-                  onFilterChange={handleFilterChange}
-                />
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="lg:col-span-1"
+              >
+                <div className="sticky top-20">
+                  <ProductFilters
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                  />
+                </div>
+              </motion.div>
 
               {/* Products Grid */}
-              <div className="lg:col-span-3">
-                <div className="flex justify-between items-center mb-6">
-                  <p className="text-gray-400">
-                    Showing {filteredProducts.length} of {products.length} products
-                  </p>
-                </div>
-                <ProductGrid products={filteredProducts} />
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                className="lg:col-span-3"
+              >
+                {/* Products Grid or Empty State */}
+                {filteredProducts.length === 0 ? (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-20 bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-2xl shadow-2xl relative overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/5 to-transparent"></div>
+                    <div className="relative">
+                      <div className="text-7xl mb-6">🔍</div>
+                      <h3 className="text-3xl font-bold text-white mb-4">No products found</h3>
+                      <p className="text-gray-400 mb-8 text-lg max-w-md mx-auto">Try adjusting your filters to see more results</p>
+                      <button
+                        onClick={() => setFilters({ category: 'ALL', priceRange: [0, 10000], search: '' })}
+                        className="bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-700 hover:to-violet-700 text-white px-8 py-4 rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-fuchsia-500/50 hover:scale-105"
+                      >
+                        Clear Filters
+                      </button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <ProductGrid products={filteredProducts} />
+                )}
+              </motion.div>
             </div>
           </div>
         </motion.div>
