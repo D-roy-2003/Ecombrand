@@ -23,7 +23,7 @@ export default function AboutPage() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-red-900/20" />
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-fuchsia-900/20" />
           <motion.div
             animate={{
               backgroundPosition: ['0% 0%', '100% 100%'],
@@ -55,7 +55,7 @@ export default function AboutPage() {
               transition={{ delay: 0.3, duration: 0.5 }}
               className="inline-block mb-8"
             >
-              <Skull className="w-16 h-16 text-red-500 mx-auto" />
+              <Skull className="w-16 h-16 text-purple-500 mx-auto" />
             </motion.div>
             
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-display font-black mb-6">
@@ -65,7 +65,7 @@ export default function AboutPage() {
                 transition={{ delay: 0.5 }}
                 className="block text-white"
                 style={{ 
-                  textShadow: '3px 3px 0 #ff0000, -3px -3px 0 #00ffff',
+                  textShadow: '3px 3px 0 #a855f7, -3px -3px 0 #00ffff',
                   letterSpacing: '-0.05em'
                 }}
               >
@@ -75,9 +75,9 @@ export default function AboutPage() {
                 initial={{ x: 100, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.7 }}
-                className="block bg-gradient-to-r from-red-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent"
+                className="block bg-gradient-to-r from-purple-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-transparent"
                 style={{ 
-                  textShadow: '0 0 40px rgba(255,0,0,0.5)',
+                  textShadow: '0 0 40px rgba(168,85,247,0.5)',
                   letterSpacing: '0.1em'
                 }}
               >
@@ -162,13 +162,13 @@ export default function AboutPage() {
                   <motion.div
                     key={stat.label}
                     whileHover={{ scale: 1.05, rotate: [-1, 1, -1, 0] }}
-                    className="bg-gradient-to-br from-purple-900/50 to-red-900/50 backdrop-blur-sm border border-red-500/30 p-6 rounded-lg relative overflow-hidden group"
+                    className="bg-gradient-to-br from-purple-900/50 to-fuchsia-900/50 backdrop-blur-sm border border-fuchsia-500/30 p-6 rounded-lg relative overflow-hidden group"
                   >
-                    <div className="absolute top-2 right-2 text-red-500/30 group-hover:text-red-500 transition-colors">
+                    <div className="absolute top-2 right-2 text-fuchsia-500/30 group-hover:text-fuchsia-500 transition-colors">
                       {stat.icon}
                     </div>
                     <div className="text-3xl md:text-4xl font-black text-white mb-1">{stat.num}</div>
-                    <div className="text-sm text-red-400 uppercase tracking-widest">{stat.label}</div>
+                    <div className="text-sm text-fuchsia-400 uppercase tracking-widest">{stat.label}</div>
                   </motion.div>
                 ))}
               </motion.div>
@@ -180,7 +180,7 @@ export default function AboutPage() {
       {/* Values with Dark Cards */}
       <section className="relative py-32 overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-900/20 via-black to-purple-900/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 via-black to-fuchsia-900/20" />
           <div 
             className="absolute inset-0 opacity-10"
             style={{
@@ -197,7 +197,7 @@ export default function AboutPage() {
             className="text-5xl md:text-7xl font-display font-black text-center mb-16"
           >
             <span className="text-white">CORE</span>{' '}
-            <span className="text-red-500">VALUES</span>
+            <span className="text-fuchsia-400">VALUES</span>
           </motion.h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -212,7 +212,7 @@ export default function AboutPage() {
                 icon: <Shield className="w-10 h-10" />,
                 title: 'QUALITY',
                 desc: 'Built to survive mosh pits and midnight adventures.',
-                gradient: 'from-red-600 to-orange-600',
+                gradient: 'from-fuchsia-600 to-purple-600',
               },
               {
                 icon: <Skull className="w-10 h-10" />,
@@ -259,7 +259,7 @@ export default function AboutPage() {
           >
             <span className="text-white">THE</span>{' '}
             <span 
-              className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-purple-500 to-cyan-500"
+              className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-fuchsia-500 to-cyan-500"
             >
               EVOLUTION
             </span>
@@ -267,7 +267,7 @@ export default function AboutPage() {
 
           <div className="relative">
             {/* Central Line */}
-            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-red-500 via-purple-500 to-cyan-500" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-purple-500 via-fuchsia-500 to-cyan-500" />
 
             <div className="space-y-20">
               {[
@@ -275,7 +275,7 @@ export default function AboutPage() {
                   year: '2019', 
                   title: 'GENESIS', 
                   desc: 'Born in a garage with nothing but rebellion and a screen printer.',
-                  color: 'red'
+                  color: 'fuchsia'
                 },
                 { 
                   year: '2021', 
@@ -315,7 +315,7 @@ export default function AboutPage() {
 
       {/* Team Section with Glitch Cards */}
       <section className="relative py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-red-900/10 to-black" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-900/10 to-black" />
         
         <div className="relative container-custom">
           <motion.h2
@@ -325,12 +325,12 @@ export default function AboutPage() {
             className="text-5xl md:text-7xl font-display font-black text-center mb-16"
           >
             <span className="text-white">THE</span>{' '}
-            <span className="text-red-500">COLLECTIVE</span>
+            <span className="text-fuchsia-400">COLLECTIVE</span>
           </motion.h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { name: 'ALEX VOID', role: 'Creative Chaos', color: 'red' },
+              { name: 'ALEX VOID', role: 'Creative Chaos', color: 'fuchsia' },
               { name: 'RILEY HEX', role: 'Design Demon', color: 'purple' },
               { name: 'JORDAN FLUX', role: 'Production Punk', color: 'cyan' },
               { name: 'CASEY VENOM', role: 'Community Cult Leader', color: 'green' },
@@ -368,7 +368,7 @@ export default function AboutPage() {
       {/* CTA with Aggressive Style */}
       <section className="relative py-32 overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-900/30 via-purple-900/30 to-red-900/30 animate-gradient" />
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-900/30 via-fuchsia-900/30 to-purple-900/30 animate-gradient" />
         </div>
         
         <div className="relative container-custom">
@@ -383,7 +383,7 @@ export default function AboutPage() {
               <span className="text-white">JOIN THE</span>
               <br />
               <span 
-                className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-purple-500 to-cyan-500 animate-gradient-text"
+                className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-fuchsia-500 to-cyan-500 animate-gradient-text"
               >
                 RESISTANCE
               </span>
@@ -396,11 +396,11 @@ export default function AboutPage() {
               <input 
                 type="email" 
                 placeholder="YOUR EMAIL" 
-                className="flex-1 bg-black/50 border-2 border-white/20 rounded-lg px-6 py-4 text-white placeholder-gray-500 focus:border-red-500 focus:outline-none transition-colors backdrop-blur-sm"
+                className="flex-1 bg-black/50 border-2 border-white/20 rounded-lg px-6 py-4 text-white placeholder-gray-500 focus:border-fuchsia-500 focus:outline-none transition-colors backdrop-blur-sm"
               />
               <button 
                 type="button" 
-                className="px-8 py-4 bg-gradient-to-r from-red-600 to-purple-600 text-white font-black uppercase tracking-wider rounded-lg hover:from-red-500 hover:to-purple-500 transition-all transform hover:scale-105"
+                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-black uppercase tracking-wider rounded-lg hover:from-purple-500 hover:to-fuchsia-500 transition-all transform hover:scale-105"
               >
                 SUBMIT
               </button>
