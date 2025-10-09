@@ -70,36 +70,42 @@ export default function FeaturedProducts() {
           <div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {products.slice(0, 4).map((p) => (
-                <Link key={p.id} href={`/product/${p.id}`} className="group">
-                  <div className="relative overflow-hidden rounded-xl bg-[#1a1224] border border-[#2a1f3b] hover:border-white/30 transition-all">
-                    <div className="relative h-64">
-                      <img src={p.imageUrls[0] || '/placeholder.jpg'} alt={p.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="text-white font-semibold line-clamp-1">{p.name}</h3>
-                      <p className="text-sm text-gray-400 mb-3">{p.category}</p>
-                      <div className="flex items-center justify-between">
-                        {p.originalPrice && p.originalPrice > p.price ? (
-                          <div>
-                            <span className="text-sm text-gray-400 line-through mr-2">₹{p.originalPrice}</span>
+                <motion.div
+                  key={p.id}
+                  whileHover={{ scale: 1.05, y: -8 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Link href={`/product/${p.id}`} className="group block">
+                    <div className="relative overflow-hidden rounded-xl bg-[#1a1224] border border-[#2a1f3b] hover:border-white/30 transition-all">
+                      <div className="relative h-64">
+                        <img src={p.imageUrls[0] || '/placeholder.jpg'} alt={p.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-white font-semibold line-clamp-1">{p.name}</h3>
+                        <p className="text-sm text-gray-400 mb-3">{p.category}</p>
+                        <div className="flex items-center justify-between">
+                          {p.originalPrice && p.originalPrice > p.price ? (
+                            <div>
+                              <span className="text-sm text-gray-400 line-through mr-2">₹{p.originalPrice}</span>
+                              <span className="text-fuchsia-400 font-semibold">₹{p.price}</span>
+                            </div>
+                          ) : (
                             <span className="text-fuchsia-400 font-semibold">₹{p.price}</span>
-                          </div>
-                        ) : (
-                          <span className="text-fuchsia-400 font-semibold">₹{p.price}</span>
-                        )}
-                        <button
-                          className={`px-3 h-9 text-sm rounded border ${isInWishlist(p.id) ? 'border-fuchsia-600 text-fuchsia-400' : 'border-white/20 text-white/80 hover:border-white/40'}`}
-                          onClick={(ev) => handleWishlist(p.id, ev)}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <Heart className={`w-4 h-4 ${isInWishlist(p.id) ? 'fill-current' : ''}`} />
-                            {isInWishlist(p.id) ? 'Remove' : 'Wishlist'}
-                          </span>
-                        </button>
+                          )}
+                          <button
+                            className={`px-3 h-9 text-sm rounded border ${isInWishlist(p.id) ? 'border-fuchsia-600 text-fuchsia-400' : 'border-white/20 text-white/80 hover:border-white/40'}`}
+                            onClick={(ev) => handleWishlist(p.id, ev)}
+                          >
+                            <span className="inline-flex items-center gap-2">
+                              <Heart className={`w-4 h-4 ${isInWishlist(p.id) ? 'fill-current' : ''}`} />
+                              {isInWishlist(p.id) ? 'Remove' : 'Wishlist'}
+                            </span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                </motion.div>
               ))}
             </div>
           </div>
