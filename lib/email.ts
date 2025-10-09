@@ -303,6 +303,176 @@ export async function sendWelcomeEmail(email: string, name: string): Promise<{ s
 }
 
 /**
+ * Send forgot password OTP email to user
+ */
+export async function sendForgotPasswordOTPEmail(email: string, otp: string, name?: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD, // Use App Password for Gmail
+      },
+    })
+
+    const mailOptions = {
+      from: {
+        name: 'ROT KIT',
+        address: process.env.EMAIL_USER || 'noreply@rotkit.com'
+      },
+      to: email,
+      subject: 'Login OTP - ROT KIT',
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Login OTP - ROT KIT</title>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              background-color: #f4f4f4;
+            }
+            .container {
+              background: white;
+              padding: 40px;
+              border-radius: 10px;
+              box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .logo {
+              font-size: 32px;
+              font-weight: bold;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+              margin-bottom: 10px;
+            }
+            .subtitle {
+              color: #666;
+              font-size: 16px;
+            }
+            .otp-container {
+              background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+              color: white;
+              padding: 30px;
+              border-radius: 10px;
+              text-align: center;
+              margin: 30px 0;
+            }
+            .otp-code {
+              font-size: 36px;
+              font-weight: bold;
+              letter-spacing: 8px;
+              margin: 20px 0;
+              font-family: 'Courier New', monospace;
+            }
+            .message {
+              font-size: 16px;
+              margin-bottom: 20px;
+              line-height: 1.5;
+            }
+            .warning {
+              background: #fef2f2;
+              border: 1px solid #fecaca;
+              color: #991b1b;
+              padding: 15px;
+              border-radius: 5px;
+              margin: 20px 0;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #eee;
+              color: #666;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">ROT KIT</div>
+              <div class="subtitle">Fashion & Lifestyle</div>
+            </div>
+            
+            <div class="message">
+              <p>Hello${name ? ` ${name}` : ''},</p>
+              <p>We received a request for login access to your ROT KIT account. Use the OTP code below to access your account:</p>
+            </div>
+            
+            <div class="otp-container">
+              <div>Login OTP Code</div>
+              <div class="otp-code">${otp}</div>
+              <div>This code will expire in 5 minutes</div>
+            </div>
+            
+            <div class="message">
+              <p>Enter this code on the login page to verify your identity and access your account.</p>
+              <p><strong>Note:</strong> After verification, you will be automatically logged in without needing to enter your password.</p>
+            </div>
+            
+            <div class="warning">
+              <strong>Security Alert:</strong> If you didn't request this login access, please ignore this email. Your account remains secure.
+            </div>
+            
+            <div class="footer">
+              <p>If you continue to have problems, please contact our support team.</p>
+              <p>This is an automated message, please do not reply to this email.</p>
+              <p>&copy; 2024 ROT KIT. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+        ROT KIT - Login OTP
+        
+        Hello${name ? ` ${name}` : ''},
+        
+        We received a request for login access to your ROT KIT account. Use the OTP code below to access your account:
+        
+        Login OTP Code: ${otp}
+        
+        This code will expire in 5 minutes.
+        
+        Enter this code on the login page to verify your identity and access your account.
+        
+        Note: After verification, you will be automatically logged in without needing to enter your password.
+        
+        If you didn't request this login access, please ignore this email. Your account remains secure.
+        
+        © 2024 ROT KIT. All rights reserved.
+      `
+    }
+
+    await transporter.sendMail(mailOptions)
+    
+    return {
+      success: true,
+      message: 'Login OTP sent successfully to your email address.'
+    }
+  } catch (error) {
+    console.error('Forgot password email sending error:', error)
+    return {
+      success: false,
+      message: 'Failed to send login OTP email. Please try again later.'
+    }
+  }
+}
+
+/**
  * Send order confirmation email after successful purchase
  */
 export async function sendOrderConfirmationEmail(params: {

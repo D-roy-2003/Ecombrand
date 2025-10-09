@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Lock, Mail, User, ShoppingCart, Heart } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { setCurrentUserId } from '@/lib/cart'
-
 function LoginContent() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -15,6 +14,15 @@ function LoginContent() {
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Forgot Password states
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('')
+  const [forgotPasswordOtp, setForgotPasswordOtp] = useState('')
+  const [forgotPasswordOtpSent, setForgotPasswordOtpSent] = useState(false)
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false)
+  const [forgotPasswordOtpLoading, setForgotPasswordOtpLoading] = useState(false)
+  const [forgotPasswordResendTimer, setForgotPasswordResendTimer] = useState(0)
   const [otpSent, setOtpSent] = useState(false)
   const [otpLoading, setOtpLoading] = useState(false)
   const [otpVerified, setOtpVerified] = useState(false)
@@ -46,6 +54,17 @@ function LoginContent() {
     }
     return () => clearInterval(interval)
   }, [resendTimer])
+
+  // Timer for Forgot Password OTP resend
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (forgotPasswordResendTimer > 0) {
+      interval = setInterval(() => {
+        setForgotPasswordResendTimer(prev => prev - 1)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [forgotPasswordResendTimer])
 
   // Reset OTP state when switching between login/register
   useEffect(() => {
@@ -129,6 +148,107 @@ function LoginContent() {
       return
     }
     await handleSendOTP()
+  }
+
+  // Forgot Password handlers
+  const handleForgotPasswordSendOTP = async () => {
+    if (!forgotPasswordEmail) {
+      toast.error('Please enter your email address')
+      return
+    }
+
+    setForgotPasswordOtpLoading(true)
+
+    try {
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: forgotPasswordEmail }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setForgotPasswordOtpSent(true)
+        setForgotPasswordResendTimer(60) // 1 minute timer
+        toast.success('Login OTP sent to your email address!')
+      } else {
+        if (response.status === 429) {
+          setForgotPasswordResendTimer(data.waitTime || 60)
+        }
+        toast.error(data.error || 'Failed to send OTP')
+      }
+    } catch (error) {
+      toast.error('Failed to send OTP. Please try again.')
+    } finally {
+      setForgotPasswordOtpLoading(false)
+    }
+  }
+
+  const handleForgotPasswordVerifyOTP = async () => {
+    if (!forgotPasswordOtp || forgotPasswordOtp.length !== 6) {
+      toast.error('Please enter a valid 6-digit OTP')
+      return
+    }
+
+    setForgotPasswordLoading(true)
+
+    try {
+      const response = await fetch('/api/auth/forgot-password/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: forgotPasswordEmail, otp: forgotPasswordOtp }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Store token in localStorage for authentication
+        if (data.token) {
+          localStorage.setItem('token', data.token)
+        }
+        
+        // Set user ID for cart system
+        if (data.user && data.user.id) {
+          setCurrentUserId(data.user.id)
+        }
+        
+        toast.success('OTP verified successfully! You are now logged in.')
+        
+        // Add debugging
+        console.log('User data:', data.user)
+        console.log('Token stored:', data.token)
+        
+        // Longer delay to ensure cookie is set properly
+        setTimeout(() => {
+          console.log('Redirecting to dashboard...')
+          // Redirect based on user role
+          if (data.user.role === 'ADMIN') {
+            window.location.href = '/admin/dashboard'
+          } else {
+            window.location.href = '/user/dashboard'
+          }
+        }, 500)
+      } else {
+        toast.error(data.error || 'Invalid OTP')
+      }
+    } catch (error) {
+      toast.error('Failed to verify OTP. Please try again.')
+    } finally {
+      setForgotPasswordLoading(false)
+    }
+  }
+
+  const handleForgotPasswordResendOTP = async () => {
+    if (forgotPasswordResendTimer > 0) {
+      toast.error(`Please wait ${forgotPasswordResendTimer} seconds before resending`)
+      return
+    }
+    await handleForgotPasswordSendOTP()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -259,13 +379,144 @@ function LoginContent() {
         {/* Logo */}
         <div className="text-center mb-8">
           <span className="text-4xl font-display font-bold text-gradient">
-            EDGY FASHION
+            ROT KIT
           </span>
           <p className="text-gray-400 mt-2">Welcome Back</p>
         </div>
 
+        {/* Forgot Password Modal */}
+        {isForgotPassword && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="bg-primary-900 border border-primary-800 rounded-lg p-8 mb-6"
+          >
+            <div className="flex items-center justify-center mb-6">
+              <div className="p-3 bg-red-600/20 rounded-lg">
+                <Lock className="w-8 h-8 text-red-500" />
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-bold text-white text-center mb-8">
+              FORGOT PASSWORD
+            </h2>
+
+            <div className="space-y-6">
+              {/* Email Field */}
+              <div>
+                <label htmlFor="forgotEmail" className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    id="forgotEmail"
+                    type="email"
+                    value={forgotPasswordEmail}
+                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300"
+                    placeholder="Enter your email address"
+                    disabled={forgotPasswordOtpSent}
+                  />
+                </div>
+                
+                {/* Send OTP Button */}
+                {!forgotPasswordOtpSent && (
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={handleForgotPasswordSendOTP}
+                      disabled={forgotPasswordOtpLoading || !forgotPasswordEmail}
+                      className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {forgotPasswordOtpLoading ? 'Sending OTP...' : 'Send OTP'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* OTP Field (after OTP is sent) */}
+              {forgotPasswordOtpSent && (
+                <div>
+                  <label htmlFor="forgotOtp" className="block text-sm font-medium text-gray-300 mb-2">
+                    OTP Code
+                  </label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        id="forgotOtp"
+                        type="text"
+                        value={forgotPasswordOtp}
+                        onChange={(e) => setForgotPasswordOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className="w-full pl-10 pr-4 py-3 bg-primary-800 border border-primary-700 text-white rounded-lg focus:border-accent-500 focus:outline-none transition-colors duration-300 text-center text-lg tracking-widest"
+                        placeholder="Enter 6-digit code"
+                        maxLength={6}
+                      />
+                    </div>
+                    
+                    {/* Verify Button */}
+                    {forgotPasswordOtp.length === 6 && (
+                      <button
+                        type="button"
+                        onClick={handleForgotPasswordVerifyOTP}
+                        disabled={forgotPasswordLoading}
+                        className="px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {forgotPasswordLoading ? 'Verifying...' : 'Verify OTP'}
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Resend OTP */}
+                  <div className="mt-3 flex items-center justify-between text-sm">
+                    <span className="text-gray-400">
+                      Didn't receive the code?
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleForgotPasswordResendOTP}
+                      disabled={forgotPasswordResendTimer > 0}
+                      className="text-red-500 hover:text-red-400 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors duration-200"
+                    >
+                      {forgotPasswordResendTimer > 0 ? `Resend in ${forgotPasswordResendTimer}s` : 'Resend OTP'}
+                    </button>
+                  </div>
+                  
+                  {/* Info */}
+                  <div className="mt-2 p-3 bg-red-600/20 border border-red-600/30 rounded-lg">
+                    <p className="text-red-300 text-xs">
+                      🔐 We've sent a 6-digit OTP to your email address. 
+                      Enter the code above to verify your identity and access your account.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Back to Login */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPassword(false)
+                    setForgotPasswordEmail('')
+                    setForgotPasswordOtp('')
+                    setForgotPasswordOtpSent(false)
+                    setForgotPasswordResendTimer(0)
+                  }}
+                  className="text-accent-500 hover:text-accent-400 transition-colors duration-200"
+                >
+                  ← Back to Login
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Login Form */}
-        <div className="bg-primary-900 border border-primary-800 rounded-lg p-8">
+        {!isForgotPassword && (
+          <div className="bg-primary-900 border border-primary-800 rounded-lg p-8">
           <div className="flex items-center justify-center mb-6">
             <div className="p-3 bg-accent-600/20 rounded-lg">
               <User className="w-8 h-8 text-accent-500" />
@@ -437,6 +688,19 @@ function LoginContent() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              
+              {/* Forgot Password Link (only for login) */}
+              {isLogin && (
+                <div className="mt-2 text-right">
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPassword(true)}
+                    className="text-sm text-accent-500 hover:text-accent-400 transition-colors duration-200"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Login/Register Button */}
@@ -459,6 +723,7 @@ function LoginContent() {
             </button>
           </div>
         </div>
+        )}
 
         {/* Footer */}
         <div className="text-center mt-8">
