@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Heart, ArrowRight } from 'lucide-react'
+import { Heart, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useWishlist } from '@/lib/useWishlist'
 
 interface FeaturedProduct {
@@ -18,7 +18,7 @@ interface FeaturedProduct {
 export default function FeaturedProducts() {
   const [products, setProducts] = useState<FeaturedProduct[]>([])
   const [loading, setLoading] = useState(true)
-  const trackRef = useRef<HTMLDivElement>(null)
+  const [currentIndex, setCurrentIndex] = useState(0)
   const { toggleWishlist, isInWishlist } = useWishlist()
 
   useEffect(() => {
@@ -37,16 +37,25 @@ export default function FeaturedProducts() {
     fetchFeatured()
   }, [])
 
-  const marqueeItems = useMemo(() => {
-    if (products.length === 0) return []
-    // duplicate for seamless loop
-    return [...products, ...products]
-  }, [products])
-
   const handleWishlist = async (productId: string, ev: React.MouseEvent<HTMLButtonElement>) => {
     ev.preventDefault()
     await toggleWishlist(productId)
   }
+
+  const goToPrevious = () => {
+    if (products.length <= 4) return
+    setCurrentIndex(prev => (prev === 0 ? Math.max(0, products.length - 4) : prev - 1))
+  }
+
+  const goToNext = () => {
+    if (products.length <= 4) return
+    setCurrentIndex(prev => (prev >= products.length - 4 ? 0 : prev + 1))
+  }
+
+  // Get current set of 4 products to display
+  const currentProducts = products.length > 4
+    ? products.slice(currentIndex, currentIndex + 4)
+    : products
 
   return (
     <section className="relative py-24 overflow-hidden">
@@ -67,9 +76,38 @@ export default function FeaturedProducts() {
         ) : products.length === 0 ? (
           <div className="h-64 flex items-center justify-center text-gray-400">No featured products yet</div>
         ) : (
-          <div>
+          <div className="relative">
+            {/* Navigation Buttons */}
+            {products.length > 4 && (
+              <>
+                <button
+                  onClick={goToPrevious}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-all duration-300"
+                  aria-label="Previous products"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={goToNext}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-all duration-300"
+                  aria-label="Next products"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+
+            {/* Product Counter */}
+            {products.length > 4 && (
+              <div className="text-center mb-6">
+                <p className="text-gray-400 text-sm">
+                  Showing {currentIndex + 1}-{Math.min(currentIndex + 4, products.length)} of {products.length} products
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {products.slice(0, 4).map((p) => (
+              {currentProducts.map((p) => (
                 <motion.div
                   key={p.id}
                   whileHover={{ scale: 1.05, y: -8 }}
