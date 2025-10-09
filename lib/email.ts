@@ -473,6 +473,340 @@ export async function sendForgotPasswordOTPEmail(email: string, otp: string, nam
 }
 
 /**
+ * Send admin login OTP email
+ */
+export async function sendAdminOTPEmail(email: string, otp: string, name?: string) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD, // Use App Password for Gmail
+      },
+    })
+
+    const mailOptions = {
+      from: {
+        name: 'ROT KIT Admin',
+        address: process.env.EMAIL_USER || 'noreply@rotkit.com'
+      },
+      to: email,
+      subject: 'Admin Login OTP - ROT KIT',
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Admin Login OTP - ROT KIT</title>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              background-color: #f4f4f4;
+            }
+            .container {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              border-radius: 10px;
+              overflow: hidden;
+              box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            }
+            .header {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 30px;
+              text-align: center;
+            }
+            .logo {
+              font-size: 32px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            }
+            .subtitle {
+              font-size: 16px;
+              opacity: 0.9;
+            }
+            .message {
+              background: white;
+              padding: 30px;
+              color: #333;
+            }
+            .otp-container {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 25px;
+              text-align: center;
+              margin: 20px 0;
+            }
+            .otp-code {
+              font-size: 36px;
+              font-weight: bold;
+              letter-spacing: 8px;
+              margin: 15px 0;
+              text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            }
+            .warning {
+              background: #fff3cd;
+              border: 1px solid #ffeaa7;
+              color: #856404;
+              padding: 15px;
+              border-radius: 5px;
+              margin: 20px 0;
+            }
+            .footer {
+              background: #f8f9fa;
+              padding: 20px;
+              text-align: center;
+              color: #6c757d;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">ROT KIT</div>
+              <div class="subtitle">Admin Portal</div>
+            </div>
+            
+            <div class="message">
+              <p>Hello${name ? ` ${name}` : ''},</p>
+              <p>You have requested admin login access to your ROT KIT admin account. Use the OTP code below to complete your login:</p>
+            </div>
+            
+            <div class="otp-container">
+              <div>Admin Login OTP</div>
+              <div class="otp-code">${otp}</div>
+              <div>This code will expire in 5 minutes</div>
+            </div>
+            
+            <div class="message">
+              <p>Enter this code on the admin login page to verify your identity and access the admin dashboard.</p>
+              <p><strong>Note:</strong> This is an admin-only verification process for enhanced security.</p>
+            </div>
+            
+            <div class="warning">
+              <strong>Security Alert:</strong> If you didn't request this admin login access, please ignore this email and contact IT support immediately.
+            </div>
+            
+            <div class="footer">
+              <p>If you continue to have problems, please contact the IT support team.</p>
+              <p>This is an automated message, please do not reply to this email.</p>
+              <p>&copy; 2024 ROT KIT. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+        ROT KIT - Admin Login OTP
+        
+        Hello${name ? ` ${name}` : ''},
+        
+        You have requested admin login access to your ROT KIT admin account. Use the OTP code below to complete your login:
+        
+        Admin Login OTP: ${otp}
+        
+        This code will expire in 5 minutes.
+        
+        Enter this code on the admin login page to verify your identity and access the admin dashboard.
+        
+        Note: This is an admin-only verification process for enhanced security.
+        
+        If you didn't request this admin login access, please ignore this email and contact IT support immediately.
+        
+        © 2024 ROT KIT. All rights reserved.
+      `
+    }
+
+    await transporter.sendMail(mailOptions)
+    
+    return {
+      success: true,
+      message: 'Admin login OTP sent successfully to your email address.'
+    }
+  } catch (error) {
+    console.error('Admin OTP email sending error:', error)
+    return {
+      success: false,
+      message: 'Failed to send admin login OTP email. Please try again later.'
+    }
+  }
+}
+
+/**
+ * Send admin forgot password OTP email
+ */
+export async function sendAdminForgotPasswordOTPEmail(email: string, otp: string, name?: string) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD, // Use App Password for Gmail
+      },
+    })
+
+    const mailOptions = {
+      from: {
+        name: 'ROT KIT Admin',
+        address: process.env.EMAIL_USER || 'noreply@rotkit.com'
+      },
+      to: email,
+      subject: 'Admin Account Recovery - ROT KIT',
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Admin Account Recovery - ROT KIT</title>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              background-color: #f4f4f4;
+            }
+            .container {
+              background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+              border-radius: 10px;
+              overflow: hidden;
+              box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            }
+            .header {
+              background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+              color: white;
+              padding: 30px;
+              text-align: center;
+            }
+            .logo {
+              font-size: 32px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            }
+            .subtitle {
+              font-size: 16px;
+              opacity: 0.9;
+            }
+            .message {
+              background: white;
+              padding: 30px;
+              color: #333;
+            }
+            .otp-container {
+              background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+              color: white;
+              padding: 25px;
+              text-align: center;
+              margin: 20px 0;
+            }
+            .otp-code {
+              font-size: 36px;
+              font-weight: bold;
+              letter-spacing: 8px;
+              margin: 15px 0;
+              text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            }
+            .warning {
+              background: #fff3cd;
+              border: 1px solid #ffeaa7;
+              color: #856404;
+              padding: 15px;
+              border-radius: 5px;
+              margin: 20px 0;
+            }
+            .footer {
+              background: #f8f9fa;
+              padding: 20px;
+              text-align: center;
+              color: #6c757d;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">ROT KIT</div>
+              <div class="subtitle">Admin Account Recovery</div>
+            </div>
+            
+            <div class="message">
+              <p>Hello${name ? ` ${name}` : ''},</p>
+              <p>We received a request for admin account recovery for your ROT KIT admin account. Use the OTP code below to regain access:</p>
+            </div>
+            
+            <div class="otp-container">
+              <div>Admin Recovery OTP</div>
+              <div class="otp-code">${otp}</div>
+              <div>This code will expire in 5 minutes</div>
+            </div>
+            
+            <div class="message">
+              <p>Enter this code on the admin login page to verify your identity and access your admin account.</p>
+              <p><strong>Note:</strong> After verification, you will be automatically logged into the admin dashboard.</p>
+            </div>
+            
+            <div class="warning">
+              <strong>Security Alert:</strong> If you didn't request this admin account recovery, please ignore this email and contact IT support immediately.
+            </div>
+            
+            <div class="footer">
+              <p>If you continue to have problems, please contact the IT support team.</p>
+              <p>This is an automated message, please do not reply to this email.</p>
+              <p>&copy; 2024 ROT KIT. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+        ROT KIT - Admin Account Recovery
+        
+        Hello${name ? ` ${name}` : ''},
+        
+        We received a request for admin account recovery for your ROT KIT admin account. Use the OTP code below to regain access:
+        
+        Admin Recovery OTP: ${otp}
+        
+        This code will expire in 5 minutes.
+        
+        Enter this code on the admin login page to verify your identity and access your admin account.
+        
+        Note: After verification, you will be automatically logged into the admin dashboard.
+        
+        If you didn't request this admin account recovery, please ignore this email and contact IT support immediately.
+        
+        © 2024 ROT KIT. All rights reserved.
+      `
+    }
+
+    await transporter.sendMail(mailOptions)
+    
+    return {
+      success: true,
+      message: 'Admin recovery OTP sent successfully to your email address.'
+    }
+  } catch (error) {
+    console.error('Admin forgot password email sending error:', error)
+    return {
+      success: false,
+      message: 'Failed to send admin recovery OTP email. Please try again later.'
+    }
+  }
+}
+
+/**
  * Send order confirmation email after successful purchase
  */
 export async function sendOrderConfirmationEmail(params: {
