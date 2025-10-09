@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { 
@@ -145,6 +145,10 @@ export default function AdminDashboard() {
   const [admin, setAdmin] = useState<Admin | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  
+  // Add refs for request management
+  const analyticsControllerRef = useRef<AbortController | null>(null)
+  const analyticsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
@@ -178,6 +182,18 @@ export default function AdminDashboard() {
 
   // Add this useEffect to populate profile data when admin loads
   useEffect(() => {
+    // Cleanup function to cancel pending requests on unmount
+    return () => {
+      if (analyticsControllerRef.current) {
+        analyticsControllerRef.current.abort()
+      }
+      if (analyticsTimeoutRef.current) {
+        clearTimeout(analyticsTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     if (admin) {
       setProfileData({
         firstName: admin.firstName || '',
@@ -193,10 +209,34 @@ export default function AdminDashboard() {
 
   // Check admin authentication on component mount
   useEffect(() => {
+    // Cleanup function to cancel pending requests on unmount
+    return () => {
+      if (analyticsControllerRef.current) {
+        analyticsControllerRef.current.abort()
+      }
+      if (analyticsTimeoutRef.current) {
+        clearTimeout(analyticsTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     checkAdminAuth()
   }, [])
 
   // Load all data immediately when admin is authenticated
+  useEffect(() => {
+    // Cleanup function to cancel pending requests on unmount
+    return () => {
+      if (analyticsControllerRef.current) {
+        analyticsControllerRef.current.abort()
+      }
+      if (analyticsTimeoutRef.current) {
+        clearTimeout(analyticsTimeoutRef.current)
+      }
+    }
+  }, [])
+
   useEffect(() => {
     if (admin) {
       const loadAllData = async () => {
@@ -216,6 +256,18 @@ export default function AdminDashboard() {
       loadAllData()
     }
   }, [admin])
+
+  useEffect(() => {
+    // Cleanup function to cancel pending requests on unmount
+    return () => {
+      if (analyticsControllerRef.current) {
+        analyticsControllerRef.current.abort()
+      }
+      if (analyticsTimeoutRef.current) {
+        clearTimeout(analyticsTimeoutRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (admin && activeTab !== 'overview') {
@@ -307,20 +359,62 @@ export default function AdminDashboard() {
   }
 
   const loadUsers = async () => {
-    const response = await fetch('/api/admin/users')
-    if (response.ok) {
-      const data = await response.json()
-      setUsers(data.users || [])
+    try {
+      const response = await fetch('/api/admin/users')
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data.users || [])
+      } else {
+        console.error('Failed to load users:', response.status, response.statusText)
+        const errorText = await response.text()
+        console.error('Users error response:', errorText)
+        toast.error(`Failed to load users: ${response.status} ${response.statusText}`)
+      }
+    } catch (error) {
+      console.error('Users fetch error:', error)
+      toast.error('Failed to load users')
     }
   }
 
-  const loadAnalytics = async () => {
+  const loadAnalytics = async (forceRefresh = false) => {
+    // Cancel any existing analytics request
+    if (analyticsControllerRef.current) {
+      analyticsControllerRef.current.abort()
+    }
+    
+    // Clear any existing timeout
+    if (analyticsTimeoutRef.current) {
+      clearTimeout(analyticsTimeoutRef.current)
+    }
+    
+    // If analytics already exists and this isn't a forced refresh, skip loading
+    if (analytics && !forceRefresh && !analyticsLoading) {
+      console.log('Analytics already loaded, skipping...')
+      return
+    }
+    
+    // Debounce rapid calls
+    if (!forceRefresh) {
+      analyticsTimeoutRef.current = setTimeout(() => {
+        loadAnalyticsInternal()
+      }, 300) // 300ms debounce
+    } else {
+      loadAnalyticsInternal()
+    }
+  }
+  
+  const loadAnalyticsInternal = async () => {
     try {
       setAnalyticsLoading(true)
       console.log('Loading analytics...')
+      
+      // Create new abort controller for this request
+      analyticsControllerRef.current = new AbortController()
+      
       const response = await fetch('/api/admin/analytics', {
         cache: 'no-store',
-        credentials: 'include'
+        credentials: 'include',
+        signal: analyticsControllerRef.current.signal
       })
       
       console.log('Analytics response status:', response.status)
@@ -351,8 +445,14 @@ export default function AdminDashboard() {
           dailyStats: []
         })
       }
-    } catch (error) {
-      console.error('Analytics fetch error:', error)
+    } catch (error: any) {
+      // Don't show error if request was aborted (normal behavior)
+      if (error.name === 'AbortError') {
+        console.log('Analytics request was cancelled')
+        return
+      }
+      
+      console.error('Analytics loading error:', error)
       toast.error('Failed to load analytics data')
       
       // Set default analytics to prevent UI from breaking
@@ -372,6 +472,7 @@ export default function AdminDashboard() {
       })
     } finally {
       setAnalyticsLoading(false)
+      analyticsControllerRef.current = null
     }
   }
 
@@ -633,6 +734,18 @@ export default function AdminDashboard() {
 
   // Add this debugging useEffect to see the current state
   useEffect(() => {
+    // Cleanup function to cancel pending requests on unmount
+    return () => {
+      if (analyticsControllerRef.current) {
+        analyticsControllerRef.current.abort()
+      }
+      if (analyticsTimeoutRef.current) {
+        clearTimeout(analyticsTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     console.log('Admin profileImage:', admin?.profileImage)
     console.log('ProfileData profileImage:', profileData.profileImage)
   }, [admin?.profileImage, profileData.profileImage])
@@ -833,7 +946,7 @@ export default function AdminDashboard() {
               <div className="bg-primary-900 border border-primary-800 rounded-lg p-6 mb-6 text-center">
                 <p className="text-red-400 mb-4">Failed to load analytics data</p>
                 <button
-                  onClick={loadAnalytics}
+                  onClick={() => loadAnalytics(true)}
                   className="px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors"
                 >
                   Retry Loading Analytics
@@ -922,7 +1035,7 @@ export default function AdminDashboard() {
                   Add New Product
                 </button>
                 <button
-                  onClick={loadAnalytics}
+                  onClick={() => loadAnalytics(true)}
                   disabled={analyticsLoading}
                   className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

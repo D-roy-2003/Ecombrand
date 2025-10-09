@@ -39,6 +39,7 @@ model User {
 
 model Admin {
   id                String    @id @default(cuid())
+  adminId           String?   @unique
   email             String    @unique
   password          String
   firstName         String

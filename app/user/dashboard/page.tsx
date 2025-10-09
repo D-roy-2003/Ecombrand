@@ -828,23 +828,23 @@ export default function UserDashboard() {
       <header className="bg-[#160f22] border-b border-[#2a1f3b]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-semibold text-white">ROT KIT</h1>
-              <div className="h-6 w-px bg-primary-700"></div>
-              <h2 className="text-lg text-gray-300">My Account</h2>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <h1 className="text-lg sm:text-xl font-semibold text-white">ROT KIT</h1>
+              <div className="hidden sm:block h-6 w-px bg-primary-700"></div>
+              <h2 className="hidden sm:block text-lg text-gray-300">My Account</h2>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <button
                 onClick={goHome}
                 className="p-2 text-gray-400 hover:text-white transition-colors duration-200"
                 title="Home"
               >
-                <Home className="w-5 h-5" />
+                <Home className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-accent-400 flex items-center justify-center text-white font-semibold text-sm">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-accent-400 flex items-center justify-center text-white font-semibold text-xs sm:text-sm">
                   {user.profileImage ? (
                     <img
                       src={user.profileImage}
@@ -855,7 +855,7 @@ export default function UserDashboard() {
                     getUserInitials(user.name)
                   )}
                 </div>
-                <span className="text-white font-medium">{user.name}</span>
+                <span className="hidden sm:block text-white font-medium">{user.name}</span>
               </div>
               
               <button
@@ -863,16 +863,16 @@ export default function UserDashboard() {
                 className="p-2 text-gray-400 hover:text-white transition-colors duration-200"
                 title="Logout"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Tabs */}
-        <div className="flex space-x-1 bg-[#1a1224] p-1 rounded-lg mb-8 border border-[#2a1f3b]">
+        <div className="flex flex-wrap gap-1 bg-[#1a1224] p-1 rounded-lg mb-6 sm:mb-8 border border-[#2a1f3b]">
           {[
             { id: 'overview', label: 'Overview', icon: User },
             { id: 'orders', label: 'Orders', icon: Package },
@@ -884,80 +884,81 @@ export default function UserDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-300 ${
+              className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-md transition-all duration-300 text-xs sm:text-sm ${
                 activeTab === tab.id
                   ? 'bg-fuchsia-600 text-white'
                   : 'text-gray-300 hover:text-white hover:bg-[#2a1f3b]'
               }`}
             >
-              <tab.icon className="w-4 h-4" />
-              <span>{tab.label}</span>
+              <tab.icon className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden">{tab.label.charAt(0)}</span>
             </button>
           ))}
         </div>
 
         {/* Tab Content */}
         {activeTab === 'overview' && (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+              <div className="bg-primary-900 border border-primary-800 rounded-lg p-3 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-400">Total Orders</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalOrders}</p>
+                    <p className="text-xs sm:text-sm text-gray-400">Total Orders</p>
+                    <p className="text-lg sm:text-2xl font-bold text-white">{stats.totalOrders}</p>
                   </div>
-                  <div className="w-12 h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
-                    <Package className="w-6 h-6 text-accent-400" />
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
+                    <Package className="w-4 h-4 sm:w-6 sm:h-6 text-accent-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
+              <div className="bg-primary-900 border border-primary-800 rounded-lg p-3 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-400">Total Spent</p>
-                    <p className="text-2xl font-bold text-white">₹{stats.totalSpent.toFixed(2)}</p>
+                    <p className="text-xs sm:text-sm text-gray-400">Total Spent</p>
+                    <p className="text-lg sm:text-2xl font-bold text-white">₹{stats.totalSpent.toFixed(2)}</p>
                   </div>
-                  <div className="w-12 h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
-                    <CreditCard className="w-6 h-6 text-accent-400" />
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-4 h-4 sm:w-6 sm:h-6 text-accent-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
+              <div className="bg-primary-900 border border-primary-800 rounded-lg p-3 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-400">Wishlist Items</p>
-                    <p className="text-2xl font-bold text-white">{wishlist.length}</p>
+                    <p className="text-xs sm:text-sm text-gray-400">Wishlist Items</p>
+                    <p className="text-lg sm:text-2xl font-bold text-white">{wishlist.length}</p>
                   </div>
-                  <div className="w-12 h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
-                    <Heart className="w-6 h-6 text-accent-400" />
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
+                    <Heart className="w-4 h-4 sm:w-6 sm:h-6 text-accent-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
+              <div className="bg-primary-900 border border-primary-800 rounded-lg p-3 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-400">Loyalty Points</p>
-                    <p className="text-2xl font-bold text-white">{stats.loyaltyPoints}</p>
+                    <p className="text-xs sm:text-sm text-gray-400">Loyalty Points</p>
+                    <p className="text-lg sm:text-2xl font-bold text-white">{stats.loyaltyPoints}</p>
                   </div>
-                  <div className="w-12 h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
-                    <Star className="w-6 h-6 text-accent-400" />
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 bg-accent-600/20 rounded-lg flex items-center justify-center">
+                    <Star className="w-4 h-4 sm:w-6 sm:h-6 text-accent-400" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Recent Orders */}
-            <div className="bg-primary-900 border border-primary-800 rounded-lg p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-white">Recent Orders</h3>
+            <div className="bg-primary-900 border border-primary-800 rounded-lg p-4 sm:p-8">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-semibold text-white">Recent Orders</h3>
                 {stats.totalOrders > 0 && (
                   <button
                     onClick={() => setActiveTab('orders')}
-                    className="text-accent-400 hover:text-accent-300 transition-colors duration-200"
+                    className="text-accent-400 hover:text-accent-300 transition-colors duration-200 text-sm sm:text-base"
                   >
                     View All →
                   </button>
@@ -996,8 +997,8 @@ export default function UserDashboard() {
 
         {/* Orders Tab */}
         {activeTab === 'orders' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white">Your Orders</h2>
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Your Orders</h2>
             
             {ordersLoading ? (
               <div className="text-center py-12">
@@ -1016,20 +1017,20 @@ export default function UserDashboard() {
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {orders.map((order) => (
-                  <div key={order.id} className="bg-primary-900 border border-primary-800 rounded-lg p-6">
+                  <div key={order.id} className="bg-primary-900 border border-primary-800 rounded-lg p-4 sm:p-6">
                     {/* Order Header */}
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                       <div>
-                        <h3 className="text-white font-semibold">Order #{order.id.slice(-8)}</h3>
-                        <p className="text-gray-400 text-sm">
+                        <h3 className="text-white font-semibold text-sm sm:text-base">Order #{order.id.slice(-8)}</h3>
+                        <p className="text-gray-400 text-xs sm:text-sm">
                           {new Date(order.createdAt).toLocaleDateString()} • {order.items.length} item{order.items.length !== 1 ? 's' : ''}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-accent-400 font-bold text-lg">₹{order.totalPrice.toFixed(2)}</p>
-                        <span className={`px-3 py-1 text-xs rounded-full ${
+                      <div className="flex items-center justify-between sm:block sm:text-right">
+                        <p className="text-accent-400 font-bold text-base sm:text-lg">₹{order.totalPrice.toFixed(2)}</p>
+                        <span className={`px-2 sm:px-3 py-1 text-xs rounded-full ${
                           order.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
                           order.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400' :
                           order.status === 'SHIPPED' ? 'bg-purple-600/20 text-purple-400' :
@@ -1043,53 +1044,53 @@ export default function UserDashboard() {
                     </div>
 
                     {/* Order Items */}
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       {order.items.map((item, index) => (
-                        <div key={index} className="flex items-center gap-4 p-3 bg-primary-800/50 rounded-lg">
+                        <div key={index} className="flex items-center gap-2 sm:gap-4 p-2 sm:p-3 bg-primary-800/50 rounded-lg">
                           <img
                             src={item.product.imageUrls[0] || '/placeholder.jpg'}
                             alt={item.product.name}
-                            className="w-12 h-12 object-cover rounded-lg"
+                            className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg"
                           />
-                          <div className="flex-1">
-                            <h4 className="text-white font-medium text-sm">{item.product.name}</h4>
-                            <div className="flex items-center gap-4 text-xs text-gray-400">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-white font-medium text-xs sm:text-sm truncate">{item.product.name}</h4>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-400">
                               <span>Qty: {item.quantity}</span>
                               <span>₹{item.price}</span>
                               {item.sizes && <span>Size: {item.sizes}</span>}
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-white font-semibold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                            <p className="text-white font-semibold text-sm sm:text-base">₹{(item.price * item.quantity).toFixed(2)}</p>
                           </div>
                         </div>
                       ))}
                     </div>
 
                     {/* Order Actions */}
-                    <div className="mt-4 pt-4 border-t border-primary-700 flex justify-between items-center">
-                      <div className="text-sm text-gray-400">
+                    <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-primary-700 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+                      <div className="text-xs sm:text-sm text-gray-400">
                         {order.status === 'DELIVERED' ? 'Delivered' : 
                          order.status === 'OUT_FOR_DELIVERY' ? 'Out for Delivery' :
                          order.status === 'SHIPPED' ? 'In Transit' :
                          order.status === 'PROCESSING' ? 'Being Prepared' :
                          'Order Placed'}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {order.status === 'DELIVERED' && (
-                          <button className="px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white text-sm rounded-lg transition-colors duration-200">
+                          <button className="px-3 sm:px-4 py-1.5 sm:py-2 bg-accent-600 hover:bg-accent-700 text-white text-xs sm:text-sm rounded-lg transition-colors duration-200">
                             Reorder
                           </button>
                         )}
                         <button 
                           onClick={() => handleTrackOrder(order)}
-                          className="px-4 py-2 border border-primary-600 text-gray-300 hover:text-white hover:border-primary-500 text-sm rounded-lg transition-colors duration-200"
+                          className="px-3 sm:px-4 py-1.5 sm:py-2 border border-primary-600 text-gray-300 hover:text-white hover:border-primary-500 text-xs sm:text-sm rounded-lg transition-colors duration-200"
                         >
                           Track Order
                         </button>
                         <button 
                           onClick={() => handleViewInvoice(order)}
-                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors duration-200 flex items-center gap-2"
+                          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm rounded-lg transition-colors duration-200 flex items-center gap-1 sm:gap-2"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
