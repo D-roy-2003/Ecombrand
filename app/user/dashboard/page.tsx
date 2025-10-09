@@ -1110,142 +1110,152 @@ export default function UserDashboard() {
         {activeTab === 'wishlist' && (
           <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-between"
+            >
               <div>
-                <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
-                  <span>❤️</span>
-                  <span>My Wishlist</span>
+                <h2 className="text-3xl font-bold text-white flex items-center space-x-4 mb-3">
+                  <div className="p-3 bg-gradient-to-br from-fuchsia-500/20 to-violet-500/20 rounded-2xl">
+                    <Heart className="w-8 h-8 text-fuchsia-400 fill-fuchsia-400 drop-shadow-[0_0_10px_rgba(217,70,239,0.5)]" />
+                  </div>
+                  <span className="bg-gradient-to-r from-fuchsia-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent">My Wishlist</span>
                 </h2>
-                <p className="text-gray-400 mt-1">
-                  {wishlist.length} {wishlist.length === 1 ? 'item' : 'items'} saved
+                <p className="text-gray-400 text-lg ml-1">
+                  <span className="text-fuchsia-400 font-bold">{wishlist.length}</span> {wishlist.length === 1 ? 'item' : 'items'} saved for later
                 </p>
               </div>
               <Link
                 href="/wishlist"
-                className="text-accent-400 hover:text-accent-300 transition-colors duration-200"
+                className="bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-700 hover:to-violet-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-fuchsia-500/50 hover:scale-105 text-center"
               >
                 View Full Wishlist →
               </Link>
-            </div>
+            </motion.div>
 
             {wishlist.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center py-16"
+                className="text-center py-20 bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-2xl shadow-2xl relative overflow-hidden"
               >
-                <div className="text-6xl mb-4">❤️</div>
-                <h3 className="text-2xl font-semibold text-white mb-4">Your wishlist is empty</h3>
-                <p className="text-gray-400 mb-8">Start adding products you love to your wishlist!</p>
-                <button
-                  onClick={() => router.push('/shop')}
-                  className="btn-primary inline-flex items-center space-x-2"
-                >
-                  <ShoppingBag className="w-5 h-5" />
-                  <span>Start Shopping</span>
-                </button>
+                <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/5 to-transparent"></div>
+                <div className="relative">
+                  <div className="p-6 bg-fuchsia-500/10 rounded-full w-32 h-32 mx-auto mb-6 flex items-center justify-center">
+                    <Heart className="w-16 h-16 text-fuchsia-400/50" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-white mb-4">Your wishlist is empty</h3>
+                  <p className="text-gray-400 mb-8 text-lg max-w-md mx-auto">Start adding products you love to your wishlist and never lose track of them!</p>
+                  <button
+                    onClick={() => router.push('/shop')}
+                    className="bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-700 hover:to-violet-700 text-white px-8 py-4 rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-fuchsia-500/50 hover:scale-105 inline-flex items-center space-x-2"
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                    <span>Start Shopping</span>
+                  </button>
+                </div>
               </motion.div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {wishlist.map((item, index) => (
                   <motion.div
                     key={item.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    transition={{ duration: 0.5, delay: index * 0.05 }}
+                    whileHover={{ scale: 1.05, y: -8 }}
                     className="group h-full"
                   >
-                    <div className="bg-primary-900 border border-primary-800 rounded-lg overflow-hidden hover:border-accent-500 transition-all duration-300 h-full flex flex-col">
+                    <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-xl overflow-hidden hover:border-fuchsia-500 hover:shadow-xl hover:shadow-fuchsia-500/20 transition-all duration-300 h-full flex flex-col">
                       {/* Product Image */}
-                      <div className="relative overflow-hidden flex-shrink-0">
+                      <div className="relative overflow-hidden aspect-square flex-shrink-0">
                         <Link href={`/product/${item.product.id}`}>
                           <img
                             src={item.product.imageUrls[0] || '/placeholder.jpg'}
                             alt={item.product.name}
-                            className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           />
                         </Link>
 
                         {/* Remove from Wishlist */}
-                        <div className="absolute top-4 right-4">
+                        <div className="absolute top-3 right-3">
                           <button
                             onClick={() => handleRemoveFromWishlist(item.product.id)}
                             disabled={isRemoving === item.product.id}
-                            className="w-10 h-10 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 disabled:opacity-50"
+                            className="w-10 h-10 bg-red-500/20 backdrop-blur-md hover:bg-red-500/40 text-red-400 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 disabled:opacity-50 shadow-lg hover:shadow-red-500/50"
                             title="Remove from wishlist"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
 
-                        {/* Quick View Button */}
-                        <div className="absolute bottom-4 right-4">
-                          <Link
-                            href={`/product/${item.product.id}`}
-                            className="w-10 h-10 bg-accent-500/20 hover:bg-accent-500/30 text-accent-400 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                            title="View Details"
-                          >
-                            <Eye className="w-5 h-5" />
-                          </Link>
+                        {/* Category Badge */}
+                        <div className="absolute top-3 left-3">
+                          <span className="px-3 py-1.5 bg-gradient-to-r from-fuchsia-600/90 to-violet-600/90 backdrop-blur-md text-white text-xs font-bold rounded-lg shadow-lg">
+                            {item.product.category.toUpperCase()}
+                          </span>
                         </div>
 
                         {/* Product Status */}
                         {!item.product.isActive && (
-                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                            <span className="px-4 py-2 bg-red-600 text-white font-medium rounded">
+                          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+                            <span className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg">
                               UNAVAILABLE
                             </span>
                           </div>
                         )}
 
                         {item.product.stock === 0 && item.product.isActive && (
-                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                            <span className="px-4 py-2 bg-yellow-600 text-white font-medium rounded">
+                          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+                            <span className="px-4 py-2 bg-yellow-600 text-white font-medium rounded-lg">
                               OUT OF STOCK
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Discount Badge */}
+                        {item.product.discount && item.product.discount > 0 && (
+                          <div className="absolute bottom-3 left-3">
+                            <span className="px-3 py-1.5 bg-gradient-to-r from-green-500/90 to-emerald-500/90 backdrop-blur-md text-white text-xs font-bold rounded-lg shadow-lg">
+                              -{item.product.discount}% OFF
                             </span>
                           </div>
                         )}
                       </div>
 
                       {/* Product Info */}
-                      <div className="p-6 flex flex-col flex-grow">
-                        <div className="mb-4 flex-grow">
-                          <h3 className="text-base font-semibold text-white mb-2 group-hover:text-accent-400 transition-colors duration-300 line-clamp-2 leading-tight">
+                      <div className="p-4 flex flex-col flex-grow">
+                        <div className="mb-3 flex-grow">
+                          <h3 className="text-base font-semibold text-white mb-2 group-hover:text-fuchsia-400 transition-colors duration-300 line-clamp-2 leading-tight min-h-[2.5rem]">
                             <Link href={`/product/${item.product.id}`}>
                               {item.product.name}
                             </Link>
                           </h3>
 
-                          <p className="text-gray-400 text-sm mb-3">
-                            {item.product.category} • {item.product.stock} in stock
+                          <p className="text-gray-400 text-xs mb-3">
+                            {item.product.stock} in stock
                           </p>
 
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="text-2xl font-bold text-accent-400">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-xl font-bold text-fuchsia-400">
                               ₹{item.product.price}
                             </div>
-                            {item.product.discount && item.product.discount > 0 && (
-                              <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
-                                -{item.product.discount}% off
-                              </span>
-                            )}
                           </div>
 
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm text-gray-400">
-                              Added {new Date(item.createdAt).toLocaleDateString()}
-                            </div>
+                          <div className="text-xs text-gray-500">
+                            Added {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex gap-2 mt-auto">
+                        <div className="flex gap-2 mt-auto pt-3 border-t border-[#2a1f3b]">
                           <button
-                            className="flex-1 btn-primary text-xs sm:text-sm py-2 sm:py-3 flex items-center justify-center space-x-1 sm:space-x-2 min-h-[40px] sm:min-h-[48px]"
+                            className="flex-1 bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-700 hover:to-violet-700 text-white text-xs py-2.5 rounded-lg flex items-center justify-center space-x-1.5 transition-all duration-300 font-semibold shadow-lg hover:shadow-fuchsia-500/50 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={!item.product.isActive || item.product.stock === 0}
                             onClick={() => handleAddToCartClick(item.product)}
                           >
-                            <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <ShoppingBag className="w-4 h-4" />
                             <span className="truncate">
                               {!item.product.isActive ? 'Unavailable' :
                                item.product.stock === 0 ? 'Out of Stock' :
@@ -1255,10 +1265,10 @@ export default function UserDashboard() {
 
                           <Link
                             href={`/product/${item.product.id}`}
-                            className="btn-secondary text-xs sm:text-sm py-2 sm:py-3 px-3 sm:px-4 flex items-center justify-center min-h-[40px] sm:min-h-[48px] flex-shrink-0"
+                            className="bg-[#221733] hover:bg-[#2a1f3b] border border-[#2a1f3b] hover:border-fuchsia-500 text-fuchsia-400 text-xs py-2.5 px-3 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:scale-105"
+                            title="View Details"
                           >
-                            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
-                            <span className="hidden sm:inline ml-1">View</span>
+                            <Eye className="w-4 h-4" />
                           </Link>
                         </div>
                       </div>
@@ -2087,7 +2097,7 @@ export default function UserDashboard() {
       {/* Size Selection Modal for Wishlist */}
       {showSizeModal && selectedProduct && (
         <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowSizeModal(false)
@@ -2097,89 +2107,85 @@ export default function UserDashboard() {
           }}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-primary-900 border border-primary-700 rounded-lg p-6 max-w-md w-full"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: "spring", damping: 25 }}
+            className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-2xl p-8 max-w-lg w-full shadow-2xl"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Select Your Size</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-white">Select Your Size</h3>
               <button
                 onClick={() => {
                   setShowSizeModal(false)
                   setSelectedProduct(null)
                   setSelectedSize('')
                 }}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white hover:bg-[#2a1f3b] p-2 rounded-lg transition-all"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
             {/* Product Info */}
-            <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-4 mb-8 p-4 bg-[#221733] rounded-xl border border-[#2a1f3b]">
               <img
                 src={selectedProduct.imageUrls[0] || '/placeholder.jpg'}
                 alt={selectedProduct.name}
-                className="w-16 h-16 object-cover rounded-lg"
+                className="w-20 h-20 object-cover rounded-xl"
               />
               <div>
-                <h4 className="text-white font-medium">{selectedProduct.name}</h4>
-                <p className="text-accent-400 font-bold">₹{selectedProduct.price}</p>
+                <h4 className="text-white font-semibold text-lg line-clamp-1 mb-1">{selectedProduct.name}</h4>
+                <p className="text-fuchsia-400 font-bold text-xl">₹{selectedProduct.price}</p>
               </div>
             </div>
 
             {/* Size Options */}
-            <div className="mb-6">
-              <p className="text-gray-300 mb-3">Available Sizes:</p>
-              <div className="grid grid-cols-3 gap-2">
+            <div className="mb-8">
+              <p className="text-white mb-4 font-semibold text-lg">Available Sizes:</p>
+              <div className="grid grid-cols-3 gap-3">
                 {selectedProduct.sizes.map((size: string) => (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className={`py-2 px-3 border rounded-lg text-sm font-medium transition-colors duration-200 ${
+                    className={`py-3 px-4 border-2 rounded-xl text-base font-bold transition-all duration-200 ${
                       selectedSize === size
-                        ? 'border-accent-500 bg-accent-500/10 text-accent-400'
-                        : 'border-primary-700 text-gray-300 hover:border-accent-500 hover:text-white'
+                        ? 'border-fuchsia-500 bg-fuchsia-500/20 text-fuchsia-400 scale-105 shadow-lg shadow-fuchsia-500/50'
+                        : 'border-[#2a1f3b] text-gray-300 hover:border-fuchsia-500/50 hover:text-white hover:bg-[#221733]'
                     }`}
                   >
                     {size}
                   </button>
                 ))}
               </div>
-              {selectedSize && (
-                <p className="text-sm text-gray-400 mt-2">
-                  Selected: <span className="text-accent-400 font-medium">{selectedSize}</span>
-                </p>
-              )}
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <button
                 onClick={() => {
                   setShowSizeModal(false)
                   setSelectedProduct(null)
                   setSelectedSize('')
                 }}
-                className="flex-1 py-2 px-4 border border-primary-700 text-gray-300 rounded-lg hover:border-primary-600 hover:text-white transition-colors"
+                className="flex-1 py-3.5 px-4 border-2 border-[#2a1f3b] text-white rounded-xl hover:border-fuchsia-500/50 hover:bg-[#221733] transition-all font-semibold"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSizeSelection}
                 disabled={!selectedSize || addingToCart}
-                className="flex-1 btn-primary py-2 px-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-700 hover:to-violet-700 text-white py-3.5 px-4 rounded-xl transition-all duration-300 font-bold shadow-lg hover:shadow-fuchsia-500/50 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
               >
                 {addingToCart ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     Adding...
                   </>
                 ) : (
                   <>
-                    <ShoppingBag className="w-4 h-4" />
+                    <ShoppingBag className="w-5 h-5" />
                     Add to Cart
                   </>
                 )}
