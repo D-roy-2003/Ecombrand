@@ -11,12 +11,18 @@ async function seedAdmin() {
     console.log('🔐 Hashing password...')
     const hashedPassword = await bcrypt.hash('Admin@69', 12)
     
+    // First, clean up any duplicate admin records to avoid conflicts
+    console.log('🧹 Cleaning up duplicate admin records...')
+    await prisma.$executeRaw`
+      DELETE FROM "admins" 
+      WHERE "email" = 'admin1@email.com'
+    `
+    
     // Check if admin exists using raw SQL to avoid TypeScript issues
     console.log('🔍 Checking for existing admin...')
     const existingAdmins = await prisma.$queryRaw`
       SELECT * FROM "admins" 
-      WHERE "email" = 'admin1@email.com' 
-      OR "email" = 'roy.debangshu2023@gmail.com'
+      WHERE "email" = 'roy.debangshu2023@gmail.com'
       OR "id" = 'cmflhi59s0000qmbca76vx244'
       LIMIT 1
     ` as any[]

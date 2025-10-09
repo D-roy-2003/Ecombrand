@@ -311,18 +311,24 @@ export default function Navigation() {
               </Link>
               {user ? (
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-fuchsia-500 flex items-center justify-center text-white font-semibold text-sm">
-                    {user.profileImage ? (
-                      <img
-                        src={user.profileImage}
-                        alt={user.name}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      getUserInitials(user.name)
-                    )}
-                  </div>
-                  <span className="text-white text-sm">{user.name}</span>
+                  <Link
+                    href={user.role === 'ADMIN' ? '/admin/dashboard' : '/user/dashboard'}
+                    className="flex items-center space-x-2 hover:opacity-80 transition-opacity duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-fuchsia-500 flex items-center justify-center text-white font-semibold text-sm">
+                      {user.profileImage ? (
+                        <img
+                          src={user.profileImage}
+                          alt={user.name}
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      ) : (
+                        getUserInitials(user.name)
+                      )}
+                    </div>
+                    <span className="text-white text-sm">{user.name}</span>
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="p-2 text-gray-300 hover:text-white transition-colors duration-200"
