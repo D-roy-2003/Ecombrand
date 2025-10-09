@@ -13,7 +13,6 @@ import {
 import Link from 'next/link'
 import { getCartCount, isUserAuthenticated, clearAllCartData } from '@/lib/cart'
 import toast from 'react-hot-toast'
-import { FlyingHeartProvider } from '@/lib/FlyingHeartContext'
 
 interface User {
   id: string
@@ -120,25 +119,30 @@ export default function Navigation() {
     setIsMenuOpen(!isMenuOpen)
   }
 
-  // Listen for flying heart completion
+  // Blink/glow wishlist icon once when an item is added
   useEffect(() => {
-    const handleFlyingHeartComplete = () => {
+    const handler = () => {
       setIsWishlistGlowing(true)
-      setTimeout(() => setIsWishlistGlowing(false), 1000)
+      setTimeout(() => setIsWishlistGlowing(false), 800)
     }
-
-    window.addEventListener('flyingHeartComplete', handleFlyingHeartComplete)
-    return () => window.removeEventListener('flyingHeartComplete', handleFlyingHeartComplete)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('wishlistPulse', handler)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('wishlistPulse', handler)
+      }
+    }
   }, [])
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 bg-primary-900/95 backdrop-blur-sm border-b border-primary-800">
+    <nav className="fixed top-0 left-0 right-0 z-40 bg-[#160f22]/90 backdrop-blur-sm border-b border-[#2a1f3b]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold">
-              <span className="text-accent-400">ROT</span>
+            <span className="text-xl md:text-2xl font-bold tracking-wide">
+              <span className="text-fuchsia-400">ROT</span>
               <span className="text-white">KIT</span>
             </span>
           </Link>
@@ -168,7 +172,7 @@ export default function Navigation() {
             >
               <ShoppingBag className="w-6 h-6" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-accent-400 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-fuchsia-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
@@ -177,15 +181,13 @@ export default function Navigation() {
             {/* Wishlist */}
             <Link
               href="/wishlist"
-              className={`p-2 text-gray-300 hover:text-white transition-colors duration-200 ${
-                isWishlistGlowing ? 'text-red-500' : ''
-              }`}
+              className={`relative p-2 text-gray-300 hover:text-white transition-colors duration-200`}
             >
               <motion.div
-                animate={isWishlistGlowing ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-                transition={{ duration: 0.5 }}
+                animate={isWishlistGlowing ? { scale: [1, 1.25, 1], filter: ['drop-shadow(0 0 0 rgba(217,70,239,0))','drop-shadow(0 0 10px rgba(217,70,239,0.8))','drop-shadow(0 0 0 rgba(217,70,239,0))'] } : { scale: 1, filter: 'none' }}
+                transition={{ duration: 0.6 }}
               >
-                <Heart className={`w-6 h-6 ${isWishlistGlowing ? 'fill-red-500' : ''}`} />
+                <Heart className={`w-6 h-6 ${isWishlistGlowing ? 'text-fuchsia-400' : ''}`} />
               </motion.div>
             </Link>
 
@@ -194,7 +196,7 @@ export default function Navigation() {
               <div className="w-8 h-8 bg-primary-700 rounded-full animate-pulse"></div>
             ) : user ? (
               <div className="relative group">
-                <button className="w-8 h-8 rounded-full bg-accent-400 flex items-center justify-center text-white font-semibold text-sm">
+                <button className="w-8 h-8 rounded-full bg-fuchsia-500 flex items-center justify-center text-white font-semibold text-sm">
                   {user.profileImage ? (
                     <img
                       src={user.profileImage}
@@ -207,21 +209,21 @@ export default function Navigation() {
                 </button>
                 
                 {/* User Dropdown */}
-                <div className="absolute right-0 mt-2 w-48 bg-primary-800 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                <div className="absolute right-0 mt-2 w-64 bg-[#221733] border border-[#2a1f3b] rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                   <div className="py-2">
-                    <div className="px-4 py-2 border-b border-primary-700">
-                      <p className="text-sm text-white font-medium">{user.name}</p>
-                      <p className="text-xs text-gray-400">{user.email}</p>
+                    <div className="px-4 py-2 border-b border-[#2a1f3b]">
+                      <p className="text-sm text-white font-medium truncate">{user.name}</p>
+                      <p className="text-xs text-gray-400 truncate" title={user.email}>{user.email}</p>
                     </div>
                     <Link
                       href={user.role === 'ADMIN' ? '/admin/dashboard' : '/user/dashboard'}
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-primary-700 hover:text-white transition-colors duration-200"
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-[#2a1f3b] hover:text-white transition-colors duration-200"
                     >
                       Dashboard
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-primary-700 hover:text-white transition-colors duration-200"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-[#2a1f3b] hover:text-white transition-colors duration-200"
                     >
                       Logout
                     </button>
@@ -254,7 +256,7 @@ export default function Navigation() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="md:hidden border-t border-primary-800 bg-primary-900"
+          className="md:hidden border-t border-[#2a1f3b] bg-[#160f22]"
         >
           <div className="px-4 py-4 space-y-4">
             <Link
@@ -294,8 +296,8 @@ export default function Navigation() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 <ShoppingBag className="w-6 h-6" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-accent-400 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-fuchsia-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     {cartCount}
                   </span>
                 )}
@@ -309,7 +311,7 @@ export default function Navigation() {
               </Link>
               {user ? (
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-accent-400 flex items-center justify-center text-white font-semibold text-sm">
+                  <div className="w-8 h-8 rounded-full bg-fuchsia-500 flex items-center justify-center text-white font-semibold text-sm">
                     {user.profileImage ? (
                       <img
                         src={user.profileImage}

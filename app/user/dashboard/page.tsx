@@ -507,7 +507,7 @@ export default function UserDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-[#120c18] flex items-center justify-center">
         <div className="text-white text-xl">Loading...</div>
       </div>
     )
@@ -515,7 +515,7 @@ export default function UserDashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-[#120c18] flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Please log in</h1>
           <button 
@@ -530,7 +530,7 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#120c18]">
       {/* Print Styles */}
       <style jsx global>{`
         @media print {
@@ -825,7 +825,7 @@ export default function UserDashboard() {
         }
       `}</style>
       {/* Header */}
-      <header className="bg-primary-900 border-b border-primary-800">
+      <header className="bg-[#160f22] border-b border-[#2a1f3b]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
@@ -872,7 +872,7 @@ export default function UserDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tabs */}
-        <div className="flex space-x-1 bg-primary-900 p-1 rounded-lg mb-8">
+        <div className="flex space-x-1 bg-[#1a1224] p-1 rounded-lg mb-8 border border-[#2a1f3b]">
           {[
             { id: 'overview', label: 'Overview', icon: User },
             { id: 'orders', label: 'Orders', icon: Package },
@@ -886,8 +886,8 @@ export default function UserDashboard() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-300 ${
                 activeTab === tab.id
-                  ? 'bg-accent-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-primary-800'
+                  ? 'bg-fuchsia-600 text-white'
+                  : 'text-gray-300 hover:text-white hover:bg-[#2a1f3b]'
               }`}
             >
               <tab.icon className="w-4 h-4" />

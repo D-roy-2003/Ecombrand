@@ -8,6 +8,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-black">
       <Navigation />
+      <div className="h-16" />
       <HeroSection />
       <FeaturedProducts />
       <CategoriesSection />

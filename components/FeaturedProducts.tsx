@@ -1,279 +1,116 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Heart } from 'lucide-react'
+import { Heart, ArrowRight } from 'lucide-react'
 import { useWishlist } from '@/lib/useWishlist'
-import { useFlyingHeart } from '@/lib/FlyingHeartContext'
-import toast from 'react-hot-toast'
 
 interface FeaturedProduct {
   id: string
   name: string
   price: number
-  originalPrice?: number
+  originalPrice?: number | null
   imageUrls: string[]
   category: string
 }
 
 export default function FeaturedProducts() {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
+  const [products, setProducts] = useState<FeaturedProduct[]>([])
   const [loading, setLoading] = useState(true)
-  const { addToWishlist, isInWishlist, isLoading: wishlistLoading } = useWishlist()
-  const { triggerFlyingHeart } = useFlyingHeart()
-  const buttonRef = useRef<HTMLButtonElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const { toggleWishlist, isInWishlist } = useWishlist()
 
   useEffect(() => {
-    const fetchFeaturedProducts = async () => {
+    const fetchFeatured = async () => {
       try {
-        const response = await fetch('/api/products?featured=true')
-        if (response.ok) {
-          const data = await response.json()
-          setFeaturedProducts(data.products || [])
-        }
-      } catch (error) {
-        console.error('Error fetching featured products:', error)
+        const res = await fetch('/api/products?featured=true&limit=12', { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        setProducts((data.products || []).filter((p: FeaturedProduct) => Array.isArray(p.imageUrls) && p.imageUrls.length > 0))
+      } catch (e) {
+        console.error('Failed to load featured products', e)
       } finally {
         setLoading(false)
       }
     }
-
-    fetchFeaturedProducts()
+    fetchFeatured()
   }, [])
 
-  useEffect(() => {
-    if (featuredProducts.length > 0) {
-      const timer = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % featuredProducts.length)
-      }, 5000)
-      return () => clearInterval(timer)
-    }
-  }, [featuredProducts.length])
+  const marqueeItems = useMemo(() => {
+    if (products.length === 0) return []
+    // duplicate for seamless loop
+    return [...products, ...products]
+  }, [products])
 
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % featuredProducts.length)
-  }
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + featuredProducts.length) % featuredProducts.length)
-  }
-
-  const handleAddToWishlist = async (product: FeaturedProduct) => {
-    if (isInWishlist(product.id)) {
-      // Product already in wishlist, do nothing
-      return
-    }
-
-    const success = await addToWishlist(product.id)
-    if (success) {
-      
-      // Trigger flying heart animation with delay
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect()
-        console.log('🚀 Featured Products - Triggering flying heart from:', rect.left, rect.top)
-        
-        setTimeout(() => {
-          triggerFlyingHeart({
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2
-          })
-          console.log('💖 Featured Products - Flying heart animation started!')
-        }, 200) // Slightly longer delay for featured products
-      }
-    }
-  }
-
-  if (loading) {
-    return (
-      <section className="section-padding bg-primary-900">
-        <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
-              <span className="text-white">FEATURED</span>{' '}
-              <span className="text-gradient">PRODUCTS</span>
-            </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Loading featured products...
-            </p>
-          </motion.div>
-        </div>
-      </section>
-    )
-  }
-
-  if (featuredProducts.length === 0) {
-    return (
-      <section className="section-padding bg-primary-900">
-        <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
-              <span className="text-white">FEATURED</span>{' '}
-              <span className="text-gradient">PRODUCTS</span>
-            </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              No featured products available at the moment
-            </p>
-          </motion.div>
-        </div>
-      </section>
-    )
+  const handleWishlist = async (productId: string, ev: React.MouseEvent<HTMLButtonElement>) => {
+    ev.preventDefault()
+    await toggleWishlist(productId)
   }
 
   return (
-    <section className="section-padding bg-primary-900">
-      <div className="container-custom">
+    <section className="relative py-24 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#120c18] via-[#1b1327]/40 to-[#120c18]" />
+      <div className="relative container-custom px-4">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10"
         >
-          <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
-            <span className="text-white">FEATURED</span>{' '}
-            <span className="text-gradient">PRODUCTS</span>
-          </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Discover our latest drops and most popular pieces
-          </p>
+          <h2 className="text-4xl md:text-5xl font-black uppercase mb-2">Featured Products</h2>
+          <p className="text-gray-400 text-base md:text-lg">Handpicked rebellion for the brave</p>
         </motion.div>
 
-        {/* Carousel */}
-        <div className="relative max-w-6xl mx-auto">
-          <div className="overflow-hidden rounded-lg">
-            <motion.div
-              key={currentIndex}
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
-              transition={{ duration: 0.5 }}
-              className="flex justify-center"
-            >
-              <div className="relative group">
-                <div className="relative overflow-hidden rounded-lg">
-                  <img
-                    src={featuredProducts[currentIndex].imageUrls[0] || '/placeholder.jpg'}
-                    alt={featuredProducts[currentIndex].name}
-                    className="w-full h-96 md:h-[500px] object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                </div>
-                
-                {/* Product Info Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-8">
-                  <div className="text-center">
-                    <span className="inline-block px-3 py-1 bg-accent-600 text-white text-sm font-medium mb-3">
-                      {featuredProducts[currentIndex].category}
-                    </span>
-                    <h3 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                      {featuredProducts[currentIndex].name}
-                    </h3>
-                    <div className="mb-6">
-                      {featuredProducts[currentIndex].originalPrice && featuredProducts[currentIndex].originalPrice! > featuredProducts[currentIndex].price ? (
-                        <>
-                          <span className="text-lg text-gray-400 line-through block">
-                            ₹{featuredProducts[currentIndex].originalPrice}
-                          </span>
-                          <span className="text-2xl font-bold text-accent-400">
-                            ₹{featuredProducts[currentIndex].price}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold text-accent-400">
-                          ${featuredProducts[currentIndex].price}
-                        </span>
-                      )}
+        {loading ? (
+          <div className="h-64 flex items-center justify-center text-gray-400">Loading featured…</div>
+        ) : products.length === 0 ? (
+          <div className="h-64 flex items-center justify-center text-gray-400">No featured products yet</div>
+        ) : (
+          <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {products.slice(0, 4).map((p) => (
+                <Link key={p.id} href={`/product/${p.id}`} className="group">
+                  <div className="relative overflow-hidden rounded-xl bg-[#1a1224] border border-[#2a1f3b] hover:border-white/30 transition-all">
+                    <div className="relative h-64">
+                      <img src={p.imageUrls[0] || '/placeholder.jpg'} alt={p.name} className="w-full h-full object-cover" />
                     </div>
-                    <div className="flex gap-2 sm:gap-4 justify-center">
-                      <Link 
-                        href={`/product/${featuredProducts[currentIndex].id}`}
-                        className="btn-primary flex items-center justify-center min-w-[120px] sm:min-w-[140px] h-10 sm:h-12 text-xs sm:text-sm px-2 sm:px-4"
-                      >
-                        VIEW DETAILS
-                      </Link>
-                      <button
-                        ref={buttonRef}
-                        className={`btn-secondary flex items-center justify-center gap-1 sm:gap-2 min-w-[120px] sm:min-w-[140px] h-10 sm:h-12 text-xs sm:text-sm px-2 sm:px-4 ${
-                          isInWishlist(featuredProducts[currentIndex].id) 
-                            ? 'bg-red-500/20 text-red-400 border-red-500/30' 
-                            : ''
-                        }`}
-                        onClick={() => handleAddToWishlist(featuredProducts[currentIndex])}
-                        disabled={wishlistLoading || isInWishlist(featuredProducts[currentIndex].id)}
-                      >
-                        <Heart 
-                          className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${
-                            isInWishlist(featuredProducts[currentIndex].id) ? 'fill-current' : ''
-                          }`} 
-                        />
-                        <span className="truncate">
-                          {isInWishlist(featuredProducts[currentIndex].id) ? 'IN WISHLIST' : 'ADD TO WISHLIST'}
-                        </span>
-                      </button>
+                    <div className="p-4">
+                      <h3 className="text-white font-semibold line-clamp-1">{p.name}</h3>
+                      <p className="text-sm text-gray-400 mb-3">{p.category}</p>
+                      <div className="flex items-center justify-between">
+                        {p.originalPrice && p.originalPrice > p.price ? (
+                          <div>
+                            <span className="text-sm text-gray-400 line-through mr-2">₹{p.originalPrice}</span>
+                            <span className="text-fuchsia-400 font-semibold">₹{p.price}</span>
+                          </div>
+                        ) : (
+                          <span className="text-fuchsia-400 font-semibold">₹{p.price}</span>
+                        )}
+                        <button
+                          className={`px-3 h-9 text-sm rounded border ${isInWishlist(p.id) ? 'border-fuchsia-600 text-fuchsia-400' : 'border-white/20 text-white/80 hover:border-white/40'}`}
+                          onClick={(ev) => handleWishlist(p.id, ev)}
+                        >
+                          <span className="inline-flex items-center gap-2">
+                            <Heart className={`w-4 h-4 ${isInWishlist(p.id) ? 'fill-current' : ''}`} />
+                            {isInWishlist(p.id) ? 'Remove' : 'Wishlist'}
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </motion.div>
+                </Link>
+              ))}
+            </div>
           </div>
+        )}
 
-          {/* Navigation Arrows */}
-          <button
-            onClick={prevSlide}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-300 hover:scale-110"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          
-          <button
-            onClick={nextSlide}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-300 hover:scale-110"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-
-          {/* Dots Indicator */}
-          <div className="flex justify-center mt-8 space-x-3">
-            {featuredProducts.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === currentIndex 
-                    ? 'bg-accent-500 scale-125' 
-                    : 'bg-gray-400 hover:bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* View All Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.2 }}
-          viewport={{ once: true }}
-          className="text-center mt-12"
-        >
-          <Link href="/shop" className="btn-primary">
-            VIEW ALL PRODUCTS
+        <div className="text-center mt-10">
+          <Link href="/shop" className="inline-flex items-center gap-2 text-fuchsia-400 hover:text-fuchsia-300 transition-colors font-semibold">
+            Explore the full collection
+            <ArrowRight className="w-4 h-4" />
           </Link>
-        </motion.div>
+        </div>
       </div>
     </section>
   )

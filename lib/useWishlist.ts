@@ -77,6 +77,11 @@ export const useWishlist = () => {
       if (response.ok) {
         const newItem = await response.json()
         setWishlist(prev => [newItem, ...prev])
+        try {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('wishlistPulse'))
+          }
+        } catch {}
         return true
       } else if (response.status === 401) {
         // Redirect to login page with wishlist message

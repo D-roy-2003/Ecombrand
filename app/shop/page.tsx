@@ -88,7 +88,7 @@ export default function ShopPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-[#120c18]">
         <Navigation />
         <div className="pt-8">
           <motion.div
@@ -125,7 +125,7 @@ export default function ShopPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#120c18]">
       <Navigation />
       <div className="pt-8">
         <motion.div

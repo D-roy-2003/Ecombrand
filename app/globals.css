@@ -11,7 +11,7 @@
   
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    background-color: #0a0a0a;
+    background-color: #120c18; /* deep plum */
     color: #fafafa;
   }
 }
@@ -26,11 +26,11 @@
   }
   
   .card {
-    @apply bg-primary-900 border border-primary-800 p-6 transition-all duration-300 hover:border-accent-500;
+    @apply bg-[#1a1224] border border-[#2a1f3b] p-6 transition-all duration-300 hover:border-accent-500;
   }
   
   .input-field {
-    @apply bg-primary-800 border border-primary-700 text-white px-4 py-3 focus:border-accent-500 focus:outline-none transition-colors duration-300;
+    @apply bg-[#221733] border border-[#2e2146] text-white px-4 py-3 focus:border-accent-500 focus:outline-none transition-colors duration-300;
   }
   
   .section-padding {
@@ -44,7 +44,7 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-accent-400 to-accent-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent;
   }
   
   .border-gradient {

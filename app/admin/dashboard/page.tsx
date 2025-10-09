@@ -733,7 +733,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
               <span className="text-2xl font-display font-bold text-gradient">
-                EDGY FASHION
+                ROTKIT
               </span>
                   <div className="text-sm text-gray-400">Admin Portal</div>
                 </div>
