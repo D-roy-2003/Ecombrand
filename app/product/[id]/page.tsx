@@ -56,6 +56,8 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState<string>('')
   const [addingToCart, setAddingToCart] = useState(false)
   const [imageZoom, setImageZoom] = useState(false)
+  const [isZoomed, setIsZoomed] = useState(false)
+  const [zoomOrigin, setZoomOrigin] = useState<{ x: number; y: number }>({ x: 50, y: 50 })
   
   const { isInWishlist, toggleWishlist, isLoading: wishlistLoading } = useWishlist()
 
@@ -81,6 +83,14 @@ export default function ProductPage() {
       fetchProduct()
     }
   }, [params.id, router])
+
+  // Reset zoom state each time the modal opens
+  useEffect(() => {
+    if (imageZoom) {
+      setIsZoomed(false)
+      setZoomOrigin({ x: 50, y: 50 })
+    }
+  }, [imageZoom])
 
   const handleAddToCart = async () => {
     if (!product) return
@@ -501,12 +511,33 @@ export default function ProductPage() {
             </motion.button>
             <motion.img
               initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
               exit={{ scale: 0.8 }}
               src={product.imageUrls[selectedImage]}
               alt={product.name}
-              className="max-w-full max-h-[90vh] object-contain"
-              onClick={(e) => e.stopPropagation()}
+              className={`max-w-full max-h-[90vh] object-contain ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+              animate={{
+                scale: isZoomed ? 2 : 1,
+                transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`
+              }}
+              transition={{
+                duration: isZoomed ? 0.12 : 0.25,
+                ease: "easeOut"
+              }}
+              onMouseMove={(e) => {
+                if (!isZoomed) return
+                const rect = (e.currentTarget as HTMLImageElement).getBoundingClientRect()
+                const x = ((e.clientX - rect.left) / rect.width) * 100
+                const y = ((e.clientY - rect.top) / rect.height) * 100
+                setZoomOrigin({ x, y })
+              }}
+              onClick={(e) => {
+                e.stopPropagation()
+                const rect = (e.currentTarget as HTMLImageElement).getBoundingClientRect()
+                const x = ((e.clientX - rect.left) / rect.width) * 100
+                const y = ((e.clientY - rect.top) / rect.height) * 100
+                setZoomOrigin({ x, y })
+                setIsZoomed((z) => !z)
+              }}
             />
           </motion.div>
         )}
