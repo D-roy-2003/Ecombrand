@@ -2,6 +2,7 @@
 
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
+import MobileTimeline from '@/components/MobileTimeline'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { Award, Heart, Leaf, Shield, Sparkles, Users, Skull, Zap, Moon, Star } from 'lucide-react'
 import { useRef } from 'react'
@@ -58,7 +59,7 @@ export default function AboutPage() {
               <Skull className="w-16 h-16 text-purple-500 mx-auto" />
             </motion.div>
             
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-display font-black mb-6">
+            <h1 className="text-5xl md:text-8xl lg:text-9xl font-display font-black mb-6">
               <motion.span
                 initial={{ x: -100, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
