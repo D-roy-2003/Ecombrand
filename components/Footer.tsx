@@ -134,7 +134,7 @@ export default function Footer() {
                 </div>
                 <div className="flex items-center space-x-3">
                   <Mail className="w-5 h-5 text-fuchsia-400" />
-                  <p className="text-gray-300 text-sm">info@edgyfashion.com</p>
+                  <p className="text-gray-300 text-sm">intellicraft.solutions25@gmail.com</p>
                 </div>
               </div>
             </motion.div>
