@@ -665,18 +665,18 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Back to cart */}
         <button 
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-400 hover:text-fuchsia-400 transition-all duration-200 mb-8 group"
+          className="flex items-center gap-2 text-gray-400 hover:text-fuchsia-400 transition-all duration-200 mb-4 sm:mb-8 group"
         >
           <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="text-sm font-medium">Back to cart</span>
         </button>
 
         {/* Secure checkout heading */}
-        <div className="mb-10">
+        <div className="mb-6 sm:mb-10">
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white via-fuchsia-200 to-white bg-clip-text text-transparent">Secure Checkout</h1>
           <div className="flex items-center gap-2 text-sm text-gray-400">
             <Shield className="w-4 h-4 text-green-500" />
@@ -684,12 +684,12 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
           {/* Left Column - Checkout Form */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             
             {/* Progress + Trust Bar */}
-            <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-xl p-5 shadow-lg">
+            <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-xl p-4 sm:p-5 shadow-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-2.5 w-32 rounded-full bg-[#2a1f3b] overflow-hidden">
@@ -721,12 +721,12 @@ export default function CheckoutPage() {
             </div>
 
             {/* Delivery Address */}
-            <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-xl p-6 shadow-lg hover:border-fuchsia-500/50 transition-all duration-300">
-              <div className="flex items-center gap-3 mb-6">
+            <div className="bg-gradient-to-br from-[#1a1224] to-[#0f0818] border border-[#2a1f3b] rounded-xl p-4 sm:p-6 shadow-lg hover:border-fuchsia-500/50 transition-all duration-300">
+              <div className="flex items-center gap-3 mb-4 sm:mb-6">
                 <div className="p-2 bg-fuchsia-500/10 rounded-lg">
                   <MapPin className="w-5 h-5 text-fuchsia-400" />
                 </div>
-                <h2 className="text-white text-xl font-bold">Delivery Address</h2>
+                <h2 className="text-white text-lg sm:text-xl font-bold">Delivery Address</h2>
               </div>
 
               {hasAddress() ? (

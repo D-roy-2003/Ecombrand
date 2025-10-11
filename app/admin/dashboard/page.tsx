@@ -835,39 +835,48 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-black">
+      <style jsx global>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
       {/* Header */}
       <header className="bg-gradient-to-r from-primary-900 to-primary-800 border-b border-primary-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-accent-500 to-accent-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">A</span>
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            <div className="flex items-center space-x-3 sm:space-x-6">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-accent-500 to-accent-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm sm:text-lg">A</span>
                 </div>
                 <div>
-              <span className="text-2xl font-display font-bold text-gradient">
+              <span className="text-lg sm:text-2xl font-display font-bold text-gradient">
                 ROTKIT
               </span>
-                  <div className="text-sm text-gray-400">Admin Portal</div>
+                  <div className="text-xs sm:text-sm text-gray-400">Admin Portal</div>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <div className="hidden sm:flex items-center space-x-2 bg-primary-800/50 rounded-lg px-3 py-2">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="hidden md:flex items-center space-x-2 bg-primary-800/50 rounded-lg px-3 py-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-sm text-gray-300">Live</span>
               </div>
               <button
                 onClick={() => window.open('/', '_blank')}
-                className="px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-700 text-white text-sm rounded-lg hover:from-accent-700 hover:to-accent-800 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                className="px-2 sm:px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-700 text-white text-xs sm:text-sm rounded-lg hover:from-accent-700 hover:to-accent-800 transition-all duration-200 flex items-center space-x-1 sm:space-x-2 shadow-lg hover:shadow-xl"
                 title="View Website"
               >
                 <span>🌐</span>
-                <span>View Site</span>
+                <span className="hidden sm:inline">View Site</span>
               </button>
-              <div className="flex items-center space-x-3 bg-primary-800/30 rounded-lg px-4 py-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="flex items-center space-x-2 sm:space-x-3 bg-primary-800/30 rounded-lg px-2 sm:px-4 py-2">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                   {admin.profileImage ? (
                     <img 
                       src={admin.profileImage} 
@@ -875,12 +884,12 @@ export default function AdminDashboard() {
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    <span className="text-white font-semibold text-sm">
+                    <span className="text-white font-semibold text-xs sm:text-sm">
                       {admin.firstName[0]}{admin.lastName[0]}
                     </span>
                   )}
                 </div>
-                <div className="hidden sm:block">
+                <div className="hidden lg:block">
                   <div className="text-sm font-medium text-white">
                     {admin.firstName} {admin.lastName}
                   </div>
@@ -889,42 +898,45 @@ export default function AdminDashboard() {
               </div>
               <button 
                 onClick={handleLogout}
-                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+                className="p-1.5 sm:p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
                 title="Logout"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Tabs */}
-        <div className="flex flex-wrap gap-2 bg-gradient-to-r from-primary-900 to-primary-800 border border-primary-700 rounded-xl p-2 mb-8 shadow-lg">
-          {[
-            { id: 'overview', name: 'Overview', icon: '📊' },
-            { id: 'products', name: 'Products', icon: '📦' },
-            { id: 'orders', name: 'Orders', icon: '📋' },
-            { id: 'users', name: 'Users', icon: '👥' },
-            { id: 'analytics', name: 'Analytics', icon: '📈' },
-            { id: 'website', name: 'Website', icon: '🌐' },
-            { id: 'profile', name: 'Your Details', icon: '👤' },
-            { id: 'settings', name: 'Settings', icon: '⚙️' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center space-x-2 ${
-                activeTab === tab.id
-                  ? 'bg-gradient-to-r from-accent-600 to-accent-700 text-white shadow-lg transform scale-105'
-                  : 'text-gray-300 hover:text-white hover:bg-primary-700/50 hover:transform hover:scale-105'
-              }`}
-            >
-              <span className="text-lg">{tab.icon}</span>
-              <span>{tab.name}</span>
-            </button>
-          ))}
+        <div className="bg-gradient-to-r from-primary-900 to-primary-800 border border-primary-700 rounded-xl p-2 mb-6 sm:mb-8 shadow-lg">
+          <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-1">
+            {[
+              { id: 'overview', name: 'Overview', icon: '📊' },
+              { id: 'products', name: 'Products', icon: '📦' },
+              { id: 'orders', name: 'Orders', icon: '📋' },
+              { id: 'users', name: 'Users', icon: '👥' },
+              { id: 'analytics', name: 'Analytics', icon: '📈' },
+              { id: 'website', name: 'Website', icon: '🌐' },
+              { id: 'profile', name: 'Your Details', icon: '👤' },
+              { id: 'settings', name: 'Settings', icon: '⚙️' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center space-x-1 sm:space-x-2 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === tab.id
+                    ? 'bg-gradient-to-r from-accent-600 to-accent-700 text-white shadow-lg transform scale-105'
+                    : 'text-gray-300 hover:text-white hover:bg-primary-700/50 hover:transform hover:scale-105'
+                }`}
+              >
+                <span className="text-sm sm:text-lg">{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.name}</span>
+                <span className="sm:hidden text-xs">{tab.name.split(' ')[0]}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Overview Tab */}
@@ -955,7 +967,7 @@ export default function AdminDashboard() {
             )}
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
               <div className="bg-gradient-to-br from-primary-900 to-primary-800 border border-primary-700 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:transform hover:scale-105">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1135,25 +1147,25 @@ export default function AdminDashboard() {
 
             <div className="bg-gradient-to-r from-primary-900 to-primary-800 border border-primary-700 rounded-xl overflow-hidden shadow-lg">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[800px]">
                   <thead className="bg-gradient-to-r from-primary-800 to-primary-700">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Product
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Category
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Price
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Stock
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -1161,43 +1173,43 @@ export default function AdminDashboard() {
                   <tbody className="divide-y divide-primary-700/50">
                     {products.map((product) => (
                       <tr key={product.id} className="hover:bg-primary-800/50 transition-all duration-200 group">
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="flex items-center space-x-4">
+                        <td className="px-3 sm:px-6 py-3 sm:py-5 whitespace-nowrap">
+                          <div className="flex items-center space-x-2 sm:space-x-4">
                             <div className="relative">
                               <img
-                                className="h-12 w-12 rounded-xl object-cover shadow-lg"
+                                className="h-8 w-8 sm:h-12 sm:w-12 rounded-xl object-cover shadow-lg"
                                 src={product.imageUrls[0] || '/placeholder.jpg'}
                               alt={product.name}
                             />
                               {product.isFeatured && (
-                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
-                                  <Star className="w-3 h-3 text-yellow-900" />
+                                <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-5 sm:h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                                  <Star className="w-2 h-2 sm:w-3 sm:h-3 text-yellow-900" />
                                 </div>
                               )}
                             </div>
-                            <div>
-                              <div className="text-sm font-semibold text-white flex items-center space-x-2">
-                                <span>{product.name}</span>
+                            <div className="min-w-0">
+                              <div className="text-xs sm:text-sm font-semibold text-white flex items-center space-x-1 sm:space-x-2">
+                                <span className="truncate max-w-[120px] sm:max-w-none">{product.name}</span>
                                 {product.discount > 0 && (
-                                  <span className="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded-full">
+                                  <span className="px-1 sm:px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded-full flex-shrink-0">
                                     -{product.discount}%
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-gray-400 mt-1">
+                              <div className="text-xs text-gray-400 mt-1 hidden sm:block">
                                 {product.description.slice(0, 50)}...
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <span className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-accent-600 to-accent-700 text-white rounded-full">
+                        <td className="px-3 sm:px-6 py-3 sm:py-5 whitespace-nowrap">
+                          <span className="px-2 sm:px-3 py-1 text-xs font-semibold bg-gradient-to-r from-accent-600 to-accent-700 text-white rounded-full">
                             {product.category}
                           </span>
                         </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="text-sm text-white">
-                            <div className="font-bold text-lg">₹{product.price}</div>
+                        <td className="px-3 sm:px-6 py-3 sm:py-5 whitespace-nowrap">
+                          <div className="text-xs sm:text-sm text-white">
+                            <div className="font-bold text-sm sm:text-lg">₹{product.price}</div>
                             {product.originalPrice && product.originalPrice > product.price && (
                               <div className="text-xs text-gray-400 line-through">
                                 ₹{product.originalPrice}
@@ -1205,44 +1217,46 @@ export default function AdminDashboard() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            <div className={`w-3 h-3 rounded-full ${
+                        <td className="px-3 sm:px-6 py-3 sm:py-5 whitespace-nowrap">
+                          <div className="flex items-center space-x-1 sm:space-x-2">
+                            <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
                               product.stock > 10 ? 'bg-green-400' :
                               product.stock > 0 ? 'bg-yellow-400' :
                               'bg-red-400'
                             }`}></div>
-                            <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                            <span className={`px-2 sm:px-3 py-1 text-xs font-semibold rounded-full ${
                               product.stock > 10 ? 'bg-green-500/20 text-green-400' :
                               product.stock > 0 ? 'bg-yellow-500/20 text-yellow-400' :
                               'bg-red-500/20 text-red-400'
                             }`}>
-                              {product.stock} units
+                              <span className="hidden sm:inline">{product.stock} units</span>
+                              <span className="sm:hidden">{product.stock}</span>
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                        <td className="px-3 sm:px-6 py-3 sm:py-5 whitespace-nowrap">
+                          <span className={`px-2 sm:px-3 py-1 text-xs font-semibold rounded-full ${
                             product.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
                           }`}>
-                            {product.isActive ? '✓ Active' : '✗ Inactive'}
+                            <span className="hidden sm:inline">{product.isActive ? '✓ Active' : '✗ Inactive'}</span>
+                            <span className="sm:hidden">{product.isActive ? '✓' : '✗'}</span>
                           </span>
                         </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="flex space-x-2">
+                        <td className="px-3 sm:px-6 py-3 sm:py-5 whitespace-nowrap">
+                          <div className="flex space-x-1 sm:space-x-2">
                             <button
                               onClick={() => openEditModal(product)}
-                              className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all duration-200 group-hover:scale-110"
+                              className="p-1.5 sm:p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all duration-200 group-hover:scale-110"
                               title="Edit Product"
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteProduct(product.id)}
-                              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all duration-200 group-hover:scale-110"
+                              className="p-1.5 sm:p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all duration-200 group-hover:scale-110"
                               title="Delete Product"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                             </button>
                           </div>
                         </td>
@@ -1262,9 +1276,9 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">Order Management</h2>
-              <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">Order Management</h2>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <input
@@ -1272,13 +1286,13 @@ export default function AdminDashboard() {
                     placeholder="Search orders..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 bg-primary-800 border border-primary-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                    className="w-full sm:w-auto pl-10 pr-4 py-2 bg-primary-800 border border-primary-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2 bg-primary-800 border border-primary-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
+                  className="w-full sm:w-auto px-4 py-2 bg-primary-800 border border-primary-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
                 >
                   <option value="ALL">All Status</option>
                   <option value="PENDING">Pending</option>
@@ -1318,28 +1332,28 @@ export default function AdminDashboard() {
             {!ordersLoading && orders.length > 0 && (
               <div className="bg-primary-900 border border-primary-800 rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full min-w-[900px]">
                     <thead className="bg-primary-800">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                           Order ID
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                           Customer
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                           Items
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                           Total
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                           Date
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
@@ -1355,41 +1369,41 @@ export default function AdminDashboard() {
                       )
                       .map((order) => (
                       <tr key={order.id} className="hover:bg-primary-800 transition-colors duration-200">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-mono">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-white font-mono">
                           #{order.id.slice(-8)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-white">{order.user.name}</div>
-                            <div className="text-sm text-gray-400">{order.user.email}</div>
+                            <div className="text-xs sm:text-sm font-medium text-white truncate max-w-[120px] sm:max-w-none">{order.user.name}</div>
+                            <div className="text-xs text-gray-400 truncate max-w-[120px] sm:max-w-none">{order.user.email}</div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex -space-x-2">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                          <div className="flex -space-x-1 sm:-space-x-2">
                             {order.items.slice(0, 3).map((item, index) => (
                               <img
                                 key={index}
-                                className="h-8 w-8 rounded-full border-2 border-primary-800 object-cover"
+                                className="h-6 w-6 sm:h-8 sm:w-8 rounded-full border-2 border-primary-800 object-cover"
                                 src={item.product.imageUrls[0] || '/placeholder.jpg'}
                                 alt={item.product.name}
                                 title={`${item.product.name} x${item.quantity}`}
                               />
                             ))}
                             {order.items.length > 3 && (
-                              <div className="h-8 w-8 rounded-full border-2 border-primary-800 bg-primary-700 flex items-center justify-center text-xs text-gray-300">
+                              <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full border-2 border-primary-800 bg-primary-700 flex items-center justify-center text-xs text-gray-300">
                                 +{order.items.length - 3}
                               </div>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-medium">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-white font-medium">
                           ₹{order.totalPrice.toFixed(2)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                           <select
                             value={order.status}
                             onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                            className={`px-3 py-1 text-xs rounded-full border-0 focus:ring-2 focus:ring-accent-500 ${
+                            className={`px-2 sm:px-3 py-1 text-xs rounded-full border-0 focus:ring-2 focus:ring-accent-500 w-full min-w-[100px] ${
                               order.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
                               order.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400' :
                               order.status === 'SHIPPED' ? 'bg-purple-600/20 text-purple-400' :
@@ -1406,16 +1420,17 @@ export default function AdminDashboard() {
                             <option value="CANCELLED">Cancelled</option>
                           </select>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                          {new Date(order.createdAt).toLocaleDateString()}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-400">
+                          <span className="hidden sm:inline">{new Date(order.createdAt).toLocaleDateString()}</span>
+                          <span className="sm:hidden">{new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => handleViewOrderDetails(order)}
-                            className="text-blue-400 hover:text-blue-300 transition-colors duration-200"
+                            className="text-blue-400 hover:text-blue-300 transition-colors duration-200 p-1"
                             title="View Details"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
                         </td>
                       </tr>
@@ -1435,8 +1450,8 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">User Management</h2>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">User Management</h2>
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
@@ -1444,35 +1459,35 @@ export default function AdminDashboard() {
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-primary-800 border border-primary-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                  className="w-full sm:w-auto pl-10 pr-4 py-2 bg-primary-800 border border-primary-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
                 />
               </div>
             </div>
 
             <div className="bg-primary-900 border border-primary-800 rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[800px]">
                   <thead className="bg-primary-800">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         User
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         Contact
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         Location
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         Orders
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         Joined
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -1486,45 +1501,48 @@ export default function AdminDashboard() {
                       )
                       .map((user) => (
                       <tr key={user.id} className="hover:bg-primary-800 transition-colors duration-200">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-white">{user.name}</div>
-                            <div className="text-sm text-gray-400">{user.email}</div>
+                            <div className="text-xs sm:text-sm font-medium text-white truncate max-w-[120px] sm:max-w-none">{user.name}</div>
+                            <div className="text-xs sm:text-sm text-gray-400 truncate max-w-[120px] sm:max-w-none">{user.email}</div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-300">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                          <div className="text-xs sm:text-sm text-gray-300">
                             {user.phoneNumber || 'N/A'}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-300">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                          <div className="text-xs sm:text-sm text-gray-300 truncate max-w-[100px] sm:max-w-none">
                             {user.city && user.state ? `${user.city}, ${user.state}` : 'N/A'}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-white">
                           {user._count.orders}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             user.isActive ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400'
                           }`}>
-                            {user.isActive ? 'Active' : 'Inactive'}
+                            <span className="hidden sm:inline">{user.isActive ? 'Active' : 'Inactive'}</span>
+                            <span className="sm:hidden">{user.isActive ? '✓' : '✗'}</span>
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                          {new Date(user.createdAt).toLocaleDateString()}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-400">
+                          <span className="hidden sm:inline">{new Date(user.createdAt).toLocaleDateString()}</span>
+                          <span className="sm:hidden">{new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => handleToggleUserStatus(user.id, !user.isActive)}
-                            className={`px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
+                            className={`px-2 sm:px-3 py-1 text-xs rounded-full transition-colors duration-200 ${
                               user.isActive 
                                 ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30' 
                                 : 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
                             }`}
                           >
-                            {user.isActive ? 'Deactivate' : 'Activate'}
+                            <span className="hidden sm:inline">{user.isActive ? 'Deactivate' : 'Activate'}</span>
+                            <span className="sm:hidden">{user.isActive ? 'Off' : 'On'}</span>
                           </button>
                         </td>
                       </tr>
@@ -1548,25 +1566,25 @@ export default function AdminDashboard() {
 
               <div className="bg-gradient-to-r from-primary-900 to-primary-800 border border-primary-700 rounded-xl overflow-hidden shadow-lg">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full min-w-[800px]">
                     <thead className="bg-gradient-to-r from-primary-800 to-primary-700">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                           User
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                           Product
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                           Price
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                           Category
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                           Added Date
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                           Status
                         </th>
                       </tr>
@@ -1662,40 +1680,74 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-2xl font-bold text-white mb-6">Analytics Dashboard</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Analytics Dashboard</h2>
             
             {analytics && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Recent Orders */}
-                <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Recent Orders</h3>
-                  <div className="space-y-4">
+                <div className="bg-primary-900 border border-primary-800 rounded-lg p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Recent Orders</h3>
+                  <div className="space-y-3 sm:space-y-4">
                     {analytics.recentOrders.slice(0, 5).map((order) => (
-                      <div key={order.id} className="flex items-center justify-between p-4 bg-primary-800 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="text-sm text-white font-medium">
-                            #{order.id.slice(-8)}
-            </div>
-                          <div className="text-sm text-gray-300">
+                      <div key={order.id} className="bg-primary-800 rounded-lg p-3 sm:p-4">
+                        {/* Mobile Layout */}
+                        <div className="block sm:hidden">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-xs font-medium text-white font-mono">
+                              #{order.id.slice(-8)}
+                            </div>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              order.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
+                              order.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400' :
+                              order.status === 'SHIPPED' ? 'bg-purple-600/20 text-purple-400' :
+                              order.status === 'OUT_FOR_DELIVERY' ? 'bg-orange-600/20 text-orange-400' :
+                              order.status === 'DELIVERED' ? 'bg-green-600/20 text-green-400' :
+                              'bg-red-600/20 text-red-400'
+                            }`}>
+                              {order.status}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-300 truncate mb-1">
                             {order.user.name}
                           </div>
-                          <div className="text-sm text-gray-400">
-                            {order.items.length} items
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs text-gray-400">
+                              {order.items.length} items
+                            </div>
+                            <div className="text-sm text-white font-medium">
+                              ₹{order.totalPrice.toFixed(2)}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-sm text-white font-medium">
-                            ₹{order.totalPrice.toFixed(2)}
+                        
+                        {/* Desktop Layout */}
+                        <div className="hidden sm:flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="text-sm text-white font-medium font-mono">
+                              #{order.id.slice(-8)}
+                            </div>
+                            <div className="text-sm text-gray-300">
+                              {order.user.name}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              {order.items.length} items
+                            </div>
                           </div>
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            order.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
-                            order.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400' :
-                            order.status === 'SHIPPED' ? 'bg-purple-600/20 text-purple-400' :
-                            order.status === 'DELIVERED' ? 'bg-green-600/20 text-green-400' :
-                            'bg-red-600/20 text-red-400'
-                          }`}>
-                            {order.status}
-                          </span>
+                          <div className="flex items-center space-x-4">
+                            <div className="text-sm text-white font-medium">
+                              ₹{order.totalPrice.toFixed(2)}
+                            </div>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              order.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
+                              order.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400' :
+                              order.status === 'SHIPPED' ? 'bg-purple-600/20 text-purple-400' :
+                              order.status === 'OUT_FOR_DELIVERY' ? 'bg-orange-600/20 text-orange-400' :
+                              order.status === 'DELIVERED' ? 'bg-green-600/20 text-green-400' :
+                              'bg-red-600/20 text-red-400'
+                            }`}>
+                              {order.status}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1703,31 +1755,61 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Top Products */}
-                <div className="bg-primary-900 border border-primary-800 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Top Selling Products</h3>
-                  <div className="space-y-4">
+                <div className="bg-primary-900 border border-primary-800 rounded-lg p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Top Selling Products</h3>
+                  <div className="space-y-3 sm:space-y-4">
                     {analytics.topProducts.map((item, index) => (
-                      <div key={item.productId} className="flex items-center justify-between p-4 bg-primary-800 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="text-lg font-bold text-accent-400">
-                            #{index + 1}
-                          </div>
-                          <img
-                            className="h-10 w-10 rounded-lg object-cover"
-                            src={item.product?.imageUrls[0] || '/placeholder.jpg'}
-                            alt={item.product?.name}
-                          />
-                          <div>
-                            <div className="text-sm text-white font-medium">
-                              {item.product?.name}
+                      <div key={item.productId} className="bg-primary-800 rounded-lg p-3 sm:p-4">
+                        {/* Mobile Layout */}
+                        <div className="block sm:hidden">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <div className="text-sm font-bold text-accent-400">
+                              #{index + 1}
                             </div>
-                            <div className="text-sm text-gray-400">
-                              ₹{item.product?.price}
+                            <img
+                              className="h-8 w-8 rounded-lg object-cover flex-shrink-0"
+                              src={item.product?.imageUrls[0] || '/placeholder.jpg'}
+                              alt={item.product?.name}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm text-white font-medium truncate">
+                                {item.product?.name}
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                ₹{item.product?.price}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm text-white font-medium">
+                              {item._sum.quantity} sold
                             </div>
                           </div>
                         </div>
-                        <div className="text-sm text-white font-medium">
-                          {item._sum.quantity} sold
+                        
+                        {/* Desktop Layout */}
+                        <div className="hidden sm:flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="text-lg font-bold text-accent-400">
+                              #{index + 1}
+                            </div>
+                            <img
+                              className="h-10 w-10 rounded-lg object-cover"
+                              src={item.product?.imageUrls[0] || '/placeholder.jpg'}
+                              alt={item.product?.name}
+                            />
+                            <div>
+                              <div className="text-sm text-white font-medium">
+                                {item.product?.name}
+                              </div>
+                              <div className="text-sm text-gray-400">
+                                ₹{item.product?.price}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-sm text-white font-medium">
+                            {item._sum.quantity} sold
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -2204,18 +2286,18 @@ export default function AdminDashboard() {
 
       {/* Order Details Modal */}
       {showOrderModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-primary-900 border border-primary-700 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-primary-900 border border-primary-700 rounded-lg max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-primary-700">
-              <div>
-                <h3 className="text-xl font-semibold text-white">Order Details</h3>
-                <p className="text-gray-400 text-sm">Order ID: {selectedOrder.id}</p>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-primary-700">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-lg sm:text-xl font-semibold text-white truncate">Order Details</h3>
+                <p className="text-gray-400 text-xs sm:text-sm truncate">Order ID: {selectedOrder.id}</p>
               </div>
               <button
                 onClick={() => {
@@ -2223,21 +2305,21 @@ export default function AdminDashboard() {
                   setSelectedOrder(null)
                   setOrderDetails(null)
                 }}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white transition-colors ml-2 flex-shrink-0"
               >
-                <XCircle className="w-6 h-6" />
+                <XCircle className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {orderDetails ? (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Order Summary */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-4">
-                      <h4 className="text-sm font-medium text-gray-400 mb-2">Order Status</h4>
-                      <span className={`px-3 py-1 text-sm rounded-full ${
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-3 sm:p-4">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-400 mb-2">Order Status</h4>
+                      <span className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-full ${
                         orderDetails.status === 'PENDING' ? 'bg-yellow-600/20 text-yellow-400' :
                         orderDetails.status === 'PROCESSING' ? 'bg-blue-600/20 text-blue-400' :
                         orderDetails.status === 'SHIPPED' ? 'bg-purple-600/20 text-purple-400' :
@@ -2248,47 +2330,47 @@ export default function AdminDashboard() {
                         {orderDetails.status}
                       </span>
                     </div>
-                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-4">
-                      <h4 className="text-sm font-medium text-gray-400 mb-2">Total Amount</h4>
-                      <p className="text-2xl font-bold text-accent-400">₹{orderDetails.totalPrice.toFixed(2)}</p>
+                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-3 sm:p-4">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-400 mb-2">Total Amount</h4>
+                      <p className="text-xl sm:text-2xl font-bold text-accent-400">₹{orderDetails.totalPrice.toFixed(2)}</p>
                     </div>
-                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-4">
-                      <h4 className="text-sm font-medium text-gray-400 mb-2">Order Date</h4>
-                      <p className="text-white">{new Date(orderDetails.createdAt).toLocaleDateString()}</p>
-                      <p className="text-sm text-gray-400">{new Date(orderDetails.createdAt).toLocaleTimeString()}</p>
+                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-3 sm:p-4 sm:col-span-2 lg:col-span-1">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-400 mb-2">Order Date</h4>
+                      <p className="text-sm sm:text-base text-white">{new Date(orderDetails.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs sm:text-sm text-gray-400">{new Date(orderDetails.createdAt).toLocaleTimeString()}</p>
                     </div>
                   </div>
 
                   {/* Customer Information */}
-                  <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-6">
-                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                      <User className="w-5 h-5 text-accent-400" />
+                  <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-4 sm:p-6">
+                    <h4 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                      <User className="w-4 h-4 sm:w-5 sm:h-5 text-accent-400" />
                       Customer Information
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                       <div>
-                        <h5 className="text-sm font-medium text-gray-400 mb-2">Personal Details</h5>
-                        <div className="space-y-2">
-                          <p className="text-white"><span className="text-gray-400">Name:</span> {orderDetails.user.name}</p>
-                          <p className="text-white"><span className="text-gray-400">Email:</span> {orderDetails.user.email}</p>
+                        <h5 className="text-xs sm:text-sm font-medium text-gray-400 mb-2">Personal Details</h5>
+                        <div className="space-y-1 sm:space-y-2">
+                          <p className="text-sm sm:text-base text-white break-words"><span className="text-gray-400">Name:</span> {orderDetails.user.name}</p>
+                          <p className="text-sm sm:text-base text-white break-all"><span className="text-gray-400">Email:</span> {orderDetails.user.email}</p>
                           {orderDetails.user.phoneNumber && (
-                            <p className="text-white"><span className="text-gray-400">Phone:</span> {orderDetails.user.phoneNumber}</p>
+                            <p className="text-sm sm:text-base text-white"><span className="text-gray-400">Phone:</span> {orderDetails.user.phoneNumber}</p>
                           )}
                         </div>
                       </div>
                       <div>
-                        <h5 className="text-sm font-medium text-gray-400 mb-2">Shipping Address</h5>
-                        <div className="space-y-2">
+                        <h5 className="text-xs sm:text-sm font-medium text-gray-400 mb-2">Shipping Address</h5>
+                        <div className="space-y-1 sm:space-y-2">
                           {orderDetails.user.address && (
-                            <p className="text-white">{orderDetails.user.address}</p>
+                            <p className="text-sm sm:text-base text-white break-words">{orderDetails.user.address}</p>
                           )}
-                          <div className="flex gap-2">
-                            {orderDetails.user.city && <span className="text-white">{orderDetails.user.city}</span>}
-                            {orderDetails.user.state && <span className="text-white">{orderDetails.user.state}</span>}
-                            {orderDetails.user.zipCode && <span className="text-white">{orderDetails.user.zipCode}</span>}
+                          <div className="flex flex-wrap gap-1 sm:gap-2">
+                            {orderDetails.user.city && <span className="text-sm sm:text-base text-white">{orderDetails.user.city}</span>}
+                            {orderDetails.user.state && <span className="text-sm sm:text-base text-white">{orderDetails.user.state}</span>}
+                            {orderDetails.user.zipCode && <span className="text-sm sm:text-base text-white">{orderDetails.user.zipCode}</span>}
                           </div>
                           {orderDetails.user.country && (
-                            <p className="text-white">{orderDetails.user.country}</p>
+                            <p className="text-sm sm:text-base text-white">{orderDetails.user.country}</p>
                           )}
                         </div>
                       </div>
@@ -2296,64 +2378,92 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Order Items */}
-                  <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-6">
-                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                      <Package className="w-5 h-5 text-accent-400" />
+                  <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-4 sm:p-6">
+                    <h4 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                      <Package className="w-4 h-4 sm:w-5 sm:h-5 text-accent-400" />
                       Order Items ({orderDetails.items.length})
                     </h4>
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {orderDetails.items.map((item: any, index: number) => (
-                        <div key={index} className="flex items-center gap-4 p-4 bg-primary-900/50 rounded-lg">
-                          <img
-                            src={item.product.imageUrls[0] || '/placeholder.jpg'}
-                            alt={item.product.name}
-                            className="w-16 h-16 object-cover rounded-lg"
-                          />
-                          <div className="flex-1">
-                            <h5 className="text-white font-medium">{item.product.name}</h5>
-                            <div className="flex items-center gap-4 mt-1">
-                              <p className="text-sm text-gray-400">Quantity: {item.quantity}</p>
-                              <p className="text-sm text-gray-400">Price: ₹{item.price}</p>
+                        <div key={index} className="bg-primary-900/50 rounded-lg p-3 sm:p-4">
+                          {/* Mobile Layout */}
+                          <div className="block sm:hidden">
+                            <div className="flex items-start gap-3 mb-2">
+                              <img
+                                src={item.product.imageUrls[0] || '/placeholder.jpg'}
+                                alt={item.product.name}
+                                className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <h5 className="text-sm font-medium text-white truncate">{item.product.name}</h5>
+                                <p className="text-xs text-gray-400">Category: {item.product.category}</p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="text-sm font-semibold text-white">₹{(item.price * item.quantity).toFixed(2)}</p>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div className="text-gray-400">Qty: {item.quantity}</div>
+                              <div className="text-gray-400">Price: ₹{item.price}</div>
                               {item.sizes && (
-                                <p className="text-sm text-gray-400">Size: {item.sizes}</p>
+                                <div className="text-gray-400">Size: {item.sizes}</div>
                               )}
                             </div>
-                            <p className="text-sm text-gray-400">Category: {item.product.category}</p>
                           </div>
-                          <div className="text-right">
-                            <p className="text-white font-semibold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                          
+                          {/* Desktop Layout */}
+                          <div className="hidden sm:flex items-center gap-4">
+                            <img
+                              src={item.product.imageUrls[0] || '/placeholder.jpg'}
+                              alt={item.product.name}
+                              className="w-16 h-16 object-cover rounded-lg"
+                            />
+                            <div className="flex-1">
+                              <h5 className="text-white font-medium">{item.product.name}</h5>
+                              <div className="flex items-center gap-4 mt-1">
+                                <p className="text-sm text-gray-400">Quantity: {item.quantity}</p>
+                                <p className="text-sm text-gray-400">Price: ₹{item.price}</p>
+                                {item.sizes && (
+                                  <p className="text-sm text-gray-400">Size: {item.sizes}</p>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-400">Category: {item.product.category}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-white font-semibold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
                     
                     {/* Order Total */}
-                    <div className="mt-6 pt-4 border-t border-primary-700">
+                    <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-primary-700">
                       <div className="flex justify-between items-center">
-                        <span className="text-lg font-semibold text-white">Total Amount:</span>
-                        <span className="text-2xl font-bold text-accent-400">₹{orderDetails.totalPrice.toFixed(2)}</span>
+                        <span className="text-base sm:text-lg font-semibold text-white">Total Amount:</span>
+                        <span className="text-xl sm:text-2xl font-bold text-accent-400">₹{orderDetails.totalPrice.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Payment Information */}
                   {(orderDetails.paymentId || orderDetails.paymentOrderId) && (
-                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-6">
-                      <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-accent-400" />
+                    <div className="bg-primary-800/50 border border-primary-700 rounded-lg p-4 sm:p-6">
+                      <h4 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-accent-400" />
                         Payment Information
                       </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                         {orderDetails.paymentId && (
                           <div>
-                            <p className="text-sm text-gray-400">Payment ID</p>
-                            <p className="text-white font-mono text-sm">{orderDetails.paymentId}</p>
+                            <p className="text-xs sm:text-sm text-gray-400">Payment ID</p>
+                            <p className="text-white font-mono text-xs sm:text-sm break-all">{orderDetails.paymentId}</p>
                           </div>
                         )}
                         {orderDetails.paymentOrderId && (
                           <div>
-                            <p className="text-sm text-gray-400">Payment Order ID</p>
-                            <p className="text-white font-mono text-sm">{orderDetails.paymentOrderId}</p>
+                            <p className="text-xs sm:text-sm text-gray-400">Payment Order ID</p>
+                            <p className="text-white font-mono text-xs sm:text-sm break-all">{orderDetails.paymentOrderId}</p>
                           </div>
                         )}
                       </div>
@@ -2361,14 +2471,14 @@ export default function AdminDashboard() {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex gap-4 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4">
                     <select
                       value={orderDetails.status}
                       onChange={(e) => {
                         handleUpdateOrderStatus(orderDetails.id, e.target.value)
                         setOrderDetails({...orderDetails, status: e.target.value})
                       }}
-                      className="px-4 py-2 bg-primary-800 border border-primary-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
+                      className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-primary-800 border border-primary-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
                     >
                       <option value="PENDING">Pending</option>
                       <option value="PROCESSING">Processing</option>
@@ -2379,7 +2489,7 @@ export default function AdminDashboard() {
                     </select>
                     <button
                       onClick={() => window.print()}
-                      className="px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors duration-200"
+                      className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors duration-200 text-sm sm:text-base"
                     >
                       Print Order
                     </button>

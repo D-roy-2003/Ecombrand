@@ -162,7 +162,6 @@ export default function Navigation() {
               Contact
             </Link>
           </div>
-
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Cart */}
@@ -287,28 +286,37 @@ export default function Navigation() {
             >
               Contact
             </Link>
+            <Link
+              href="/help"
+              className="block text-gray-300 hover:text-white transition-colors duration-200"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Help
+            </Link>
             
             {/* Mobile Actions */}
-            <div className="flex items-center space-x-4 pt-4 border-t border-primary-800">
-              <Link
-                href="/cart"
-                className="relative p-2 text-gray-300 hover:text-white transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <ShoppingBag className="w-6 h-6" />
-              {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-fuchsia-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
-              <Link
-                href="/wishlist"
-                className="p-2 text-gray-300 hover:text-white transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Heart className="w-6 h-6" />
-              </Link>
+            <div className="flex items-center justify-between pt-4 border-t border-primary-800">
+              <div className="flex items-center space-x-4">
+                <Link
+                  href="/cart"
+                  className="relative p-2 text-gray-300 hover:text-white transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <ShoppingBag className="w-6 h-6" />
+                {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-fuchsia-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  href="/wishlist"
+                  className="p-2 text-gray-300 hover:text-white transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Heart className="w-6 h-6" />
+                </Link>
+              </div>
               {user ? (
                 <div className="flex items-center space-x-2">
                   <Link

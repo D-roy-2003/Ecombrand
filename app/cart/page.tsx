@@ -229,20 +229,112 @@ export default function CartPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Cart Items */}
               <div className="lg:col-span-2">
-                <div className="mb-8">
-                  <h1 className="text-3xl font-bold text-white mb-2">Your Cart</h1>
+                <div className="mb-6 lg:mb-8">
+                  <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Your Cart</h1>
                   <p className="text-gray-400">Review your items and proceed to checkout</p>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-4 lg:space-y-6">
                   {cartItems.map((item) => (
                     <motion.div
                       key={item.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-primary-900 border border-primary-800 rounded-lg p-6"
+                      className="bg-primary-900 border border-primary-800 rounded-lg p-4 lg:p-6"
                     >
-                      <div className="flex items-center gap-6">
+                      {/* Mobile Layout */}
+                      <div className="block lg:hidden">
+                        <div className="flex items-start gap-4 mb-4">
+                          {/* Product Image */}
+                          <Link 
+                            href={`/product/${item.productId}`}
+                            className="w-16 h-16 bg-primary-700 rounded-lg overflow-hidden flex-shrink-0 hover:ring-2 hover:ring-accent-500 transition-all duration-200"
+                          >
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </Link>
+
+                          {/* Product Details */}
+                          <div className="flex-1 min-w-0">
+                            <Link 
+                              href={`/product/${item.productId}`}
+                              className="block"
+                            >
+                              <h3 className="text-base font-semibold text-white mb-1 line-clamp-2 hover:text-accent-400 transition-colors duration-200">
+                                {item.name}
+                              </h3>
+                            </Link>
+                            <p className="text-accent-400 font-bold text-lg">
+                              ₹{item.price}
+                            </p>
+                          </div>
+
+                          {/* Remove Button */}
+                          <button
+                            onClick={() => handleRemoveItem(item.productId)}
+                            disabled={updating === item.productId}
+                            className="p-2 text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* Size Selection - Mobile */}
+                        {item.sizes && item.sizes.length > 0 && (
+                          <div className="mb-4">
+                            <label className="text-sm text-gray-400 block mb-2">Size:</label>
+                            <div className="relative">
+                              <select
+                                value={selectedSizes[item.id] || item.selectedSize || item.sizes[0]}
+                                onChange={(e) => handleSizeChange(item.id, item.productId, e.target.value)}
+                                disabled={updating === item.productId}
+                                className="w-full bg-primary-700 border border-primary-600 text-white text-sm rounded-lg px-3 py-2 pr-8 appearance-none cursor-pointer hover:border-accent-500 focus:border-accent-500 focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {item.sizes.map((size) => (
+                                  <option key={size} value={size} className="bg-primary-700">
+                                    {size}
+                                  </option>
+                                ))}
+                              </select>
+                              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Quantity and Total - Mobile */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                              disabled={updating === item.productId || item.quantity <= 1}
+                              className="w-8 h-8 rounded-lg bg-primary-700 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors duration-200"
+                            >
+                              <Minus className="w-3 h-3 text-white" />
+                            </button>
+                            <span className="w-8 text-center text-white font-medium">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                              disabled={updating === item.productId}
+                              className="w-8 h-8 rounded-lg bg-primary-700 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors duration-200"
+                            >
+                              <Plus className="w-3 h-3 text-white" />
+                            </button>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-white font-bold text-lg">
+                              ₹{(item.price * item.quantity).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Desktop Layout */}
+                      <div className="hidden lg:flex items-center gap-6">
                         {/* Product Image */}
                         <Link 
                           href={`/product/${item.productId}`}
@@ -334,26 +426,26 @@ export default function CartPage() {
 
               {/* Order Summary */}
               <div className="lg:col-span-1">
-                <div className="bg-primary-900 border border-primary-800 rounded-lg p-6 sticky top-24">
-                  <h2 className="text-xl font-bold text-white mb-6">Order Summary</h2>
+                <div className="bg-primary-900 border border-primary-800 rounded-lg p-4 lg:p-6 lg:sticky lg:top-24">
+                  <h2 className="text-lg lg:text-xl font-bold text-white mb-4 lg:mb-6">Order Summary</h2>
                   
-                  <div className="space-y-4 mb-6">
+                  <div className="space-y-3 lg:space-y-4 mb-4 lg:mb-6">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-300">Subtotal</span>
-                      <span className="text-white font-semibold">
+                      <span className="text-gray-300 text-sm lg:text-base">Subtotal</span>
+                      <span className="text-white font-semibold text-sm lg:text-base">
                         ₹{total.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-300">Shipping</span>
-                      <span className="text-gray-300">Calculated at checkout</span>
+                      <span className="text-gray-300 text-sm lg:text-base">Shipping</span>
+                      <span className="text-gray-300 text-sm lg:text-base">Calculated at checkout</span>
                     </div>
                   </div>
 
-                  <div className="border-t border-primary-700 pt-4 mb-6">
+                  <div className="border-t border-primary-700 pt-3 lg:pt-4 mb-4 lg:mb-6">
                     <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-white">Total</span>
-                      <span className="text-xl font-bold text-accent-400">
+                      <span className="text-base lg:text-lg font-bold text-white">Total</span>
+                      <span className="text-lg lg:text-xl font-bold text-accent-400">
                         ₹{total.toFixed(2)}
                       </span>
                     </div>
@@ -362,14 +454,14 @@ export default function CartPage() {
                   <div className="space-y-3">
                     <button
                       onClick={handleCheckout}
-                      className="w-full btn-primary text-lg py-3"
+                      className="w-full btn-primary text-base lg:text-lg py-3"
                     >
                       Checkout
                     </button>
                     <button
                       onClick={handleClearCart}
                       disabled={updating === 'clear'}
-                      className="w-full px-4 py-3 border border-red-600 text-red-400 hover:bg-red-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 rounded-lg"
+                      className="w-full px-4 py-3 border border-red-600 text-red-400 hover:bg-red-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 rounded-lg text-sm lg:text-base"
                     >
                       {updating === 'clear' ? 'Clearing...' : 'Clear Cart'}
                     </button>

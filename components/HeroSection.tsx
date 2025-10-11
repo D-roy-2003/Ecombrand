@@ -48,9 +48,9 @@ export default function HeroSection() {
             repeat: Infinity,
             ease: "linear"
           }}
-          className="absolute top-20 left-10 text-fuchsia-500/20"
+          className="absolute top-10 sm:top-20 left-4 sm:left-10 text-fuchsia-500/20"
         >
-          <Skull className="w-32 h-32" />
+          <Skull className="w-16 h-16 sm:w-32 sm:h-32" />
         </motion.div>
         
         <motion.div
@@ -63,16 +63,16 @@ export default function HeroSection() {
             repeat: Infinity,
             ease: "linear"
           }}
-          className="absolute bottom-20 right-10 text-violet-500/20"
+          className="absolute bottom-10 sm:bottom-20 right-4 sm:right-10 text-violet-500/20"
         >
-          <Star className="w-24 h-24" />
+          <Star className="w-12 h-12 sm:w-24 sm:h-24" />
         </motion.div>
       </div>
 
       {/* Main Content */}
       <motion.div 
         style={{ opacity }}
-        className="relative z-10 text-center px-4"
+        className="relative z-10 text-center px-4 sm:px-6 lg:px-8"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0 }}
@@ -90,7 +90,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-6xl md:text-8xl lg:text-9xl font-black uppercase leading-none mb-6"
+          className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black uppercase leading-none mb-4 sm:mb-6"
         >
           <span 
             className="block text-white"

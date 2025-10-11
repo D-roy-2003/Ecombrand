@@ -192,25 +192,25 @@ export default function ProductPage() {
           />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
           {/* Back Button */}
           <motion.button 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-500 hover:text-fuchsia-400 transition-colors mb-8 group"
+            className="flex items-center gap-2 text-gray-500 hover:text-fuchsia-400 transition-colors mb-4 sm:mb-8 group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             <span className="uppercase tracking-wider text-sm font-bold">Back</span>
           </motion.button>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-12 lg:gap-20">
             {/* Product Images with Enhanced Gallery */}
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="space-y-6"
+              className="space-y-4 sm:space-y-6"
             >
               {/* Main Image */}
               <div className="relative group">
@@ -274,7 +274,7 @@ export default function ProductPage() {
 
               {/* Thumbnail Images */}
               {product.imageUrls.length > 1 && (
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3">
                   {product.imageUrls.map((url, index) => (
                     <motion.button
                       key={index}
@@ -303,15 +303,15 @@ export default function ProductPage() {
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="space-y-8"
+              className="space-y-6 sm:space-y-8"
             >
               {/* Category & Badges */}
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="px-4 py-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white text-xs font-black uppercase tracking-wider rounded-full">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="px-3 sm:px-4 py-1 sm:py-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white text-xs font-black uppercase tracking-wider rounded-full">
                   {product.category}
                 </span>
                 {product.isFeatured && (
-                  <span className="px-4 py-2 bg-black border border-yellow-500 text-yellow-500 text-xs font-black uppercase tracking-wider rounded-full flex items-center gap-1">
+                  <span className="px-3 sm:px-4 py-1 sm:py-2 bg-black border border-yellow-500 text-yellow-500 text-xs font-black uppercase tracking-wider rounded-full flex items-center gap-1">
                     <Zap className="w-3 h-3" /> Featured
                   </span>
                 )}
@@ -319,7 +319,7 @@ export default function ProductPage() {
 
               {/* Product Name with Glitch Effect */}
               <div>
-                <h1 className="text-4xl md:text-6xl font-black text-white uppercase leading-tight">
+                <h1 className="text-2xl sm:text-4xl lg:text-6xl font-black text-white uppercase leading-tight">
                   <motion.span
                     animate={{
                       textShadow: [

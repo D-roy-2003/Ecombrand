@@ -33,7 +33,7 @@ export default function ProductGrid({ products, isLoading }: ProductGridProps) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {[...Array(6)].map((_, index) => (
           <div key={index} className="bg-primary-900 border border-primary-800 rounded-lg overflow-hidden animate-pulse">
             <div className="h-64 bg-primary-800"></div>
@@ -49,7 +49,7 @@ export default function ProductGrid({ products, isLoading }: ProductGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       {filteredProducts.map((product, index) => (
         <motion.div
           key={product.id}
@@ -61,7 +61,7 @@ export default function ProductGrid({ products, isLoading }: ProductGridProps) {
         >
           <div className="bg-primary-900 border border-primary-800 rounded-lg overflow-hidden hover:border-accent-500 transition-all duration-300 h-full flex flex-col">
             {/* Product Image */}
-            <div className="relative overflow-hidden h-64 flex-shrink-0">
+            <div className="relative overflow-hidden h-48 sm:h-64 flex-shrink-0">
               <Link href={`/product/${product.id}`}>
                 <img
                   src={product.imageUrls[0] || '/placeholder.jpg'}
@@ -71,21 +71,21 @@ export default function ProductGrid({ products, isLoading }: ProductGridProps) {
               </Link>
               
               {/* Wishlist Button */}
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
                 <WishlistButton productId={product.id} />
               </div>
 
               {/* Category Badge */}
-              <div className="absolute top-4 left-4">
-                <span className="px-3 py-1 bg-accent-600 text-white text-xs font-medium rounded-full">
+              <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
+                <span className="px-2 sm:px-3 py-1 bg-accent-600 text-white text-xs font-medium rounded-full">
                   {product.category.toUpperCase()}
                 </span>
               </div>
 
               {/* Discount Badge */}
               {product.discount && product.discount > 0 && (
-                <div className="absolute top-4 left-4 mt-8">
-                  <span className="px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-full">
+                <div className="absolute top-2 sm:top-4 left-2 sm:left-4 mt-6 sm:mt-8">
+                  <span className="px-2 sm:px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-full">
                     -{product.discount}% OFF
                   </span>
                 </div>
@@ -93,8 +93,8 @@ export default function ProductGrid({ products, isLoading }: ProductGridProps) {
 
               {/* Stock Status */}
               {product.stock < 10 && product.stock > 0 && (
-                <div className="absolute bottom-4 left-4">
-                  <span className="px-3 py-1 bg-yellow-600 text-white text-xs font-medium rounded-full">
+                <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4">
+                  <span className="px-2 sm:px-3 py-1 bg-yellow-600 text-white text-xs font-medium rounded-full">
                     Low Stock
                   </span>
                 </div>
