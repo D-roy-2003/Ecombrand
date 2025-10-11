@@ -22,7 +22,7 @@ async function seedAdmin() {
     console.log('🔍 Checking for existing admin...')
     const existingAdmins = await prisma.$queryRaw`
       SELECT * FROM "admins" 
-      WHERE "email" = 'roy.debangshu2023@gmail.com'
+      WHERE "email" = 'intellicraft.solutions25@gmail.com'
       OR "id" = 'cmflhi59s0000qmbca76vx244'
       LIMIT 1
     ` as any[]
@@ -38,7 +38,7 @@ async function seedAdmin() {
         UPDATE "admins" 
         SET 
           "adminId" = 'bhogobanadmin2003',
-          "email" = 'roy.debangshu2023@gmail.com',
+          "email" = 'intellicraft.solutions25@gmail.com',
           "password" = ${hashedPassword},
           "firstName" = 'Admin',
           "lastName" = 'User',
@@ -58,7 +58,7 @@ async function seedAdmin() {
       
       console.log('✅ Admin updated successfully!')
       console.log('🆔 Admin ID: bhogobanadmin2003')
-      console.log('📧 Email: roy.debangshu2023@gmail.com')
+      console.log('📧 Email: intellicraft.solutions25@gmail.com')
       console.log('🔑 Password: Admin@69')
       console.log('🔢 Database ID:', existingAdmin.id)
       
@@ -83,7 +83,7 @@ async function seedAdmin() {
         "bio", "department", "permissions", "isActive", "createdAt", "updatedAt"
       ) VALUES (
         'bhogobanadmin2003',
-        'roy.debangshu2023@gmail.com',
+        'intellicraft.solutions25@gmail.com',
         ${hashedPassword},
         'Admin',
         'User',
@@ -106,12 +106,12 @@ async function seedAdmin() {
     const newAdmin = await prisma.$queryRaw`
       SELECT "id", "adminId", "email", "firstName", "lastName" 
       FROM "admins" 
-      WHERE "email" = 'roy.debangshu2023@gmail.com'
+      WHERE "email" = 'intellicraft.solutions25@gmail.com'
     ` as any[]
 
     console.log('✅ Admin created successfully!')
     console.log('🆔 Admin ID: bhogobanadmin2003')
-    console.log('📧 Email: roy.debangshu2023@gmail.com')
+    console.log('📧 Email: intellicraft.solutions25@gmail.com')
     console.log('🔑 Password: Admin@69')
     console.log('🔢 Database ID:', newAdmin[0].id)
     

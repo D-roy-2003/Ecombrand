@@ -624,14 +624,6 @@ export default function AdminLoginPage() {
           </div>
         )}
 
-        {/* Admin Info */}
-        <div className="mt-6 p-4 bg-primary-800 rounded-lg">
-          <p className="text-sm text-gray-400 text-center">
-            <strong>Updated Admin Credentials:</strong><br />
-            Admin ID: bhogobanadmin2003<br />
-            Email: roy.debangshu2023@gmail.com
-          </p>
-        </div>
 
         {/* Footer */}
         <div className="text-center mt-8">
